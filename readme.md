@@ -50,3 +50,10 @@ Sau đó, truy cập http://localhost:8000/docs để xem tài liệu API tươn
 Chế độ Command-line (chạy 1 lần)
 
 ```python main.py```
+
+### ✨ Các API Endpoint chính
+POST /run-full-process: Kích hoạt toàn bộ quy trình: quét email, tải CV, xử lý AI, lưu ra file CSV.
+
+GET /results: Tải về file cv_summary.csv.
+
+POST /process-single-cv: Upload một file CV duy nhất và nhận lại ngay kết quả trích xuất dạng JSON.

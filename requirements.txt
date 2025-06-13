@@ -1,14 +1,15 @@
-#uv pip install -r requirements.txt
+# requirements.txt
 python-dotenv
 pdfminer.six
 python-docx
-docx2txt
 pandas
 openpyxl
+google-generativeai
+python-multipart 
+
+# Thư viện cho giao diện test
 streamlit
-xlsxwriter 
+
+# Thư viện cho MCP Server
 fastapi
 uvicorn[standard]
-python-multipart
-
-
