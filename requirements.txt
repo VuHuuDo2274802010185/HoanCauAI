@@ -6,6 +6,7 @@ pandas
 openpyxl
 google-generativeai
 python-multipart 
+requests  # Cho OpenRouter API
 
 # Thư viện cho giao diện test
 streamlit

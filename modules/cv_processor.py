@@ -23,9 +23,9 @@ except ImportError:
             PDF_EXTRACTOR = None
 
 import docx
-from google.generativeai import GenerativeModel
+from .dynamic_llm_client import DynamicLLMClient
 
-from .config import LLM_MODEL, ATTACHMENT_DIR, OUTPUT_CSV
+from .config import ATTACHMENT_DIR, OUTPUT_CSV, LLM_CONFIG
 from .prompts import CV_EXTRACTION_PROMPT
 
 logger = logging.getLogger(__name__)
@@ -36,9 +36,9 @@ logger.addHandler(_handler)
 
 
 class CVProcessor:
-    def __init__(self, fetcher=None, model_name: str = LLM_MODEL):
+    def __init__(self, fetcher=None):
         self.fetcher = fetcher
-        self.model = GenerativeModel(model_name)
+        self.llm_client = DynamicLLMClient()
 
     def extract_text(self, path: str) -> str:
         ext = os.path.splitext(path)[1].lower()
@@ -78,8 +78,6 @@ class CVProcessor:
         else:
             logger.error("Không có thư viện PDF nào được cài đặt")
             return ""
-
-
     def extract_info_with_llm(self, text: str) -> Dict:
         if not text.strip():
             return {}
@@ -87,20 +85,20 @@ class CVProcessor:
         for attempt in range(1, 4):
             try:
                 # Sử dụng prompt từ file prompts.py
-                resp = self.model.generate_content([CV_EXTRACTION_PROMPT, text])
-                logger.debug(f"Phản hồi AI: {resp.text}")
+                resp_text = self.llm_client.generate_content([CV_EXTRACTION_PROMPT, text])
+                logger.debug(f"Phản hồi AI: {resp_text}")
 
                 # Trích xuất JSON an toàn hơn
-                json_match = re.search(r'```json\s*([\s\S]+?)\s*```|({[\s\S]+})', resp.text)
+                json_match = re.search(r'```json\s*([\s\S]+?)\s*```|({[\s\S]+})', resp_text)
                 if json_match:
                     json_str = json_match.group(1) or json_match.group(2)
                     return json.loads(json_str)
                 else:
-                    logger.warning(f"AI không trả về JSON hợp lệ. Chuyển sang fallback. Phản hồi: {resp.text}")
+                    logger.warning(f"AI không trả về JSON hợp lệ. Chuyển sang fallback. Phản hồi: {resp_text}")
                     break
 
             except json.JSONDecodeError as e:
-                logger.error(f"Lỗi parse JSON từ AI: {e}. Phản hồi: {resp.text}")
+                logger.error(f"Lỗi parse JSON từ AI: {e}. Phản hồi: {resp_text}")
                 break
             except Exception as e:
                 msg = str(e).lower()
