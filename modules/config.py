@@ -26,4 +26,5 @@ if not EMAIL_USER or not EMAIL_PASS:
 # Thư mục attachments & file xuất Excel
 ATTACHMENT_DIR = os.getenv("ATTACHMENT_DIR", "attachments")
 OUTPUT_EXCEL   = os.getenv("OUTPUT_EXCEL",   "cv_summary.xlsx")
+OUTPUT_CSV     = os.getenv("OUTPUT_CSV",     "cv_summary.csv")
 Path(ATTACHMENT_DIR).mkdir(parents=True, exist_ok=True)

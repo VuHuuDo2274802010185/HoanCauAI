@@ -5,6 +5,7 @@
 
 # Bỏ qua file đầu ra Excel
 cv_summary.xlsx
+cv_summary.csv
 
 # Bỏ qua thư mục lưu file tải về
 attachments/
