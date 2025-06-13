@@ -1,6 +1,6 @@
 # requirements.txt
 python-dotenv
-pdfminer.six
+pdfminer.six==20231228
 python-docx
 pandas
 openpyxl
@@ -13,3 +13,6 @@ streamlit
 # Thư viện cho MCP Server
 fastapi
 uvicorn[standard]
+
+# uv pip install -r requirements.txt
+# uv cache clean

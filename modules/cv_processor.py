@@ -6,7 +6,22 @@ import time
 import logging
 from typing import List, Dict, Optional
 import pandas as pd
-import pdfminer.high_level
+
+# Try different PDF extraction approaches
+try:
+    from pdfminer.high_level import extract_text
+    PDF_EXTRACTOR = "pdfminer"
+except ImportError:
+    try:
+        import PyPDF2
+        PDF_EXTRACTOR = "pypdf2"
+    except ImportError:
+        try:
+            import fitz  # PyMuPDF
+            PDF_EXTRACTOR = "pymupdf"
+        except ImportError:
+            PDF_EXTRACTOR = None
+
 import docx
 from google.generativeai import GenerativeModel
 
@@ -26,11 +41,10 @@ class CVProcessor:
         self.model = GenerativeModel(model_name)
 
     def extract_text(self, path: str) -> str:
-        # ... (nội dung hàm không đổi)
         ext = os.path.splitext(path)[1].lower()
         try:
             if ext == ".pdf":
-                return pdfminer.high_level.extract_text(path)
+                return self._extract_pdf_text(path)
             elif ext == ".docx":
                 doc = docx.Document(path)
                 return "\n".join(p.text for p in doc.paragraphs)
@@ -40,6 +54,30 @@ class CVProcessor:
         except Exception as e:
             logger.error(f"Lỗi khi đọc file {path}: {e}")
         return ""
+
+    def _extract_pdf_text(self, path: str) -> str:
+        """Extract text from PDF using available library"""
+        if PDF_EXTRACTOR == "pdfminer":
+            return extract_text(path)
+        elif PDF_EXTRACTOR == "pypdf2":
+            import PyPDF2
+            with open(path, 'rb') as file:
+                reader = PyPDF2.PdfReader(file)
+                text = ""
+                for page in reader.pages:
+                    text += page.extract_text()
+                return text
+        elif PDF_EXTRACTOR == "pymupdf":
+            import fitz
+            doc = fitz.open(path)
+            text = ""
+            for page in doc:
+                text += page.get_text()
+            doc.close()
+            return text
+        else:
+            logger.error("Không có thư viện PDF nào được cài đặt")
+            return ""
 
 
     def extract_info_with_llm(self, text: str) -> Dict:

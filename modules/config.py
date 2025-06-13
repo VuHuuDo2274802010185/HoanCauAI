@@ -1,7 +1,7 @@
 # modules/config.py
 import os
 from pathlib import Path
-from google import genai
+import google.generativeai as genai
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -23,5 +23,11 @@ EMAIL_PASS = os.getenv("EMAIL_PASS", "")
 
 # Thư mục attachments & file xuất CSV
 ATTACHMENT_DIR = os.getenv("ATTACHMENT_DIR", "attachments")
-OUTPUT_CSV = os.getenv("OUTPUT_CSV", "cv_summary.csv") # <-- THAY ĐỔI
+OUTPUT_CSV = os.getenv("OUTPUT_CSV", "cv_summary.csv")
 Path(ATTACHMENT_DIR).mkdir(parents=True, exist_ok=True)
+
+# Configure with your API key
+genai.configure(api_key=GOOGLE_API_KEY)
+
+# Now you can use genai.GenerativeModel, etc.
+model = genai.GenerativeModel('gemini-pro')
