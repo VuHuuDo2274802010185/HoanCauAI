@@ -4,12 +4,14 @@ import re
 import json
 import time
 import logging
-from typing import List, Dict
+from typing import List, Dict, Optional
 import pandas as pd
 import pdfminer.high_level
 import docx
+from google.generativeai import GenerativeModel
 
-from .config import genai_client, LLM_MODEL, ATTACHMENT_DIR, OUTPUT_EXCEL
+from .config import LLM_MODEL, ATTACHMENT_DIR, OUTPUT_CSV
+from .prompts import CV_EXTRACTION_PROMPT
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -19,11 +21,12 @@ logger.addHandler(_handler)
 
 
 class CVProcessor:
-    def __init__(self, fetcher, model: str = LLM_MODEL):
+    def __init__(self, fetcher=None, model_name: str = LLM_MODEL):
         self.fetcher = fetcher
-        self.model = model
+        self.model = GenerativeModel(model_name)
 
     def extract_text(self, path: str) -> str:
+        # ... (nội dung hàm không đổi)
         ext = os.path.splitext(path)[1].lower()
         try:
             if ext == ".pdf":
@@ -38,27 +41,35 @@ class CVProcessor:
             logger.error(f"Lỗi khi đọc file {path}: {e}")
         return ""
 
+
     def extract_info_with_llm(self, text: str) -> Dict:
         if not text.strip():
             return {}
 
-        system_prompt = (
-            "Bạn là trợ lý AI chuyên trích xuất thông tin từ CV. "
-            "Hãy trả về JSON với các khóa: ten, email, dien_thoai, hoc_van, kinh_nghiem."
-        )
-
         for attempt in range(1, 4):
             try:
-                resp = genai_client.generate_content(
-                    model=self.model,
-                    contents=[{"text": system_prompt}, {"text": text}]
-                )
+                # Sử dụng prompt từ file prompts.py
+                resp = self.model.generate_content([CV_EXTRACTION_PROMPT, text])
                 logger.debug(f"Phản hồi AI: {resp.text}")
-                return json.loads(resp.text)
+
+                # Trích xuất JSON an toàn hơn
+                json_match = re.search(r'```json\s*([\s\S]+?)\s*```|({[\s\S]+})', resp.text)
+                if json_match:
+                    json_str = json_match.group(1) or json_match.group(2)
+                    return json.loads(json_str)
+                else:
+                    logger.warning(f"AI không trả về JSON hợp lệ. Chuyển sang fallback. Phản hồi: {resp.text}")
+                    break
+
+            except json.JSONDecodeError as e:
+                logger.error(f"Lỗi parse JSON từ AI: {e}. Phản hồi: {resp.text}")
+                break
             except Exception as e:
                 msg = str(e).lower()
-                if ("quota" in msg or "429" in msg) and attempt < 3:
-                    time.sleep(2 ** attempt)
+                if ("quota" in msg or "429" in msg or "resource_exhausted" in msg) and attempt < 3:
+                    sleep_time = 2 ** attempt
+                    logger.warning(f"Lỗi quota, thử lại sau {sleep_time} giây...")
+                    time.sleep(sleep_time)
                     continue
                 logger.error(f"Lỗi GenAI SDK: {e}")
                 break
@@ -67,6 +78,7 @@ class CVProcessor:
         return self._fallback_regex(text)
 
     def _fallback_regex(self, text: str) -> Dict:
+        # ... (nội dung hàm không đổi)
         info: Dict[str, str] = {}
         patterns = {
             "ten": r"(?:(?:Họ tên|Tên|Name)[\s\:—\-]+)([^\n\r]+)",
@@ -80,18 +92,25 @@ class CVProcessor:
             info[key] = m.group(1).strip() if m else ""
         return info
 
+
     def process(self) -> pd.DataFrame:
-        new_files: List[str] = self.fetcher.fetch_cv_attachments()
+        new_files: List[str] = []
+        if self.fetcher:
+             new_files = self.fetcher.fetch_cv_attachments()
 
         if not new_files:
-            logger.info("Không tìm thấy đính kèm mới, tổng hợp tất cả CV hiện có.")
+            logger.info("Không tìm thấy đính kèm mới, tổng hợp tất cả CV hiện có trong thư mục 'attachments'.")
             attachments = [
                 os.path.join(ATTACHMENT_DIR, fname)
                 for fname in os.listdir(ATTACHMENT_DIR)
-                if fname.lower().endswith((".pdf", ".docx", ".doc"))
+                if fname.lower().endswith((".pdf", ".docx"))
             ]
         else:
             attachments = new_files
+        
+        if not attachments:
+            logger.info("Không có file CV nào để xử lý.")
+            return pd.DataFrame()
 
         records = []
         for path in attachments:
@@ -107,45 +126,9 @@ class CVProcessor:
             })
 
         df = pd.DataFrame(records)
-        if df.empty:
-            df = pd.DataFrame(columns=["Nguồn", "Họ tên", "Email", "Điện thoại", "Học vấn", "Kinh nghiệm"])
-
         return df
 
-    def save_to_excel(self, df: pd.DataFrame, output: str = OUTPUT_EXCEL):
-        if os.path.exists(output):
-            try:
-                os.remove(output)
-                logger.info(f"Đã xóa file cũ: {output}")
-            except Exception as e:
-                logger.warning(f"Không xóa được file cũ ({output}): {e}")
-
-        with pd.ExcelWriter(output, engine='xlsxwriter', mode='w') as writer:
-            df.to_excel(writer, sheet_name='CV Summary', index=False)
-            workbook  = writer.book
-            worksheet = writer.sheets['CV Summary']
-
-            header_fmt = workbook.add_format({
-                'bold': True,
-                'text_wrap': True,
-                'align': 'center',
-                'valign': 'vcenter',
-                'bg_color': '#D7E4BC',
-                'border': 1
-            })
-            cell_fmt = workbook.add_format({
-                'text_wrap': True,
-                'valign': 'top',
-                'border': 1
-            })
-
-            for col_idx, col in enumerate(df.columns):
-                worksheet.write(0, col_idx, col, header_fmt)
-                series = df[col].astype(str)
-                max_length = max(series.map(len).max(), len(col)) + 2
-                worksheet.set_column(col_idx, col_idx, max_length, cell_fmt)
-
-            worksheet.autofilter(0, 0, len(df), len(df.columns) - 1)
-            worksheet.freeze_panes(1, 0)
-
+    def save_to_csv(self, df: pd.DataFrame, output: str = OUTPUT_CSV):
+        # Xuất ra file CSV, sử dụng utf-8-sig để Excel đọc tiếng Việt không bị lỗi
+        df.to_csv(output, index=False, encoding='utf-8-sig')
         logger.info(f"Đã lưu {len(df)} hồ sơ vào {output}.")
