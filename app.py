@@ -2,8 +2,8 @@
 import streamlit as st
 import pandas as pd
 import os
-import shutil
 import logging
+from typing import Any
 
 from modules.cv_processor import CVProcessor
 from modules.email_fetcher import EmailFetcher
@@ -14,6 +14,16 @@ from modules.config import (
 
 # Cấu hình logging để thấy output trên console khi chạy
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s: %(message)s")
+
+# Hàm helper để xử lý dữ liệu trước khi hiển thị
+def prepare_dataframe_for_display(df: pd.DataFrame) -> pd.DataFrame:
+    """Chuyển đổi các list thành string để tránh lỗi pyarrow"""
+    df_display = df.copy()
+    for col in df_display.columns:
+        df_display[col] = df_display[col].apply(
+            lambda x: ', '.join(map(str, x)) if isinstance(x, list) else str(x) if x is not None else ""
+        )
+    return df_display
 
 # --- Cấu hình giao diện ---
 st.set_page_config(
@@ -51,7 +61,10 @@ with tab1:
                     if not df.empty:
                         processor.save_to_csv(df, OUTPUT_CSV)
                         st.success(f"Hoàn tất! Đã xử lý và lưu {len(df)} hồ sơ vào `{OUTPUT_CSV}`.")
-                        st.dataframe(df)
+                        
+                        # Xử lý dữ liệu để tránh lỗi hiển thị
+                        df_display = prepare_dataframe_for_display(df)
+                        st.dataframe(df_display)
                     else:
                         st.warning("Không tìm thấy CV mới hoặc không có CV nào để xử lý.")
 
@@ -100,7 +113,9 @@ with tab3:
     if os.path.exists(OUTPUT_CSV):
         try:
             df_results = pd.read_csv(OUTPUT_CSV)
-            st.dataframe(df_results)
+            # Xử lý dữ liệu trước khi hiển thị
+            df_display = prepare_dataframe_for_display(df_results)
+            st.dataframe(df_display)
             
             # Cung cấp nút tải về
             with open(OUTPUT_CSV, "rb") as f:
