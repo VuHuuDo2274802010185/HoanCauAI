@@ -25,11 +25,11 @@ st.set_page_config(
 # ——————————————————————————————
 # 2) LOAD EXTERNAL CSS
 # ——————————————————————————————
-def load_css(path: str = "style.css"):
+def load_css(path: str = "static/style.css"):
     with open(path, "r", encoding="utf-8") as f:
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-load_css("style.css")
+load_css("static/style.css")
 
 # ——————————————————————————————
 # 3) KHỞI TẠO session_state CHO SETTINGS
