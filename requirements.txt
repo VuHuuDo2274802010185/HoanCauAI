@@ -1,19 +1,14 @@
-# requirements.txt
-python-dotenv
-pdfminer.six==20231228
-python-docx
-pandas
-openpyxl
-google-generativeai
-python-multipart 
-requests  # Cho OpenRouter API
-
-# Thư viện cho giao diện test
-streamlit
-
-# Thư viện cho MCP Server
-fastapi
-uvicorn[standard]
-
 # uv pip install -r requirements.txt
-# uv cache clean
+python-dotenv>=0.21.0
+pdfminer.six==20231228
+python-docx>=0.8.11
+pandas>=2.0.0
+openpyxl>=3.1.0
+google-generativeai>=0.2.0
+requests>=2.31.0
+streamlit>=1.22.0
+fastapi>=0.95.0
+uvicorn[standard]>=0.22.0
+click>=8.1.7
+pydantic>=2.0.0
+pytest>=7.0.0

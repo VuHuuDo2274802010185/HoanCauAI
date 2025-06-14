@@ -1,102 +1,109 @@
 # modules/model_fetcher.py
-import requests
+
+import os
+import json
 import logging
-from typing import List, Dict, Optional
+from typing import List, Dict
 import google.generativeai as genai
+import requests
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+logger.addHandler(logging.StreamHandler())
+
 
 class ModelFetcher:
-    """Class để fetch danh sách models từ các API providers"""
-    
+    """Fetch danh sách models từ Google & OpenRouter, có fallback."""
+
+    CACHE_DIR = os.path.expanduser("~/.hoancauai_cache")
+    os.makedirs(CACHE_DIR, exist_ok=True)
+
+    @staticmethod
+    def _cache_path(provider: str) -> str:
+        return os.path.join(ModelFetcher.CACHE_DIR, f"{provider}_models.json")
+
+    @staticmethod
+    def _load_cache(provider: str) -> List:
+        path = ModelFetcher._cache_path(provider)
+        if os.path.exists(path):
+            try:
+                return json.load(open(path, "r"))
+            except:
+                pass
+        return []
+
+    @staticmethod
+    def _save_cache(provider: str, data: List):
+        path = ModelFetcher._cache_path(provider)
+        try:
+            json.dump(data, open(path, "w"), indent=2)
+        except:
+            pass
+
     @staticmethod
     def get_google_models(api_key: str) -> List[str]:
-        """Lấy danh sách models từ Google Gemini API"""
+        """List Google Gemini models, cache kết quả."""
+        cached = ModelFetcher._load_cache("google")
+        if cached:
+            return cached
         try:
             genai.configure(api_key=api_key)
             models = genai.list_models()
-            
-            model_names = []
-            for model in models:
-                # Chỉ lấy generative models, bỏ qua embedding models
-                if 'generate' in model.supported_generation_methods:
-                    # Lấy tên model từ model.name (vd: "models/gemini-pro" -> "gemini-pro")
-                    model_name = model.name.split('/')[-1] if '/' in model.name else model.name
-                    model_names.append(model_name)
-            
-            return sorted(model_names)
-            
-        except Exception as e:
-            logger.error(f"Lỗi khi lấy Google models: {e}")
-            # Fallback models nếu API call thất bại
-            return [
-                "gemini-1.5-flash",
-                "gemini-1.5-flash-latest", 
-                "gemini-1.5-pro",
-                "gemini-1.5-pro-latest",
-                "gemini-pro",
-                "gemini-pro-vision"
+            names = [
+                m.name.split("/")[-1]
+                for m in models
+                if "generate" in getattr(m, "supported_generation_methods", [])
             ]
-    
+            names = sorted(names)
+            ModelFetcher._save_cache("google", names)
+            return names
+        except Exception as e:
+            logger.error(f"❌ Lỗi Google list_models: {e}")
+        # fallback cứng
+        return [
+            "gemini-1.5-flash",
+            "gemini-1.5-flash-latest",
+            "gemini-1.5-pro",
+            "gemini-1.5-pro-latest",
+            "gemini-pro",
+            "gemini-pro-vision",
+        ]
+
     @staticmethod
     def get_openrouter_models(api_key: str) -> List[Dict]:
-        """Lấy danh sách models từ OpenRouter API"""
+        """List OpenRouter models, cache kết quả."""
+        cached = ModelFetcher._load_cache("openrouter")
+        if cached:
+            return cached
         try:
-            headers = {
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-                "HTTP-Referer": "https://github.com/your-username/HoanCauAI",
-                "X-Title": "HoanCauAI CV Processor"
-            }
-            
-            response = requests.get(
+            res = requests.get(
                 "https://openrouter.ai/api/v1/models",
-                headers=headers,
+                headers={"Authorization": f"Bearer {api_key}"},
                 timeout=10
             )
-            
-            if response.status_code == 200:
-                data = response.json()
-                models = []
-                
-                for model in data.get('data', []):
-                    models.append({
-                        'id': model.get('id', ''),
-                        'name': model.get('name', ''),
-                        'description': model.get('description', ''),
-                        'pricing': model.get('pricing', {}),
-                        'context_length': model.get('context_length', 0),
-                        'architecture': model.get('architecture', {})
-                    })
-                
-                # Sắp xếp theo tên
-                return sorted(models, key=lambda x: x['id'])
-            else:
-                logger.error(f"OpenRouter API lỗi {response.status_code}: {response.text}")
-                return ModelFetcher._get_fallback_openrouter_models()
-                
+            res.raise_for_status()
+            data = res.json().get("data", [])
+            models = sorted(data, key=lambda x: x.get("id", ""))
+            ModelFetcher._save_cache("openrouter", models)
+            return models
         except Exception as e:
-            logger.error(f"Lỗi khi lấy OpenRouter models: {e}")
-            return ModelFetcher._get_fallback_openrouter_models()
-    
-    @staticmethod
-    def _get_fallback_openrouter_models() -> List[Dict]:
-        """Fallback models nếu OpenRouter API thất bại"""
+            logger.error(f"❌ Lỗi OpenRouter list_models: {e}")
+        # fallback cứng
         return [
-            {"id": "anthropic/claude-3.5-sonnet", "name": "Claude 3.5 Sonnet", "description": "Most capable model"},
-            {"id": "anthropic/claude-3-haiku", "name": "Claude 3 Haiku", "description": "Fast and efficient"},
-            {"id": "openai/gpt-4o", "name": "GPT-4 Omni", "description": "Latest GPT-4 model"},
-            {"id": "openai/gpt-4o-mini", "name": "GPT-4 Omni Mini", "description": "Smaller GPT-4 model"},
-            {"id": "openai/gpt-3.5-turbo", "name": "GPT-3.5 Turbo", "description": "Fast and affordable"},
-            {"id": "google/gemini-pro-1.5", "name": "Gemini Pro 1.5", "description": "Google's latest model"},
-            {"id": "google/gemini-flash-1.5", "name": "Gemini Flash 1.5", "description": "Fast Gemini model"},
-            {"id": "meta-llama/llama-3.1-8b-instruct", "name": "Llama 3.1 8B", "description": "Small Llama model"},
-            {"id": "meta-llama/llama-3.1-70b-instruct", "name": "Llama 3.1 70B", "description": "Large Llama model"},
-            {"id": "qwen/qwen-2.5-72b-instruct", "name": "Qwen 2.5 72B", "description": "Alibaba's model"}
+            {"id": "anthropic/claude-3.5-sonnet"},
+            {"id": "anthropic/claude-3-haiku"},
+            {"id": "openai/gpt-4o"},
+            {"id": "openai/gpt-4o-mini"},
+            {"id": "openai/gpt-3.5-turbo"},
+            {"id": "google/gemini-pro-1.5"},
+            {"id": "google/gemini-flash-1.5"},
+            {"id": "meta-llama/llama-3.1-8b-instruct"},
+            {"id": "meta-llama/llama-3.1-70b-instruct"},
+            {"id": "qwen/qwen-2.5-72b-instruct"},
         ]
-    
+
     @staticmethod
     def get_simple_openrouter_model_ids(api_key: str) -> List[str]:
-        """Lấy chỉ danh sách ID models từ OpenRouter"""
+        """Chỉ lấy id models từ OpenRouter."""
         models = ModelFetcher.get_openrouter_models(api_key)
-        return [model['id'] for model in models]
+        return [m.get("id", "") for m in models]
