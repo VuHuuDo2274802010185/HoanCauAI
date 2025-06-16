@@ -1,14 +1,22 @@
-# uv pip install -r requirements.txt
-python-dotenv>=0.21.0
-pdfminer.six==20231228
-python-docx>=0.8.11
-pandas>=2.0.0
-openpyxl>=3.1.0
-google-generativeai>=0.2.0
-requests>=2.31.0
-streamlit>=1.22.0
-fastapi>=0.95.0
-uvicorn[standard]>=0.22.0
-click>=8.1.7
-pydantic>=2.0.0
-pytest>=7.0.0
+# requirements.txt
+
+# Lệnh cài đặt toàn bộ dependencies:
+
+# pip install -r requirements.txt
+
+python-dotenv>=0.21.0        # load biến môi trường từ file .env (dotenv)
+pdfminer.six==20231228        # trích xuất text từ PDF (ưu tiên pdfminer)
+PyPDF2>=3.0.0                 # fallback trích xuất PDF nếu pdfminer không có
+pymupdf>=1.22.0               # fallback trích xuất PDF (PyMuPDF/fitz)
+python-docx>=0.8.11           # đọc file .docx
+pandas>=2.0.0                 # xử lý dữ liệu, DataFrame
+openpyxl>=3.1.0               # ghi/đọc file Excel (.xlsx) (tuỳ chọn)
+google-generativeai>=0.2.0    # SDK Google Gemini AI
+requests>=2.31.0              # HTTP requests (OpenRouter API, v.v.)
+streamlit>=1.22.0             # framework UI web
+fastapi>=0.95.0               # framework backend API
+uvicorn[standard]>=0.22.0     # ASGI server, kèm uvloop và các extras
+python-multipart>=0.0.5       # xử lý multipart/form-data (file upload FastAPI)
+click>=8.1.7                  # CLI utilities (dùng cho scripts click)
+pydantic>=2.0.0               # validation, BaseSettings (FastAPI)
+pytest>=7.0.0                 # testing framework

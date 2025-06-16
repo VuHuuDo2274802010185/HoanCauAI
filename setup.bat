@@ -1,0 +1,66 @@
+@echo off
+setlocal enableextensions enabledelayedexpansion
+:: ======================================================
+:: Resume AI - Setup Script
+:: Mục đích: Tự động thiết lập môi trường dự án
+::   1) Kiểm tra Python và virtual env
+::   2) Copy .env từ .env.example nếu chưa có
+::   3) Tạo và kích hoạt venv
+::   4) Cài đặt dependencies
+::   5) Tạo thư mục attachments
+:: ======================================================
+
+:: 0) Chuyển console sang UTF-8
+chcp 65001 >nul
+
+:: 1) Kiểm tra Python
+python --version >nul 2>&1
+if errorlevel 1 (
+    echo Python không được cài đặt hoặc không tìm thấy trong PATH.
+    pause
+    exit /b 1
+)
+echo Tìm thấy Python.
+
+:: 2) Copy .env.example thành .env nếu chưa tồn tại
+if not exist "%~dp0.env" (
+    if exist "%~dp0.env.example" (
+        copy "%~dp0.env.example" "%~dp0.env" >nul
+        echo Đã tạo file .env từ .env.example. Vui lòng chỉnh sửa giá trị.
+    ) else (
+        echo Không tìm thấy .env.example. Hãy tạo file .env thủ công.
+    )
+) else (
+    echo File .env đã tồn tại.
+)
+
+:: 3) Tạo virtual environment nếu chưa có
+if not exist "%~dp0.venv\Scripts\activate.bat" (
+    echo 📦 Tạo virtual environment...
+    python -m venv "%~dp0.venv"
+    echo Đã tạo virtual environment.
+) else (
+    echo Virtual environment đã tồn tại.
+)
+
+:: 4) Kích hoạt virtual environment
+call "%~dp0.venv\Scripts\activate.bat"
+echo Đã kích hoạt virtual environment.
+
+:: 5) Cài đặt dependencies
+echo Đang cài đặt dependencies...
+pip install --upgrade uv
+uv pip install --upgrade pip
+uv pip install -r "%~dp0requirements.txt"
+echo Hoàn tất cài đặt dependencies.
+
+:: 6) Tạo thư mục attachments
+if not exist "%~dp0attachments" (
+    mkdir "%~dp0attachments"
+    echo Đã tạo thư mục attachments.
+) else (
+    echo Thư mục attachments đã tồn tại.
+)
+
+echo Setup hoàn tất! Nhấn bất kỳ phím nào để thoát.
+pause

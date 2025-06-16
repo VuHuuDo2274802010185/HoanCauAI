@@ -1,29 +1,35 @@
-/* static/style.css
+/* static/style.css */
+
+/* ------------------------------------- */
+/* BIẾN CSS CHUNG                         */
+/* ------------------------------------- */
+:root {
+  --neon-yellow: #FFFF00;               /* Màu vàng neon */
+  --glow-size: 0 0 8px;                 /* Kích thước hiệu ứng ánh sáng */
+}
 
 /* ------------------------------------- */
 /* NEON YELLOW GLOW CHO SIDEBAR          */
 /* ------------------------------------- */
-
-/* Sidebar headers (h2, h3) */
+/* Tiêu đề (h2, h3) trong sidebar */
 [data-testid="stSidebar"] h2,
 [data-testid="stSidebar"] h3 {
-  color: #FFFF00 !important;
-  text-shadow: 0 0 8px #FFFF00 !important;
+  color: var(--neon-yellow) !important;               /* Chữ vàng neon */
+  text-shadow: var(--glow-size) var(--neon-yellow) !important; /* Ánh sáng nền */
 }
 
-/* Sidebar labels (“Provider”, “Model”) */
+/* Nhãn (label) trong sidebar */
 [data-testid="stSidebar"] label {
-  color: #FFFF00 !important;
-  text-shadow: 0 0 8px #FFFF00 !important;
+  color: var(--neon-yellow) !important;
+  text-shadow: var(--glow-size) var(--neon-yellow) !important;
 }
 
 /* ------------------------------------- */
-/* NEON YELLOW GLOW CHO DOWNLOAD BUTTON  */
+/* NEON YELLOW GLOW CHO NÚT DOWNLOAD     */
 /* ------------------------------------- */
-
 /* Khi dùng st.download_button */
 button[data-testid="stDownloadCSV"] > span,
 button.stDownloadButton > span {
-  color: #FFFF00 !important;
-  text-shadow: 0 0 8px #FFFF00 !important;
+  color: var(--neon-yellow) !important;  
+  text-shadow: var(--glow-size) var(--neon-yellow) !important;
 }
