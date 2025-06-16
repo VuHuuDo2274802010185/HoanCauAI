@@ -18,30 +18,24 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 
-def _check_required_env(varname: str) -> str:
-    """
-    Kiểm tra biến môi trường bắt buộc và trả về giá trị đã làm sạch (loại bỏ comment và dấu nháy).
-    """
-    raw = os.getenv(varname, "")  # lấy chuỗi raw từ env
-    # bỏ inline comment
+def _get_env(varname: str, default: str = "") -> str:
+    """Đọc biến môi trường, bỏ comment và dấu nháy, trả về chuỗi."""
+    raw = os.getenv(varname, default)
     cleaned = raw.split('#', 1)[0].strip()
-    # bỏ dấu nháy đơn hoặc kép nếu có
     if cleaned.startswith(('"', "'")) and cleaned.endswith(('"', "'")):
         cleaned = cleaned[1:-1]
-    if not cleaned:
-        raise RuntimeError(f"⚠️ Thiếu hoặc không hợp lệ biến môi trường: {varname}")
     return cleaned
 
 # --- Nhà cung cấp (provider) và model mặc định ---
-LLM_PROVIDER = _check_required_env("LLM_PROVIDER").lower()
-LLM_MODEL = _check_required_env("LLM_MODEL")
+LLM_PROVIDER = _get_env("LLM_PROVIDER", "google").lower()
+LLM_MODEL = _get_env("LLM_MODEL", "gemini-1.5-flash-latest")
 
-# --- Khóa API cho Google và OpenRouter ---
-GOOGLE_API_KEY = _check_required_env("GOOGLE_API_KEY")
-OPENROUTER_API_KEY = _check_required_env("OPENROUTER_API_KEY")
+# --- Khóa API cho Google và OpenRouter (không bắt buộc) ---
+GOOGLE_API_KEY = _get_env("GOOGLE_API_KEY")
+OPENROUTER_API_KEY = _get_env("OPENROUTER_API_KEY")
 
-# --- Cấu hình email (bắt buộc) ---
-EMAIL_HOST = _check_required_env("EMAIL_HOST")
+# --- Cấu hình email (không bắt buộc) ---
+EMAIL_HOST = _get_env("EMAIL_HOST", "imap.gmail.com")
 # EMAIL_PORT: làm sạch comment và chuyển sang int, mặc định 993
 _raw_port = os.getenv("EMAIL_PORT", "").split('#', 1)[0].strip()
 if _raw_port:
@@ -52,8 +46,8 @@ if _raw_port:
 else:
     EMAIL_PORT = 993
 
-EMAIL_USER = _check_required_env("EMAIL_USER")
-EMAIL_PASS = _check_required_env("EMAIL_PASS")
+EMAIL_USER = _get_env("EMAIL_USER")
+EMAIL_PASS = _get_env("EMAIL_PASS")
 
 # --- Thư mục lưu file đính kèm và file xuất kết quả ---
 def _clean_path(varname: str, default: str) -> Path:
@@ -79,13 +73,7 @@ GOOGLE_FALLBACK_MODELS: List[str] = [
 OPENROUTER_FALLBACK_MODELS: List[str] = [
     "anthropic/claude-3.5-sonnet", "anthropic/claude-3-haiku",
     "openai/gpt-4o", "openai/gpt-4o-mini", "openai/gpt-3.5-turbo",
-    "google/gemini-pro-1.5", "google/gemini-flash-1.5",
-    "meta-llama/llama-3.1-8b-instruct", "meta-llama/llama-3.1-70b-instruct",
-    "qwen/qwen-2.5-72b-instruct",
-]
-
-from .model_fetcher import ModelFetcher
-
+@@ -89,47 +83,58 @@ from .model_fetcher import ModelFetcher
 
 def get_available_models(provider: str, api_key: str) -> List[str]:
     """Lấy danh sách models từ API hoặc trả về rỗng nếu lỗi."""
@@ -111,25 +99,36 @@ def get_models_for_provider(provider: str, api_key: str) -> List[str]:
 
 
 def validate_and_setup_llm() -> Dict[str, Any]:
-    """Thiết lập và trả về cấu hình LLM"""
-    config = {"provider": LLM_PROVIDER, "model": LLM_MODEL, "api_key": None, "client": None, "available_models": []}
-    if LLM_PROVIDER == "google":
-        available = get_models_for_provider("google", GOOGLE_API_KEY)
-        config.update({"api_key": GOOGLE_API_KEY, "available_models": available})
-        if LLM_MODEL not in available:
-            logger.warning(f"Model {LLM_MODEL} không tồn tại, chuyển sang {available[0]}")
-            config["model"] = available[0]
-        import google.generativeai as genai
-        genai.configure(api_key=GOOGLE_API_KEY)
-        config["client"] = genai
-    elif LLM_PROVIDER == "openrouter":
-        available = get_models_for_provider("openrouter", OPENROUTER_API_KEY)
-        config.update({"api_key": OPENROUTER_API_KEY, "available_models": available})
-        if LLM_MODEL not in available:
-            logger.warning(f"Model {LLM_MODEL} không tồn tại, chuyển sang {available[0]}")
-            config["model"] = available[0]
-    else:
-        raise RuntimeError(f"Provider không hỗ trợ: {LLM_PROVIDER}")
+    """Thiết lập cấu hình LLM từ env, dùng fallback khi thiếu API key."""
+    config = {
+        "provider": LLM_PROVIDER,
+        "model": LLM_MODEL,
+        "api_key": None,
+        "client": None,
+        "available_models": [],
+    }
+
+    provider = LLM_PROVIDER
+    api_key = GOOGLE_API_KEY if provider == "google" else OPENROUTER_API_KEY
+
+    available = get_models_for_provider(provider, api_key) if api_key else []
+    if not available:
+        available = GOOGLE_FALLBACK_MODELS if provider == "google" else OPENROUTER_FALLBACK_MODELS
+
+    config.update({"api_key": api_key, "available_models": available})
+
+    if config["model"] not in available:
+        logger.warning(f"Model {config['model']} không tồn tại, chuyển sang {available[0]}")
+        config["model"] = available[0]
+
+    if provider == "google" and api_key:
+        try:
+            import google.generativeai as genai
+            genai.configure(api_key=api_key)
+            config["client"] = genai
+        except Exception as e:
+            logger.warning(f"Không thể cấu hình Google client: {e}")
+
     return config
 
 LLM_CONFIG = validate_and_setup_llm()

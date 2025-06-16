@@ -24,11 +24,20 @@ class DynamicLLMClient:
                  model: str = None,
                  api_key: str = None):
         # Chọn provider: ưu tiên tham số, sau đó session_state, cuối cùng LLM_CONFIG
-        self.provider = provider or st.session_state.get("selected_provider", LLM_CONFIG["provider"])
+        self.provider = provider or st.session_state.get(
+            "selected_provider", LLM_CONFIG["provider"]
+        )
         # Chọn model: ưu tiên tham số, sau đó session_state, cuối cùng LLM_CONFIG
-        self.model = model or st.session_state.get("selected_model", LLM_CONFIG["model"])
-        # Lấy api_key từ tham số hoặc LLM_CONFIG
-        self.api_key = api_key or LLM_CONFIG.get("api_key", "")
+        self.model = model or st.session_state.get(
+            "selected_model", LLM_CONFIG["model"]
+        )
+        # Lấy api_key: ưu tiên tham số, sau đó session_state, cuối cùng config
+        session_key = (
+            st.session_state.get("google_api_key")
+            if self.provider == "google"
+            else st.session_state.get("openrouter_api_key")
+        )
+        self.api_key = api_key or session_key or LLM_CONFIG.get("api_key", "")
         # Thiết lập client theo provider đã chọn
         self._setup()
 
@@ -53,72 +62,3 @@ class DynamicLLMClient:
                 raise ValueError("OpenRouter API key không có sẵn")
             # Không có SDK, sẽ dùng requests trong phương thức _gen_openrouter
             self.client = None
-
-        else:
-            # Provider không được hỗ trợ
-            raise ValueError(f"Provider không hỗ trợ: {self.provider}")
-
-    def generate_content(self, messages: List[str]) -> str:
-        """
-        Gửi list messages đến LLM và trả về nội dung kết quả.
-        Tự động chọn phương thức tương ứng với provider.
-        """
-        if self.provider == "google":
-            return self._gen_google(messages)
-        else:
-            return self._gen_openrouter(messages)
-
-    def _gen_google(self, messages: List[str]) -> str:
-        """
-        Gửi yêu cầu tới Google Gemini qua SDK.
-        - messages: mỗi phần tử là chuỗi nội dung
-        - Kết nối thông qua genai client
-        """
-        prompt = "\n".join(messages)  # ghép các message thành 1 prompt duy nhất
-        try:
-            resp = self.client.generate_content(prompt)  # gọi API
-            return resp.text  # trả về văn bản kết quả
-        except Exception as e:
-            logger.error(f"❌ Lỗi Google Gemini API: {e}")
-            raise
-
-    def _gen_openrouter(self, messages: List[str]) -> str:
-        """
-        Gửi yêu cầu tới OpenRouter bằng HTTP POST.
-        - Chuyển messages thành định dạng chat: role + content
-        - Tham số điều chỉnh: temperature, max_tokens
-        - Trả về nội dung text từ response JSON
-        """
-        # Định dạng messages cho OpenRouter: role system cho phần đầu, user cho các phần sau
-        formatted = []
-        for i, m in enumerate(messages):
-            role = "system" if i == 0 else "user"
-            formatted.append({"role": role, "content": m})
-
-        # Chuẩn bị payload JSON theo API spec của OpenRouter
-        payload = {
-            "model": self.model,
-            "messages": formatted,
-            "temperature": 0.1,
-            "max_tokens": 2000,
-        }
-        # Header với API key
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json",
-        }
-        try:
-            # Gửi POST request và chờ tối đa 30s
-            res = requests.post(
-                "https://openrouter.ai/api/v1/chat/completions",
-                json=payload,
-                headers=headers,
-                timeout=30
-            )
-            res.raise_for_status()  # ném lỗi nếu HTTP status != 200
-            data = res.json()  # parse JSON
-            # Trả về nội dung message đầu tiên
-            return data["choices"][0]["message"]["content"]
-        except Exception as e:
-            logger.error(f"❌ Lỗi OpenRouter API: {e}")
-            raise

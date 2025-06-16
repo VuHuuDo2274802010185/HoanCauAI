@@ -134,7 +134,8 @@ streamlit run main_engine/app.py
 * Tab "Batch Email": xử lý hàng loạt từ email.
 * Tab "Single File": upload CV đơn lẻ.
 * Tab "Kết quả": xem & tải CSV.
-
+* Sidebar cho phép nhập Gmail, mật khẩu và API key của provider.
+  Nhấn "Lấy models" để cập nhật danh sách model từ API.
 ### 2. CLI (chạy Python)
 
 ```bash

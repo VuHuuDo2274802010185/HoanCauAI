@@ -20,6 +20,10 @@ from modules.config import (
     OPENROUTER_API_KEY,
     ATTACHMENT_DIR,
     OUTPUT_CSV,
+    EMAIL_HOST,
+    EMAIL_PORT,
+    EMAIL_USER,
+    EMAIL_PASS,
 )
 from modules.email_fetcher import EmailFetcher
 from modules.cv_processor import CVProcessor
@@ -48,19 +52,37 @@ if logo_path.exists():
 
 st.sidebar.header("Cấu hình LLM")
 
-# Chọn provider, lưu tự động vào session_state
+# Chọn provider
 provider = st.sidebar.selectbox(
     "Provider",
     options=["google", "openrouter"],
     key="selected_provider",
     help="Chọn nhà cung cấp LLM"
 )
-# Hiển thị trạng thái API key
-api_key = GOOGLE_API_KEY if provider == "google" else OPENROUTER_API_KEY
-st.sidebar.caption(f"API Key: {'✔️' if api_key else '❌'}")
 
-# Lấy danh sách models theo provider
-models = get_models_for_provider(provider, api_key)
+# Nhập API key theo provider
+if provider == "google":
+    api_key = st.sidebar.text_input(
+        "Google API Key",
+        type="password",
+        value=st.session_state.get("google_api_key", GOOGLE_API_KEY),
+        key="google_api_key"
+    )
+else:
+    api_key = st.sidebar.text_input(
+        "OpenRouter API Key",
+        type="password",
+        value=st.session_state.get("openrouter_api_key", OPENROUTER_API_KEY),
+        key="openrouter_api_key"
+    )
+
+if st.sidebar.button("Lấy models"):
+    if not api_key:
+        st.sidebar.warning("Vui lòng nhập API Key trước khi lấy models")
+    else:
+        st.session_state.available_models = get_models_for_provider(provider, api_key)
+
+models = st.session_state.get("available_models", get_models_for_provider(provider, api_key))
 if not models:
     st.sidebar.error("Không lấy được models, vui lòng kiểm tra API Key.")
     models = [LLM_CONFIG.get("model")]
@@ -78,6 +100,19 @@ model = st.sidebar.selectbox(
 # Hiển thị cấu hình đang dùng
 st.sidebar.markdown(f"**Đang dùng:** `{provider}` / `{model}`")
 
+st.sidebar.header("Thông tin Email")
+email_user = st.sidebar.text_input(
+    "Gmail",
+    value=st.session_state.get("email_user", EMAIL_USER),
+    key="email_user",
+)
+email_pass = st.sidebar.text_input(
+    "Mật khẩu",
+    type="password",
+    value=st.session_state.get("email_pass", EMAIL_PASS),
+    key="email_pass",
+)
+
 # --- Main UI: 3 Tabs ---
 tab1, tab2, tab3 = st.tabs(["Batch Email", "Single File", "Kết quả"])
 
@@ -86,7 +121,10 @@ with tab1:
     st.subheader("Batch xử lý CV từ Email")
     st.markdown(f"**LLM:** `{provider}` / `{model}`")
     if st.button("Bắt đầu xử lý từ Email"):
-        fetcher = EmailFetcher()
+        if not email_user or not email_pass:
+            st.error("Cần nhập Gmail và mật khẩu")
+            st.stop()
+        fetcher = EmailFetcher(EMAIL_HOST, EMAIL_PORT, email_user, email_pass)
         fetcher.connect()
         files = fetcher.fetch_cv_attachments()
         if not files:
@@ -100,9 +138,10 @@ with tab1:
             st.warning("Không có file CV để xử lý.")
         else:
             processor = CVProcessor()
-            # Gán provider/model cho client
+            # Gán provider/model/api key cho client
             processor.llm_client.provider = provider
             processor.llm_client.model = model
+            processor.llm_client.api_key = api_key
 
             progress = st.progress(0)
             status = st.empty()
@@ -139,6 +178,7 @@ with tab2:
             proc = CVProcessor()
             proc.llm_client.provider = provider
             proc.llm_client.model = model
+            proc.llm_client.api_key = api_key
             text = proc.extract_text(str(tmp_file))
             info = proc.extract_info_with_llm(text)
         st.json(info)
@@ -164,5 +204,3 @@ with tab3:
 st.markdown("---")
 st.markdown(
     "<center><small>Powered by Hoàn Cầu AI CV Processor</small></center>",
-    unsafe_allow_html=True
-)
