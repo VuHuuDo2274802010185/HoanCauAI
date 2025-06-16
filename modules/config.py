@@ -72,8 +72,10 @@ GOOGLE_FALLBACK_MODELS: List[str] = [
 ]
 OPENROUTER_FALLBACK_MODELS: List[str] = [
     "anthropic/claude-3.5-sonnet", "anthropic/claude-3-haiku",
-    "openai/gpt-4o", "openai/gpt-4o-mini", "openai/gpt-3.5-turbo",]
-@@ -89,47 +83,58 @@ from .model_fetcher import ModelFetcher
+    "openai/gpt-4o", "openai/gpt-4o-mini", "openai/gpt-3.5-turbo",
+]
+
+from .model_fetcher import ModelFetcher
 
 def get_available_models(provider: str, api_key: str) -> List[str]:
     """Lấy danh sách models từ API hoặc trả về rỗng nếu lỗi."""
@@ -97,38 +99,13 @@ def get_models_for_provider(provider: str, api_key: str) -> List[str]:
     logger.warning(f"Sử dụng fallback models cho {provider.upper()}")
     return fallback
 
-
-def validate_and_setup_llm() -> Dict[str, Any]:
-    """Thiết lập cấu hình LLM từ env, dùng fallback khi thiếu API key."""
-    config = {
-        "provider": LLM_PROVIDER,
-        "model": LLM_MODEL,
-        "api_key": None,
-        "client": None,
-        "available_models": [],
-    }
-
-    provider = LLM_PROVIDER
-    api_key = GOOGLE_API_KEY if provider == "google" else OPENROUTER_API_KEY
-
-    available = get_models_for_provider(provider, api_key) if api_key else []
-    if not available:
-        available = GOOGLE_FALLBACK_MODELS if provider == "google" else OPENROUTER_FALLBACK_MODELS
-
-    config.update({"api_key": api_key, "available_models": available})
-
-    if config["model"] not in available:
-        logger.warning(f"Model {config['model']} không tồn tại, chuyển sang {available[0]}")
-        config["model"] = available[0]
-
-    if provider == "google" and api_key:
-        try:
-            import google.generativeai as genai
-            genai.configure(api_key=api_key)
-            config["client"] = genai
-        except Exception as e:
-            logger.warning(f"Không thể cấu hình Google client: {e}")
-
-    return config
-
-LLM_CONFIG = validate_and_setup_llm()
+# --- Cấu hình LLM mặc định ---
+LLM_CONFIG = {
+    "provider": LLM_PROVIDER,
+    "model": LLM_MODEL,
+    "api_key": GOOGLE_API_KEY if LLM_PROVIDER == "google" else OPENROUTER_API_KEY,
+    "available_models": get_models_for_provider(
+        LLM_PROVIDER, 
+        GOOGLE_API_KEY if LLM_PROVIDER == "google" else OPENROUTER_API_KEY
+    ),
+}

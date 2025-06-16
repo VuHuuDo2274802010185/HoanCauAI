@@ -62,3 +62,70 @@ class DynamicLLMClient:
                 raise ValueError("OpenRouter API key không có sẵn")
             # Không có SDK, sẽ dùng requests trong phương thức _gen_openrouter
             self.client = None
+
+    def generate_content(self, messages: List[str]) -> str:
+        """
+        Gửi danh sách messages tới LLM và trả về nội dung kết quả.
+        Tự động chọn phương thức generate tương ứng với provider.
+        """
+        if self.provider == "google":
+            return self._gen_google(messages)      # gọi Google Gemini SDK
+        else:
+            return self._gen_openrouter(messages)  # gọi HTTP OpenRouter
+
+    def _gen_google(self, messages: List[str]) -> str:
+        """
+        Gửi yêu cầu tới Google Gemini thông qua SDK.
+        - messages: list các chuỗi nội dung (prompt)
+        - Trả về văn bản kết quả từ resp.text
+        """
+        prompt = "\n".join(messages)  # ghép các message thành 1 chuỗi prompt duy nhất
+        try:
+            resp = self.client.generate_content(prompt)  # gọi API
+            return resp.text                              # trả về nội dung text
+        except Exception as e:
+            logger.error(f"❌ Lỗi Google Gemini API: {e}")  # log lỗi nếu có
+            raise                                       # ném ngoại lệ lên trên
+
+    def _gen_openrouter(self, messages: List[str]) -> str:
+        """
+        Gửi yêu cầu tới OpenRouter qua HTTP POST.
+        - Chuyển messages thành định dạng chat: hệ thống + người dùng
+        - Tham số điều chỉnh: temperature, max_tokens
+        - Trả về nội dung text từ response JSON
+        """
+        # Định dạng messages cho OpenRouter: role "system" cho phần đầu, "user" cho các phần sau
+        formatted = [
+            {"role": "system" if i == 0 else "user", "content": m}
+            for i, m in enumerate(messages)
+        ]
+
+        # Thiết lập payload JSON theo API spec của OpenRouter
+        payload = {
+            "model": self.model,               # model muốn dùng
+            "messages": formatted,             # danh sách message đã format
+            "temperature": 0.1,                # mức độ sáng tạo (thấp = ổn định)
+            "max_tokens": 2000,                # số token tối đa trả về
+        }
+
+        # Header chứa API key và content type
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",  
+            "Content-Type": "application/json",
+        }
+
+        try:
+            # Gửi POST request, timeout 30s
+            res = requests.post(
+                "https://openrouter.ai/api/v1/chat/completions",
+                json=payload,
+                headers=headers,
+                timeout=30
+            )
+            res.raise_for_status()                     # ném lỗi nếu status code != 200
+            data = res.json()                          # parse JSON từ response
+            # Trả về nội dung message đầu tiên trong choices
+            return data["choices"][0]["message"]["content"]
+        except Exception as e:
+            logger.error(f"❌ Lỗi OpenRouter API: {e}")  # log lỗi nếu có
+            raise                                       # ném ngoại lệ lên trên

@@ -29,7 +29,7 @@ def info():
     click.echo(f"Models avail.: {count}")
     click.echo("="*60)
 
-@cli.command()
+@cli.command('list-models')
 def list_models():
     """Liệt kê chi tiết các models khả dụng."""
     provider = LLM_CONFIG["provider"]
