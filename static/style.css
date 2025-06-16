@@ -1,35 +1,80 @@
 /* static/style.css */
 
-/* ------------------------------------- */
-/* BIẾN CSS CHUNG                         */
-/* ------------------------------------- */
-:root {
-  --neon-yellow: #FFFF00;               /* Màu vàng neon */
-  --glow-size: 0 0 8px;                 /* Kích thước hiệu ứng ánh sáng */
+/* Theme variables */
+html[data-theme='light'] {
+  --cv-text-color: #000;
+  --cv-bg-color: #fff;
+  --cv-accent-color: #f0f2f6;
+  --btn-gold: #FFC107;
+  --btn-gold-border: #000;
 }
 
-/* ------------------------------------- */
-/* NEON YELLOW GLOW CHO SIDEBAR          */
-/* ------------------------------------- */
-/* Tiêu đề (h2, h3) trong sidebar */
-[data-testid="stSidebar"] h2,
-[data-testid="stSidebar"] h3 {
-  color: var(--neon-yellow) !important;               /* Chữ vàng neon */
-  text-shadow: var(--glow-size) var(--neon-yellow) !important; /* Ánh sáng nền */
+/* Logo contrast enhancement: specific to logo filename */
+html[data-theme='light'] img[src*="logo.png"] {
+  /* dark drop shadow around bright logo */
+  filter: drop-shadow(0 0 12px rgba(0,0,0,0.8));
+}
+html[data-theme='dark'] img[src*="logo.png"] {
+  /* light drop shadow around logo */
+  filter: drop-shadow(0 0 12px rgba(255,255,255,0.9));
+}
+html[data-theme='dark'] {
+  --cv-text-color: #fff;
+  --cv-bg-color: #0e1117;
+  --cv-accent-color: #1a1a1a;
+  --btn-gold: #FFD700;
+  --btn-gold-border: #FFFF33;
 }
 
-/* Nhãn (label) trong sidebar */
-[data-testid="stSidebar"] label {
-  color: var(--neon-yellow) !important;
-  text-shadow: var(--glow-size) var(--neon-yellow) !important;
+/* Global background and text */
+body {
+  background-color: var(--cv-bg-color) !important;
+  color: var(--cv-text-color) !important;
 }
 
-/* ------------------------------------- */
-/* NEON YELLOW GLOW CHO NÚT DOWNLOAD     */
-/* ------------------------------------- */
-/* Khi dùng st.download_button */
-button[data-testid="stDownloadCSV"] > span,
-button.stDownloadButton > span {
-  color: var(--neon-yellow) !important;  
-  text-shadow: var(--glow-size) var(--neon-yellow) !important;
+/* Enhance logo contrast: apply drop-shadow to any image in sidebar */
+aside[data-testid="stSidebar"] img,
+div[data-testid="stSidebar"] img {
+  filter: drop-shadow(0 0 8px rgba(0,0,0,0.8)) !important;
+}
+
+/* Button styling for BaseWeb buttons */
+button[data-baseweb="base-button"] {
+  background-color: var(--btn-gold) !important;
+  color: var(--cv-bg-color) !important;
+  border: 2px solid var(--btn-gold-border) !important;
+  border-radius: 4px !important;
+  padding: 8px 16px !important;
+  transition: background-color 0.2s, color 0.2s !important;
+}
+button[data-baseweb="base-button"]:hover {
+  background-color: var(--cv-bg-color) !important;
+  color: var(--btn-gold) !important;
+  border-color: var(--btn-gold-border) !important;
+}
+
+/* File uploader dashed border */
+.stFileUploader > div {
+  border: 2px dashed var(--cv-text-color) !important;
+  border-radius: 4px;
+  padding: 8px;
+}
+
+/* Containers and frames */
+.stContainer, .stFrame {
+  background-color: var(--cv-accent-color) !important;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+/* DataFrame styling */
+.css-1ex1afd {
+  background-color: var(--cv-bg-color) !important;
+  color: var(--cv-text-color) !important;
+}
+
+/* Tabs styling */
+.css-1v0mbdj .css-1xt0zh0 {
+  background-color: var(--cv-bg-color) !important;
+  color: var(--cv-text-color) !important;
 }

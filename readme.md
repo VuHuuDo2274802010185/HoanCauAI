@@ -1,85 +1,92 @@
-## Resume AI - CV Processor
+# Build Resume AI
 
-**Resume AI** là một bộ công cụ toàn diện để tự động trích xuất thông tin quan trọng từ file CV/Resume (hỗ trợ PDF và DOCX). Dự án bao gồm cả giao diện web, API server và CLI, được thiết kế để:
+**Build Resume AI** là hệ thống tự động trích xuất thông tin quan trọng từ file CV/Resume (.pdf, .docx) dành cho:
 
-* **Người dùng cuối** (không cần biết code) dễ dàng cài đặt, cấu hình và chạy batch hoặc single-file processing.
-* **Developer** mới lần đầu tiếp cận nhanh chóng hiểu cấu trúc mã, mở rộng và bảo trì.
+* **Người dùng cuối**: giao diện web (Streamlit), scripts .bat dễ chạy.
+* **Developer**: API (FastAPI), CLI, module động, dễ mở rộng.
 
 ---
 
-## 🌟 Tổng quan tính năng
+## 🌟 Tính năng chính
 
-1. **Batch Processing từ Email (IMAP)**
+1. **Batch Processing** qua email IMAP:
 
-   * Kết nối IMAP, tìm email có từ khóa (CV, Resume), tải về thư mục `attachments`.
-2. **Single File Processing**
+   * Quét hòm thư, tìm email có từ khóa (CV, Resume).
+   * Tự động tải file đính kèm, trích xuất, lưu kết quả.
+2. **Single File Processing**:
 
-   * Upload trực tiếp file CV (.pdf/.docx) qua giao diện hoặc API.
-3. **AI Extraction**
+   * Upload file CV đơn lẻ (.pdf/.docx) và nhận ngay kết quả JSON.
+3. **Top5 Selection**:
 
-   * Dùng Google Gemini hoặc OpenRouter để trích xuất các trường: `ten`, `email`, `dien_thoai`, `hoc_van`, `kinh_nghiem`.
-4. **Regex Fallback**
+   * Dùng AI (Google Gemini/OpenRouter) đánh giá, chọn ra TOP 5 hồ sơ tốt nhất.
+4. **CLI & Scripts Windows**:
 
-   * Khi AI response không hợp lệ JSON, dùng biểu thức chính quy đơn giản để lấy thông tin.
-5. **Streamlit UI**
+   * `main_engine/main.py` xử lý batch/single qua CLI.
+   * `main_engine/select_top5.py` chọn TOP 5 qua AI.
+   * `run_resume_ai.bat` chạy UI hoặc CLI/select tự động.
+5. **Streamlit UI**:
 
-   * Giao diện web thân thiện để cấu hình LLM, chạy xử lý, xem và tải kết quả.
-6. **FastAPI Backend**
+   * Giao diện web trực quan để cấu hình LLM, chạy batch/single, xem & tải CSV.
+6. **Module tái sử dụng**:
 
-   * REST API có thể tích hợp với hệ thống khác hoặc AI Agent.
-7. **CLI (Click)**
-
-   * Câu lệnh `info` xem cấu hình hiện tại.
-   * `list-models` liệt kê các models khả dụng.
-8. **Unit Tests (pytest)**
-
-   * Đảm bảo tính ổn định của module fetch model và logic quan trọng.
+   * `modules/email_fetcher.py`, `modules/cv_processor.py`, `modules/dynamic_llm_client.py`,...
+   * Dễ dàng tích hợp trong dự án khác.
 
 ---
 
 ## 🚀 Bắt đầu nhanh
 
-### 1. Clone & tạo môi trường ảo
+1. **Clone repository**
 
-```bash
-git clone <repo_url>
-cd <repo_folder>
-python -m venv .venv
-# Linux/Mac
-source .venv/bin/activate
-# Windows
-.venv\Scripts\activate
-```
+   ```bash
+   git clone <repo_url>
+   cd <repo_folder>
+   ```
+2. **Tạo môi trường ảo & cài dependencies**
 
-### 2. Cài đặt dependencies
+   ```bash
+   python -m venv .venv
+   # Windows:
+   .venv\Scripts\activate
+   # Linux/Mac:
+   source .venv/bin/activate
+   pip install --upgrade pip
+   pip install -r requirements.txt
+   ```
+3. **Tạo file `.env`**
 
-```bash
-pip install -r requirements.txt
-```
+   * Copy từ mẫu:
 
-### 3. Cấu hình biến môi trường
+     ```bash
+     cp .env.example .env
+     ```
+   * Hoặc dùng `setup.bat` (Windows):
 
-Tạo file `.env` tại thư mục gốc, điền các biến sau (không commit file này):
+     ```bash
+     setup.bat
+     ```
+   * Điền giá trị:
 
-```dotenv
-# --- LLM ---
-LLM_PROVIDER=google              # 'google' hoặc 'openrouter'
-LLM_MODEL=gemini-1.5-flash-latest
-GOOGLE_API_KEY=your_google_key
-OPENROUTER_API_KEY=your_openrouter_key
+     ```dotenv
+     # LLM
+     LLM_PROVIDER=google
+     LLM_MODEL=gemini-1.5-flash-latest
+     GOOGLE_API_KEY=...
+     OPENROUTER_API_KEY=...
 
-# --- Email (IMAP) ---
-EMAIL_HOST=imap.gmail.com
-EMAIL_PORT=993
-EMAIL_USER=your_email@example.com
-EMAIL_PASS=your_email_app_password
+     # Email
+     EMAIL_HOST=imap.gmail.com
+     EMAIL_PORT=993
+     EMAIL_USER=...
+     EMAIL_PASS=...
 
-# --- Đường dẫn ---
-ATTACHMENT_DIR=attachments       # thư mục lưu file tải về
-OUTPUT_CSV=cv_summary.csv        # file CSV kết quả
-```
+     # Paths
+     ATTACHMENT_DIR=attachments
+     OUTPUT_CSV=cv_summary.csv
 
-> **Lưu ý**: `.env.example` có sẵn template, bạn chỉ cần sao chép và điền giá trị.
+     # Canva (nếu dùng)
+     CANVA_ACCESS_TOKEN=
+     ```
 
 ---
 
@@ -87,63 +94,81 @@ OUTPUT_CSV=cv_summary.csv        # file CSV kết quả
 
 ```
 .
-├── app.py                    # Streamlit UI
-├── mcp_server.py             # FastAPI backend server
-├── main.py                   # CLI entry point (import và chạy config_info)
-├── modules/                  # Thư mục chứa module core
-│   ├── config.py             # Load & validate .env → biến cấu hình dùng chung
-│   ├── config_info.py        # CLI commands (Click) để xem config & models
-│   ├── email_fetcher.py      # IMAP email fetching & attachment download
-│   ├── cv_processor.py       # CV text extraction & info parsing
-│   ├── dynamic_llm_client.py # LLM client cho Streamlit
-│   ├── llm_client.py         # LLM client chung cho backend API
-│   ├── model_fetcher.py      # Fetch & cache danh sách models từ API
-│   └── prompts.py            # Prompt mẫu cho AI trích xuất thông tin CV
-├── static/                   # Tài nguyên tĩnh cho UI
-│   └── style.css             # Custom CSS cho Streamlit
-├── attachments/              # Thư mục lưu CV tải về từ email
-├── tests/                    # Unit tests (pytest)
-│   └── test_models.py        # Test logic fetch model
-├── .env.example              # Template file cấu hình môi trường
-├── requirements.txt          # Danh sách dependencies
-└── README.md                 # File hướng dẫn này
+├── main_engine/             # Entry-point cho UI & CLI
+│   ├── app.py               # Streamlit UI
+│   ├── main.py              # CLI batch/single
+│   ├── select_top5.py       # Chọn TOP5 CV
+│   └── run_resume_ai.bat    # Script Windows chạy UI/CLI/select
+├── modules/                 # Module core
+│   ├── config.py            # Load .env, cấu hình chung
+│   ├── email_fetcher.py     # Fetch CV qua IMAP
+│   ├── cv_processor.py      # Xử lý & trích xuất CV
+│   ├── dynamic_llm_client.py# LLM client wrapper
+│   ├── model_fetcher.py     # Lấy danh sách models
+│   └── prompts.py           # Prompt mẫu cho AI
+├── static/                  # Tài nguyên tĩnh
+│   ├── style.css            # CSS tùy chỉnh
+│   └── logo.png             # Logo hiển thị
+├── attachments/             # Lưu CV tải từ email
+├── tests/                   # Unit tests (pytest)
+│   └── test_models.py       # Kiểm thử model_fetcher
+├── .env.example             # Mẫu cấu hình môi trường
+├── requirements.txt         # Dependencies
+└── README.md                # Hướng dẫn này
 ```
 
 ---
 
 ## 🎯 Hướng dẫn sử dụng
 
-### Chạy giao diện Streamlit
+### 1. Giao diện Streamlit UI
 
 ```bash
-streamlit run app.py
+run_resume_ai.bat        # Windows: double-click hoặc chạy từ CMD
+otr
+# Hoặc Linux/Mac:
+streamlit run main_engine/app.py
 ```
 
-* Mở `http://localhost:8501` để cấu hình LLM, chạy batch hoặc single file, xem & tải kết quả.
+* Truy cập: `http://localhost:8501`
+* Tab "Batch Email": xử lý hàng loạt từ email.
+* Tab "Single File": upload CV đơn lẻ.
+* Tab "Kết quả": xem & tải CSV.
 
-### Chạy API Server
+### 2. CLI (chạy Python)
 
 ```bash
-uvicorn mcp_server:app --reload --host 0.0.0.0 --port 8000
+# Batch qua email (mặc định)
+python main_engine/main.py --batch
+# Hoặc xử lý file đơn
+python main_engine/main.py --single path/to/cv.pdf
 ```
 
-* Truy cập Swagger UI tại `http://localhost:8000/docs`.
-
-#### Endpoints chính
-
-| Phương thức | Đường dẫn            | Mô tả                                          |
-| ----------- | -------------------- | ---------------------------------------------- |
-| POST        | `/run-full-process`  | Quét email, tải CV, trích xuất, lưu CSV        |
-| POST        | `/process-single-cv` | Upload CV (.pdf/.docx), trả về JSON trích xuất |
-| GET         | `/results`           | Tải file CSV kết quả                           |
-
-### Sử dụng CLI
+### 3. Chọn TOP 5 CV
 
 ```bash
-# Xem thông tin cấu hình
-python main.py info
-# Liệt kê models khả dụng
-python main.py list-models
+python main_engine/select_top5.py   # In ra danh sách TOP 5 Nguồn
 ```
+
+### 4. Script Windows (.bat)
+
+* `setup.bat`: tự động tạo `.env`, venv và cài dependencies.
+* `run_resume_ai.bat [cli|select]`:
+
+  * Không tham số: chạy UI.
+  * `cli`: chạy main\_engine/main.py
+  * `select`: chạy select\_top5.
 
 ---
+
+## 🔧 Phát triển & đóng góp
+
+1. Fork repo, tạo branch `feature/...`.
+2. Viết code, chạy `pytest` đảm bảo không lỗi.
+3. Commit & push lên branch, mở Pull Request.
+
+---
+
+## 📜 License
+
+Distributed under the MIT License. Xem `LICENSE` để biết chi tiết.

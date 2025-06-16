@@ -1,147 +1,168 @@
 # main_engine/app.py
 
-import os
-import sys
+import os, sys
+from pathlib import Path
 
-# Đưa thư mục gốc (chứa `modules/`) vào sys.path để có thể import modules
-HERE = os.path.dirname(__file__)
-ROOT = os.path.abspath(os.path.join(HERE, ".."))
-if ROOT not in sys.path:
-    sys.path.insert(0, ROOT)
+# Đưa thư mục gốc (chứa `modules/`) vào sys.path để import modules
+HERE = Path(__file__).parent
+ROOT = HERE.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
-import streamlit as st               # framework UI
-import pandas as pd                  # xử lý DataFrame
+import streamlit as st
+import pandas as pd
 
-# --- Import cấu hình và tiện ích từ modules ---
+# Import cấu hình và modules
 from modules.config import (
-    LLM_CONFIG,                      # cấu hình LLM chung
-    get_models_for_provider,         # hàm lấy list models
-    GOOGLE_API_KEY,                  # API key Google
-    OPENROUTER_API_KEY,              # API key OpenRouter
-    OUTPUT_CSV                       # đường dẫn file CSV kết quả
+    LLM_CONFIG,
+    get_models_for_provider,
+    GOOGLE_API_KEY,
+    OPENROUTER_API_KEY,
+    ATTACHMENT_DIR,
+    OUTPUT_CSV,
 )
-from modules.email_fetcher import EmailFetcher  # lớp fetch email + attachments
-from modules.cv_processor import CVProcessor    # lớp xử lý trích xuất CV
+from modules.email_fetcher import EmailFetcher
+from modules.cv_processor import CVProcessor
 
-# ——————————————————————————————
-# 1) CẤU HÌNH TRANG STREAMLIT
-# ——————————————————————————————
+# --- Cấu hình chung cho trang Streamlit ---
 st.set_page_config(
-    page_title="Hoàn Cầu AI CV Processor",  # tiêu đề tab
-    layout="wide",                           # bố cục full-width
-    initial_sidebar_state="expanded"         # sidebar mặc định mở
+    page_title="Hoàn Cầu AI CV Processor",
+    page_icon=str(ROOT / "static" / "logo.png"),
+    layout="wide",
+    initial_sidebar_state="expanded",
 )
 
-# ——————————————————————————————
-# 2) NẠP CSS TÙY CHỈNH
-# ——————————————————————————————
-def load_custom_css(path: str = "static/style.css"):
-    """
-    Đọc file CSS và chèn vào trang cho style tuỳ chỉnh.
-    Nếu không tìm thấy, hiện cảnh báo.
-    """
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            css = f.read()                  # đọc CSS
-        st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
-    except FileNotFoundError:
-        st.warning(f"Không tìm thấy file CSS tại: {path}")
+# --- Load CSS tuỳ chỉnh ---
+def load_css():
+    path = ROOT / "static" / "style.css"
+    if path.exists():
+        st.markdown(f"<style>{path.read_text(encoding='utf-8')}</style>", unsafe_allow_html=True)
+    else:
+        st.warning(f"Không tìm thấy CSS tại: {path}")
+load_css()
 
-load_custom_css()  # áp dụng CSS ngay
+# --- Sidebar: logo và cấu hình LLM ---
+logo_path = ROOT / "static" / "logo.png"
+if logo_path.exists():
+    st.sidebar.image(str(logo_path), use_container_width=True)
 
-# ——————————————————————————————
-# 3) INIT SESSION_STATE CHO LLM
-# ——————————————————————————————
-# Lưu chọn provider/model giữa các reload
-if "selected_provider" not in st.session_state:
-    st.session_state.selected_provider = LLM_CONFIG["provider"]
-if "selected_model" not in st.session_state:
-    st.session_state.selected_model = LLM_CONFIG["model"]
+st.sidebar.header("Cấu hình LLM")
 
-# ——————————————————————————————
-# 4) SIDEBAR: CÀI ĐẶT LLM
-# ——————————————————————————————
-st.sidebar.header("Cài đặt LLM")  # header sidebar
-
-# 4.1) Chọn provider
+# Chọn provider, lưu tự động vào session_state
 provider = st.sidebar.selectbox(
     "Provider",
-    ["google", "openrouter"],
-    index=["google", "openrouter"].index(st.session_state.selected_provider)
+    options=["google", "openrouter"],
+    key="selected_provider",
+    help="Chọn nhà cung cấp LLM"
 )
-
-# 4.2) Chọn API key tương ứng
+# Hiển thị trạng thái API key
 api_key = GOOGLE_API_KEY if provider == "google" else OPENROUTER_API_KEY
+st.sidebar.caption(f"API Key: {'✔️' if api_key else '❌'}")
 
-# 4.3) Lấy danh sách models
+# Lấy danh sách models theo provider
 models = get_models_for_provider(provider, api_key)
-if not models:  # nếu API lỗi, fallback giữ model cũ
-    models = [st.session_state.selected_model]
-# nếu model cũ không còn trong list, reset về đầu
-if st.session_state.selected_model not in models:
+if not models:
+    st.sidebar.error("Không lấy được models, vui lòng kiểm tra API Key.")
+    models = [LLM_CONFIG.get("model")]
+# Đặt model mặc định nếu session chưa có hoặc không hợp lệ
+if 'selected_model' not in st.session_state or st.session_state.selected_model not in models:
     st.session_state.selected_model = models[0]
-
-# 4.4) Chọn model
+# Chọn model, lưu tự động vào session_state
 model = st.sidebar.selectbox(
     "Model",
-    models,
-    index=models.index(st.session_state.selected_model)
+    options=models,
+    key="selected_model",
+    help="Chọn mô hình LLM"
 )
 
-# 4.5) Áp dụng thay đổi
-if st.sidebar.button("Áp dụng"):
-    st.session_state.selected_provider = provider
-    st.session_state.selected_model = model
-    try:
-        st.experimental_rerun()  # reload nội bộ
-    except AttributeError:
-        st.sidebar.info("Vui lòng refresh trang để áp dụng thay đổi.")
+# Hiển thị cấu hình đang dùng
+st.sidebar.markdown(f"**Đang dùng:** `{provider}` / `{model}`")
 
-# ——————————————————————————————
-# 5) MAIN UI: 3 TABS
-# ——————————————————————————————
+# --- Main UI: 3 Tabs ---
 tab1, tab2, tab3 = st.tabs(["Batch Email", "Single File", "Kết quả"])
 
-# --- Tab 1: Batch Email ---
+# --- Tab 1: Batch xử lý CV từ Email ---
 with tab1:
     st.subheader("Batch xử lý CV từ Email")
+    st.markdown(f"**LLM:** `{provider}` / `{model}`")
     if st.button("Bắt đầu xử lý từ Email"):
-        fetcher = EmailFetcher()               # khởi tạo fetcher
-        fetcher.connect()                      # kết nối IMAP
-        processor = CVProcessor(fetcher)       # khởi tạo processor
-        df = processor.process()               # chạy process
-        processor.save_to_csv(df, OUTPUT_CSV)  # lưu CSV & Excel
-        st.success(f"Đã xử lý {len(df)} CV và lưu vào `{OUTPUT_CSV.name}`")
+        fetcher = EmailFetcher()
+        fetcher.connect()
+        files = fetcher.fetch_cv_attachments()
+        if not files:
+            st.info("Không tìm thấy file CV mới, dò trong thư mục attachments.")
+            files = [
+                str(ROOT / ATTACHMENT_DIR / f)
+                for f in os.listdir(ROOT / ATTACHMENT_DIR)
+                if f.lower().endswith((".pdf", ".docx"))
+            ]
+        if not files:
+            st.warning("Không có file CV để xử lý.")
+        else:
+            processor = CVProcessor()
+            # Gán provider/model cho client
+            processor.llm_client.provider = provider
+            processor.llm_client.model = model
 
-# --- Tab 2: Single File ---
+            progress = st.progress(0)
+            status = st.empty()
+            results = []
+            total = len(files)
+            for idx, path in enumerate(files, start=1):
+                fname = os.path.basename(path)
+                status.text(f"({idx}/{total}) Đang xử lý: {fname}")
+                text = processor.extract_text(path)
+                info = processor.extract_info_with_llm(text)
+                results.append({
+                    "Nguồn": fname,
+                    "Họ tên": info.get("ten", ""),
+                    "Email": info.get("email", ""),
+                    "Điện thoại": info.get("dien_thoai", ""),
+                    "Học vấn": info.get("hoc_van", ""),
+                    "Kinh nghiệm": info.get("kinh_nghiem", ""),
+                })
+                progress.progress(idx / total)
+            status.text("Hoàn tất xử lý tất cả file.")
+            df = pd.DataFrame(results)
+            processor.save_to_csv(df, OUTPUT_CSV)
+            st.success(f"Đã xử lý {len(df)} CV và lưu vào `{OUTPUT_CSV.name}`.")
+
+# --- Tab 2: Xử lý một CV đơn lẻ ---
 with tab2:
     st.subheader("Xử lý một CV đơn lẻ")
-    uploaded = st.file_uploader("Chọn file CV (.pdf/.docx)", type=["pdf", "docx"])
+    st.markdown(f"**LLM:** `{provider}` / `{model}`")
+    uploaded = st.file_uploader("Chọn file CV (.pdf, .docx)", type=["pdf", "docx"])
     if uploaded:
-        tmp_path = f"temp_{uploaded.name}"
-        with open(tmp_path, "wb") as f:
-            f.write(uploaded.getbuffer())       # ghi file tạm
-        proc = CVProcessor()                    # new processor (không fetcher)
-        text = proc.extract_text(tmp_path)      # trích text
-        info = proc.extract_info_with_llm(text) # trích info
-        st.json(info)                           # show JSON
-        try:
-            os.remove(tmp_path)                 # xóa file tạm
-        except Exception as e:
-            st.warning(f"Không xóa được file tạm: {e}")
+        tmp_file = ROOT / f"tmp_{uploaded.name}"
+        tmp_file.write_bytes(uploaded.getbuffer())
+        with st.spinner(f"Đang trích xuất & phân tích... (LLM: {provider}/{model})"):
+            proc = CVProcessor()
+            proc.llm_client.provider = provider
+            proc.llm_client.model = model
+            text = proc.extract_text(str(tmp_file))
+            info = proc.extract_info_with_llm(text)
+        st.json(info)
+        tmp_file.unlink(missing_ok=True)
 
-# --- Tab 3: Results ---
+# --- Tab 3: Xem và tải kết quả ---
 with tab3:
     st.subheader("Xem và tải kết quả")
-    try:
+    if os.path.exists(OUTPUT_CSV):
         df = pd.read_csv(OUTPUT_CSV, encoding="utf-8-sig")
-        st.dataframe(df, use_container_width=True)        # hiển thị bảng
+        st.dataframe(df, use_container_width=True)
         csv_bytes = df.to_csv(index=False, encoding="utf-8-sig").encode()
         st.download_button(
-            "Tải xuống CSV",
+            label="Tải xuống CSV",
             data=csv_bytes,
             file_name=OUTPUT_CSV.name,
             mime="text/csv"
         )
-    except FileNotFoundError:
-        st.info("Chưa có file kết quả. Vui lòng chạy Batch hoặc Single trước.")
+    else:
+        st.info("Chưa có kết quả. Vui lòng chạy Batch hoặc Single.")
+
+# --- Footer ---
+st.markdown("---")
+st.markdown(
+    "<center><small>Powered by Hoàn Cầu AI CV Processor</small></center>",
+    unsafe_allow_html=True
+)
