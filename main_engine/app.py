@@ -203,4 +203,4 @@ with tab3:
 # --- Footer ---
 st.markdown("---")
 st.markdown(
-    "<center><small>Powered by Hoàn Cầu AI CV Processor</small></center>",
+    "<center><small>Powered by Hoàn Cầu AI CV Processor</small></center>")
