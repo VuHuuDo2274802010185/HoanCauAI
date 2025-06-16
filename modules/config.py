@@ -72,7 +72,7 @@ GOOGLE_FALLBACK_MODELS: List[str] = [
 ]
 OPENROUTER_FALLBACK_MODELS: List[str] = [
     "anthropic/claude-3.5-sonnet", "anthropic/claude-3-haiku",
-    "openai/gpt-4o", "openai/gpt-4o-mini", "openai/gpt-3.5-turbo",
+    "openai/gpt-4o", "openai/gpt-4o-mini", "openai/gpt-3.5-turbo",]
 @@ -89,47 +83,58 @@ from .model_fetcher import ModelFetcher
 
 def get_available_models(provider: str, api_key: str) -> List[str]:
