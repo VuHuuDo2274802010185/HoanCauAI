@@ -1,4 +1,4 @@
-# tests/test_models.py
+# test_models.py
 
 import os               # thư viện để truy cập biến môi trường
 import pytest           # pytest framework để viết và chạy unit tests
