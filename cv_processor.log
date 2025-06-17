@@ -19,3 +19,4 @@
 2025-06-16 10:06:34,475 - ERROR - ❌ Lỗi khi gọi GenAI: 401 Client Error: Unauthorized for url: https://openrouter.ai/api/v1/chat/completions
 2025-06-16 10:06:34,475 - INFO - 🔄 Dùng fallback regex để trích xuất thông tin
 2025-06-16 10:06:34,481 - INFO - ✅ Đã lưu 10 hồ sơ vào cv_summary.csv
+2025-06-17 02:02:06,873 - INFO - ✅ Đã lưu 10 hồ sơ vào cv_summary.csv
