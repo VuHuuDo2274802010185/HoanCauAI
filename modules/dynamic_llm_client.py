@@ -6,7 +6,7 @@ import streamlit as st  # lấy thông tin session_state trong Streamlit
 import logging  # ghi log xử lý
 from typing import List  # định nghĩa kiểu cho danh sách
 
-from .config import LLM_CONFIG  # cấu hình chung LLM từ modules/config.py
+from .config import LLM_CONFIG, OPENROUTER_BASE_URL  # cấu hình chung LLM và URL
 
 # --- Thiết lập logger cho module dynamic_llm_client ---
 logger = logging.getLogger(__name__)  # lấy logger theo tên module
@@ -85,7 +85,7 @@ class DynamicLLMClient:
             return resp.text                              # trả về nội dung text
         except Exception as e:
             logger.error(f"❌ Lỗi Google Gemini API: {e}")  # log lỗi nếu có
-            raise                                       # ném ngoại lệ lên trên
+            raise  # propagate the exception to the caller
 
     def _gen_openrouter(self, messages: List[str]) -> str:
         """
@@ -116,8 +116,7 @@ class DynamicLLMClient:
 
         try:
             # Gửi POST request, timeout 30s
-            # Correct base URL for chat completions
-            url = "https://api.openrouter.ai/v1/chat/completions"
+            url = f"{OPENROUTER_BASE_URL}/chat/completions"
             res = requests.post(
                 url,
                 json=payload,
@@ -134,4 +133,4 @@ class DynamicLLMClient:
             return data["choices"][0]["message"]["content"]
         except Exception as e:
             logger.error(f"❌ Lỗi OpenRouter API: {e}")  # log lỗi nếu có
-            raise                                       # ném ngoại lệ lên trên
+            raise  # propagate the exception to the caller
