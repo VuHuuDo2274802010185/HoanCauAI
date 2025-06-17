@@ -116,12 +116,18 @@ class DynamicLLMClient:
 
         try:
             # Gửi POST request, timeout 30s
+            # Correct base URL for chat completions
+            url = "https://api.openrouter.ai/v1/chat/completions"
             res = requests.post(
-                "https://openrouter.ai/api/v1/chat/completions",
+                url,
                 json=payload,
                 headers=headers,
                 timeout=30
             )
+            # Kiểm tra Unauthorized
+            if res.status_code == 401:
+                logger.error("OpenRouter API Unauthorized: check API key")
+                raise ValueError("OpenRouter API Unauthorized: Vui lòng kiểm tra API key.")
             res.raise_for_status()                     # ném lỗi nếu status code != 200
             data = res.json()                          # parse JSON từ response
             # Trả về nội dung message đầu tiên trong choices

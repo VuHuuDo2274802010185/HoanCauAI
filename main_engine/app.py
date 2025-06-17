@@ -10,6 +10,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 import streamlit as st
+from typing import cast
 import pandas as pd
 
 # Import cấu hình và modules
@@ -115,8 +116,8 @@ email_pass = st.sidebar.text_input(
 )
 
 # --- Main UI: 5 Tabs ---
-tab_fetch, tab_process, tab_single, tab_results, tab_chat = st.tabs([
-    "Lấy CV từ Email", "Xử lý CV", "Single File", "Kết quả", "Hỏi AI"
+tab_fetch, tab_process, tab_single, tab_results, tab_flow, tab_mcp, tab_chat = st.tabs([
+    "Lấy CV từ Email", "Xử lý CV", "Single File", "Kết quả", "Xây dựng flow", "MCP Server", "Hỏi AI"
 ])
 
 # --- Tab: Lấy CV từ Email ---
@@ -215,11 +216,33 @@ with tab_results:
     else:
         st.info("Chưa có kết quả. Vui lòng chạy Batch hoặc Single.")
 
-# --- Tab 4: Hỏi AI ---
+# --- Tab: Xây dựng flow ---
+with tab_flow:
+    st.subheader("Xây dựng flow")
+    st.info("Chức năng xây dựng flow đang phát triển.")
+# --- Tab: MCP Server ---
+with tab_mcp:
+    st.subheader("MCP Server")
+    st.markdown("Kết nối với MCP server và các client desktop như Cherry Studio, LangFlow, VectorShift.")
+    st.write("FastAPI server đang chạy tại: http://localhost:8000/")
+    st.write("Xem chi tiết các endpoint trong `modules/mcp_server.py`.")
+
+# --- Tab: Hỏi AI ---
 with tab_chat:
     st.subheader("Hỏi AI về dữ liệu CV")
-    question = st.text_area("Nhập câu hỏi", key="ai_question")
-    if st.button("Gửi câu hỏi", key="ask_ai"):
+    # Initialize trigger flag
+    if 'trigger_ai' not in st.session_state:
+        st.session_state.trigger_ai = False
+    # Define callback to set trigger on Enter
+    def submit_ai():
+        st.session_state.trigger_ai = True
+    # Use text_input to allow Enter key submission
+    question = st.text_input(
+        "Nhập câu hỏi và nhấn Enter để gửi", key="ai_question", on_change=submit_ai
+    )
+    # Process on trigger
+    if st.session_state.trigger_ai:
+        st.session_state.trigger_ai = False
         if not question.strip():
             st.warning("Vui lòng nhập câu hỏi trước khi gửi.")
         elif not os.path.exists(OUTPUT_CSV):
@@ -228,7 +251,13 @@ with tab_chat:
             df = pd.read_csv(OUTPUT_CSV, encoding="utf-8-sig")
             with st.spinner("Đang hỏi AI..."):
                 try:
-                    answer = answer_question(question, df, provider, model, api_key)
+                    answer = answer_question(
+                        question,
+                        df,
+                        cast(str, provider),
+                        cast(str, model),
+                        cast(str, api_key)
+                    )
                     st.markdown(answer)
                 except Exception as e:
                     st.error(f"Lỗi khi hỏi AI: {e}")
