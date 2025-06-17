@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.env
+*.log
+attachments/
+cv_summary.csv
