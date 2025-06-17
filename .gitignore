@@ -1,2 +1,7 @@
-# Ignore log files
+# Ignore files
+__pycache__/
+*.pyc
+.env
 *.log
+attachments/
+cv_summary.csv
