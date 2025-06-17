@@ -27,6 +27,7 @@ from modules.config import (
 )
 from modules.email_fetcher import EmailFetcher
 from modules.cv_processor import CVProcessor
+from modules.qa_chatbot import answer_question
 
 # --- Cấu hình chung cho trang Streamlit ---
 st.set_page_config(
@@ -113,8 +114,8 @@ email_pass = st.sidebar.text_input(
     key="email_pass",
 )
 
-# --- Main UI: 3 Tabs ---
-tab1, tab2, tab3 = st.tabs(["Batch Email", "Single File", "Kết quả"])
+# --- Main UI: 4 Tabs ---
+tab1, tab2, tab3, tab4 = st.tabs(["Batch Email", "Single File", "Kết quả", "Hỏi AI"])
 
 # --- Tab 1: Batch xử lý CV từ Email ---
 with tab1:
@@ -199,6 +200,24 @@ with tab3:
         )
     else:
         st.info("Chưa có kết quả. Vui lòng chạy Batch hoặc Single.")
+
+# --- Tab 4: Hỏi AI ---
+with tab4:
+    st.subheader("Hỏi AI về dữ liệu CV")
+    question = st.text_area("Nhập câu hỏi", key="ai_question")
+    if st.button("Gửi câu hỏi", key="ask_ai"):
+        if not question.strip():
+            st.warning("Vui lòng nhập câu hỏi trước khi gửi.")
+        elif not os.path.exists(OUTPUT_CSV):
+            st.warning("Chưa có dữ liệu CSV để hỏi.")
+        else:
+            df = pd.read_csv(OUTPUT_CSV, encoding="utf-8-sig")
+            with st.spinner("Đang hỏi AI..."):
+                try:
+                    answer = answer_question(question, df, provider, model, api_key)
+                    st.markdown(answer)
+                except Exception as e:
+                    st.error(f"Lỗi khi hỏi AI: {e}")
 
 # --- Footer ---
 st.markdown("---")
