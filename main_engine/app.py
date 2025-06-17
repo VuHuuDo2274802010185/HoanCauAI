@@ -148,8 +148,22 @@ with tab_fetch:
     if not email_user or not email_pass:
         st.warning("Cần nhập Gmail và mật khẩu trong sidebar để bắt đầu auto fetch.")
     else:
-        st.info("Auto fetch đang chạy. Kiểm tra thư mục attachments để xem file mới.")
-        st.write([str(p) for p in ATTACHMENT_DIR.glob('*')])
+        st.info("Auto fetch đang chạy ngầm. Bạn có thể nhấn 'Fetch Now' để kiểm tra ngay.")
+        # Nút kích hoạt fetch ngay lập tức
+        if st.button("Fetch Now"):
+            fetcher = EmailFetcher(
+                EMAIL_HOST, EMAIL_PORT, email_user, email_pass
+            )
+            fetcher.connect()
+            new_files = fetcher.fetch_cv_attachments()
+            if new_files:
+                st.success(f"Đã tải {len(new_files)} file mới:")
+                st.write(new_files)
+            else:
+                st.info("Không có file đính kèm mới.")
+        # Hiển thị danh sách hiện tại trong thư mục attachments
+        attachments = [str(p) for p in ATTACHMENT_DIR.glob('*')]
+        st.write(attachments)
     if st.button("Xóa toàn bộ attachments"):
         attachments = list(ATTACHMENT_DIR.iterdir())
         count = sum(1 for f in attachments if f.is_file())
@@ -248,15 +262,15 @@ with tab_flow:
     flow_text = st.text_area("Flow JSON (node: {id,label,next})", value=flow_text, height=200, key="flow_json")
     # Auto-generate flow from modules list
     if st.button("Tạo flow từ modules"):
-        # tạo flow đơn giản dựa trên tên file modules
+        # Tạo flow đơn giản dựa trên tên file modules và lưu vào session_state
         mods = [p.stem for p in (ROOT / 'modules').glob('*.py') if p.is_file()]
         gen = []
         for i, m in enumerate(mods):
             nxt = [mods[i+1]] if i+1 < len(mods) else []
             gen.append({"id": m, "label": m, "next": nxt})
         import json
-        flow_text = json.dumps(gen, indent=2)
-        st.experimental_rerun()
+        # Cập nhật lại nội dung flow trong session state, widget text_area sẽ tự động cập nhật
+        st.session_state["flow_json"] = json.dumps(gen, indent=2)
 
     cols = st.columns(2)
     with cols[0]:

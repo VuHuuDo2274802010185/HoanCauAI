@@ -2,6 +2,33 @@
 
 HoanCau AI Resume Processor là hệ thống tự động trích xuất thông tin quan trọng từ hồ sơ (.pdf, .docx), hỗ trợ chạy qua CLI, giao diện web (Streamlit) và API (FastAPI).
 
+## 📋 Yêu cầu hệ thống
+
+- Python 3.10 hoặc cao hơn (https://www.python.org/downloads/)
+- Pip (đi kèm Python) hoặc pip3
+- Virtual environment tool (`venv` hoặc `virtualenv`)
+- Git (để clone repository) https://git-scm.com/downloads
+- Tài khoản email IMAP (Gmail, Outlook, v.v.) với quyền truy cập IMAP hiện bật
+- Trình duyệt web hiện đại (Chrome, Firefox) để sử dụng giao diện Streamlit
+
+## ✉️ Troubleshooting Email Fetch
+
+- Đảm bảo IMAP đã được bật trong cài đặt email (Gmail: Settings → Forwarding and POP/IMAP → Enable IMAP).
+- Với Gmail, tạo **App Password** thay vì mật khẩu chính: https://support.google.com/mail/answer/185833
+- Kiểm tra file `.env` đúng thông tin:
+  ```bash
+  cat .env | grep EMAIL
+  ```
+- Chạy lệnh thử tay:
+  ```bash
+  python3 -c "from modules.email_fetcher import EmailFetcher; f=EmailFetcher(); f.connect(); print(f.fetch_cv_attachments())"
+  ```
+  Kết quả trả về danh sách đường dẫn file (nếu trống, nghĩa là không tìm thấy attachment trong inbox).
+- Nếu vẫn không có email, kiểm tra folder IMAP mặc định là `INBOX`, hoặc đổi:
+  ```python
+  f.mail.select('INBOX.Sent Mail')  # hoặc tên folder khác
+  ```
+
 ## 🌟 Tính năng
 
 - Tự động quét email IMAP, tải file đính kèm và xử lý batch.

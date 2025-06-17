@@ -62,57 +62,63 @@ class EmailFetcher:
 
         new_files: List[str] = []
 
-        for key in keywords:
-            # Chỉ tìm email chưa đọc để tránh xử lý trùng lặp
-            query = f'(UNSEEN OR SUBJECT "{key}" BODY "{key}")'
-            typ, data = self.mail.search(None, query)
-            if typ != "OK" or not data or not data[0]:
+        # Tìm tất cả email (đã đọc và chưa đọc)
+        typ, data = self.mail.search(None, 'ALL')
+        if typ != 'OK':
+            self.logger.error(f"[ERR] Lỗi tìm email: {typ}")
+            return []
+        email_ids = data[0].split() if data and data[0] else []
+        self.logger.info(f"[INFO] Đã tìm thấy {len(email_ids)} email trong hộp thư.")
+        for num in email_ids:
+            typ, msg_data = self.mail.fetch(num, '(RFC822)')
+            if typ != "OK" or not msg_data:
                 continue
 
-            for num in data[0].split():
-                typ, msg_data = self.mail.fetch(num, '(RFC822)')
-                if typ != "OK" or not msg_data:
+            msg = email.message_from_bytes(msg_data[0][1])
+            # Debug: log email number and subject
+            try:
+                subj_hdr = msg.get('Subject', '')
+                subj = ''.join(p.decode(enc or 'utf-8') if isinstance(p, bytes) else p for p, enc in decode_header(subj_hdr))
+                self.logger.info(f"[DEBUG] Email ID {num.decode()}: {subj}")
+            except Exception:
+                pass
+
+            # Xử lý phần đính kèm mọi email: mọi part có filename và extension PDF/DOCX
+            for part in msg.walk():
+                raw_name = part.get_filename()
+                if not raw_name:
                     continue
 
-                msg = email.message_from_bytes(msg_data[0][1])
+                # 1) Decode tên file theo RFC2047
+                decoded_parts = decode_header(raw_name)
+                filename = ''.join(
+                    (p.decode(enc or 'utf-8') if isinstance(p, bytes) else p)
+                    for p, enc in decoded_parts
+                )
 
-                for part in msg.walk():
-                    if part.get_content_maintype() == "multipart":
-                        continue
-                    if part.get("Content-Disposition") is None:
-                        continue
+                # 2) Giữ lại phần mở rộng và sanitize tên
+                name, ext = os.path.splitext(filename)
+                # Chỉ lấy file PDF hoặc DOCX
+                if ext.lower() not in ['.pdf', '.docx']:
+                    continue
+                safe_name = re.sub(r'[^\w\-\_ ]', '_', name)
+                safe = safe_name + ext
 
-                    raw_name = part.get_filename()
-                    if not raw_name:
-                        continue
+                path = os.path.join(ATTACHMENT_DIR, safe)
 
-                    # 1) Decode tên file theo RFC2047
-                    decoded_parts = decode_header(raw_name)
-                    filename = ''.join(
-                        (p.decode(enc or 'utf-8') if isinstance(p, bytes) else p)
-                        for p, enc in decoded_parts
-                    )
+                # 3) Bỏ qua nếu file đã tồn tại
+                if os.path.exists(path):
+                    self.logger.info(f"[INFO] Đã tồn tại: {path}")
+                    continue
 
-                    # 2) Giữ lại phần mở rộng và sanitize tên
-                    name, ext = os.path.splitext(filename)
-                    safe_name = re.sub(r'[^\w\-\_ ]', '_', name)
-                    safe = safe_name + ext
+                # 4) Ghi file nhị phân
+                with open(path, "wb") as f:
+                    f.write(part.get_payload(decode=True))
+                new_files.append(path)
+                self.logger.info(f"[OK] Lưu đính kèm mới: {path}")
 
-                    path = os.path.join(ATTACHMENT_DIR, safe)
-
-                    # 3) Bỏ qua nếu file đã tồn tại
-                    if os.path.exists(path):
-                        self.logger.info(f"[INFO] Đã tồn tại: {path}")
-                        continue
-
-                    # 4) Ghi file nhị phân
-                    with open(path, "wb") as f:
-                        f.write(part.get_payload(decode=True))
-                    new_files.append(path)
-                    self.logger.info(f"[OK] Lưu đính kèm mới: {path}")
-
-                # Đánh dấu email đã đọc
-                self.mail.store(num, "+FLAGS", "\\Seen")
+            # Đánh dấu email đã đọc
+            self.mail.store(num, "+FLAGS", "\\Seen")
 
         if not new_files:
             self.logger.info("[INFO] Không tìm thấy đính kèm mới.")
