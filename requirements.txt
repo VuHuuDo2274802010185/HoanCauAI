@@ -19,4 +19,5 @@ uvicorn[standard]>=0.22.0     # ASGI server, kèm uvloop và các extras
 python-multipart>=0.0.5       # xử lý multipart/form-data (file upload FastAPI)
 click                         # CLI utilities (dùng cho scripts click)
 pydantic>=2.0.0               # validation, BaseSettings (FastAPI)
+pydantic-settings>=2.0.0
 pytest>=7.0.0                 # testing framework

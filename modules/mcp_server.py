@@ -7,7 +7,8 @@ from pathlib import Path         # thao tác đường dẫn hướng đối tư
 
 from fastapi import FastAPI, UploadFile, File, HTTPException  # framework API và xử lý upload
 from fastapi.responses import FileResponse    # trả về file như response
-from pydantic import BaseSettings            # cấu hình từ biến môi trường
+from pydantic_settings import BaseSettings, SettingsConfigDict      # sử dụng BaseSettings với cấu hình cho Pydantic v2
+
 
 from modules.cv_processor import CVProcessor    # lớp xử lý CV thành DataFrame
 from modules.email_fetcher import EmailFetcher  # lớp fetch email và tải đính kèm
@@ -17,16 +18,18 @@ class Settings(BaseSettings):
     """
     Lớp cấu hình ứng dụng, tự động load từ file .env
     """
+    # Cho phép ignore các biến môi trường không định nghĩa trong model
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore"
+    )
     email_host: str        # địa chỉ IMAP server
     email_port: int        # cổng IMAP SSL
     email_user: str        # tên đăng nhập email
     email_pass: str        # mật khẩu/app-password email
     attachment_dir: Path   # thư mục lưu tệp đính kèm
     output_csv: Path       # đường dẫn file CSV xuất kết quả
-
-    class Config:
-        env_file = ".env"           # file chứa biến môi trường
-        env_file_encoding = "utf-8" # encoding của file .env
 
 
 # Khởi tạo cấu hình từ biến môi trường
