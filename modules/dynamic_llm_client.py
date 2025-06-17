@@ -85,7 +85,7 @@ class DynamicLLMClient:
             return resp.text                              # trả về nội dung text
         except Exception as e:
             logger.error(f"❌ Lỗi Google Gemini API: {e}")  # log lỗi nếu có
-            raise                                       # ném ngoại lệ lên trên
+            raise  # propagate the exception to the caller
 
     def _gen_openrouter(self, messages: List[str]) -> str:
         """
@@ -134,4 +134,4 @@ class DynamicLLMClient:
             return data["choices"][0]["message"]["content"]
         except Exception as e:
             logger.error(f"❌ Lỗi OpenRouter API: {e}")  # log lỗi nếu có
-            raise                                       # ném ngoại lệ lên trên
+            raise  # propagate the exception to the caller
