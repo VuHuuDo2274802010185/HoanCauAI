@@ -173,4 +173,4 @@ python main_engine/select_top5.py   # In ra danh sách TOP 5 Nguồn
 
 ## 📜 License
 
-Distributed under the MIT License. Xem `LICENSE` để biết chi tiết.
+Distributed under the [MIT License](LICENSE). Xem file `LICENSE` để biết chi tiết.
