@@ -63,7 +63,9 @@ class EmailFetcher:
         new_files: List[str] = []
 
         for key in keywords:
-            typ, data = self.mail.search(None, f'(OR SUBJECT "{key}" BODY "{key}")')
+            # Chỉ tìm email chưa đọc để tránh xử lý trùng lặp
+            query = f'(UNSEEN OR SUBJECT "{key}" BODY "{key}")'
+            typ, data = self.mail.search(None, query)
             if typ != "OK" or not data or not data[0]:
                 continue
 
