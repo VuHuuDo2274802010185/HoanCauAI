@@ -137,6 +137,7 @@ streamlit run main_engine/app.py
 * Tab "Hỏi AI": chatbot trả lời câu hỏi dựa trên dữ liệu CV.
 * Sidebar cho phép nhập Gmail, mật khẩu và API key của provider.
   Nhấn "Lấy models" để cập nhật danh sách model từ API.
+  Khi đã nhập Gmail và mật khẩu, CV mới sẽ được tự động tải xuống (mặc định mỗi 10 phút).
 ### 2. CLI (chạy Python)
 
 ```bash

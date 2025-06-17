@@ -29,6 +29,7 @@ from modules.config import (
 from modules.email_fetcher import EmailFetcher
 from modules.cv_processor import CVProcessor
 from modules.qa_chatbot import answer_question
+from modules.auto_fetcher import watch_loop
 
 # --- Cấu hình chung cho trang Streamlit ---
 st.set_page_config(
@@ -115,6 +116,24 @@ email_pass = st.sidebar.text_input(
     key="email_pass",
 )
 
+# Tự động khởi động auto fetcher khi đã nhập đủ thông tin
+if email_user and email_pass and "auto_fetcher_thread" not in st.session_state:
+    import threading
+
+    def _auto_fetch():
+        watch_loop(
+            600,
+            host=EMAIL_HOST,
+            port=EMAIL_PORT,
+            user=email_user,
+            password=email_pass,
+        )
+
+    t = threading.Thread(target=_auto_fetch, daemon=True)
+    t.start()
+    st.session_state.auto_fetcher_thread = t
+    st.sidebar.info("Đang tự động lấy CV từ email...")
+
 # --- Main UI: 5 Tabs ---
 tab_fetch, tab_process, tab_single, tab_results, tab_flow, tab_mcp, tab_chat = st.tabs([
     "Lấy CV từ Email", "Xử lý CV", "Single File", "Kết quả", "Xây dựng flow", "MCP Server", "Hỏi AI"
@@ -123,20 +142,14 @@ tab_fetch, tab_process, tab_single, tab_results, tab_flow, tab_mcp, tab_chat = s
 # --- Tab: Lấy CV từ Email ---
 with tab_fetch:
     st.subheader("Lấy CV từ Email")
-    st.markdown("**Email Config:** Enter Gmail và password để fetch attachments.")
-    if st.button("Lấy file từ Email"):
-        if not email_user or not email_pass:
-            st.error("Cần nhập Gmail và mật khẩu")
-            st.stop()
-        fetcher = EmailFetcher(EMAIL_HOST, EMAIL_PORT, email_user, email_pass)
-        fetcher.connect()
-        new_files = fetcher.fetch_cv_attachments()
-        if new_files:
-            st.success(f"Đã tải {len(new_files)} file mới vào thư mục attachments.")
-            st.write(new_files)
-        else:
-            st.info("Không có file mới. Xem thư mục attachments hiện tại:")
-            st.write([str(p) for p in ATTACHMENT_DIR.glob('*')])
+    st.markdown(
+        "**Email Config:** Khi đã nhập Gmail và mật khẩu ở sidebar, hệ thống sẽ tự động tải CV mới."
+    )
+    if not email_user or not email_pass:
+        st.warning("Cần nhập Gmail và mật khẩu trong sidebar để bắt đầu auto fetch.")
+    else:
+        st.info("Auto fetch đang chạy. Kiểm tra thư mục attachments để xem file mới.")
+        st.write([str(p) for p in ATTACHMENT_DIR.glob('*')])
     if st.button("Xóa toàn bộ attachments"):
         attachments = list(ATTACHMENT_DIR.iterdir())
         count = sum(1 for f in attachments if f.is_file())

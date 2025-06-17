@@ -9,9 +9,15 @@ import imaplib
 from .email_fetcher import EmailFetcher
 
 
-def watch_loop(interval: int) -> None:
+def watch_loop(
+    interval: int,
+    host: str | None = None,
+    port: int | None = None,
+    user: str | None = None,
+    password: str | None = None,
+) -> None:
     """Kết nối IMAP và gọi fetch_cv_attachments() liên tục."""
-    fetcher = EmailFetcher()
+    fetcher = EmailFetcher(host, port, user, password)
     fetcher.connect()
     logging.info(f"Bắt đầu auto fetch, interval={interval}s")
 
@@ -46,8 +52,18 @@ def main():
         default=600,
         help="Khoảng thời gian (giây) giữa các lần quét",
     )
+    parser.add_argument("--host")
+    parser.add_argument("--port", type=int)
+    parser.add_argument("--user")
+    parser.add_argument("--password")
     args = parser.parse_args()
-    watch_loop(args.interval)
+    watch_loop(
+        args.interval,
+        host=args.host,
+        port=args.port,
+        user=args.user,
+        password=args.password,
+    )
 
 
 if __name__ == "__main__":

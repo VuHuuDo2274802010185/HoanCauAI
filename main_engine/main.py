@@ -30,7 +30,13 @@ def main(batch: bool, watch: bool, interval: int, file):
     llm_client = DynamicLLMClient()
 
     if watch:
-        watch_loop(interval)
+        watch_loop(
+            interval,
+            host=EMAIL_HOST,
+            port=EMAIL_PORT,
+            user=EMAIL_USER,
+            password=EMAIL_PASS,
+        )
         return
 
     if batch:
