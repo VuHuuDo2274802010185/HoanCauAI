@@ -44,7 +44,7 @@ if /I "%MODE%"=="select" (
 
 :: 4) Mặc định: khởi động Streamlit UI
 echo [MODE] Khởi động Streamlit UI...
-streamlit run "%~dp0main_engine\app.py" --server.port 8501 --server.headless true
+streamlit run "%~dp0main_engine\app.py"
 
 :end
 pause
