@@ -1,0 +1,74 @@
+{
+  "flow": [
+    {
+      "id": 1,
+      "name": "\u0110\u1ecdc file CSV",
+      "description": "M\u1edf v\u00e0 \u0111\u1ecdc d\u1eef li\u1ec7u t\u1eeb file CSV ch\u1ee9a th\u00f4ng tin CV.",
+      "input": "File CSV (v\u00ed d\u1ee5: 20 d\u00f2ng \u0111\u1ea7u ti\u00ean)",
+      "output": "D\u1eef li\u1ec7u nguy\u00ean b\u1ea3n (d\u00f2ng, c\u1ed9t) \u0111\u01b0\u1ee3c t\u1ea3i v\u00e0o b\u1ed9 nh\u1edb."
+    },
+    {
+      "id": 2,
+      "name": "Ph\u00e2n t\u00edch c\u1ea5u tr\u00fac d\u1eef li\u1ec7u",
+      "description": "X\u00e1c \u0111\u1ecbnh c\u00e1c tr\u01b0\u1eddng d\u1eef li\u1ec7u (columns) v\u00e0 \u0111\u1ecbnh d\u1ea1ng c\u1ee7a t\u1eebng d\u00f2ng.",
+      "input": "D\u1eef li\u1ec7u CSV",
+      "output": "C\u00e1c tr\u01b0\u1eddng \u0111\u01b0\u1ee3c ph\u00e2n lo\u1ea1i: Ngu\u1ed3n, H\u1ecd t\u00ean, Email, \u0110i\u1ec7n tho\u1ea1i, H\u1ecdc v\u1ea5n, Kinh nghi\u1ec7m."
+    },
+    {
+      "id": 3,
+      "name": "Tr\u00edch xu\u1ea5t th\u00f4ng tin t\u1eebng tr\u01b0\u1eddng",
+      "description": "L\u1ea5y d\u1eef li\u1ec7u t\u1eeb t\u1eebng c\u1ed9t v\u00e0 chuy\u1ec3n \u0111\u1ed5i th\u00e0nh \u0111\u1ecbnh d\u1ea1ng ph\u00f9 h\u1ee3p.",
+      "input": "D\u1eef li\u1ec7u CSV",
+      "output": {
+        "Ngu\u1ed3n": "T\u00ean file CV",
+        "H\u1ecd t\u00ean": "T\u00ean \u0111\u1ea7y \u0111\u1ee7",
+        "Email": "\u0110\u1ecbnh d\u1ea1ng email",
+        "\u0110i\u1ec7n tho\u1ea1i": "\u0110\u1ecbnh d\u1ea1ng s\u1ed1 \u0111i\u1ec7n tho\u1ea1i",
+        "H\u1ecdc v\u1ea5n": "Danh s\u00e1ch b\u1eb1ng c\u1ea5p/ch\u1ee9ng ch\u1ec9",
+        "Kinh nghi\u1ec7m": "Danh s\u00e1ch kinh nghi\u1ec7m"
+      }
+    },
+    {
+      "id": 4,
+      "name": "X\u1eed l\u00fd h\u1ecdc v\u1ea5n",
+      "description": "T\u00e1ch c\u00e1c b\u1eb1ng c\u1ea5p/ch\u1ee9ng ch\u1ec9 trong tr\u01b0\u1eddng 'H\u1ecdc v\u1ea5n' b\u1eb1ng d\u1ea5u ph\u00e2n t\u00e1ch (v\u00ed d\u1ee5: ';') v\u00e0 chu\u1ea9n h\u00f3a \u0111\u1ecbnh d\u1ea1ng.",
+      "input": "D\u1eef li\u1ec7u H\u1ecdc v\u1ea5n (chu\u1ed7i v\u0103n b\u1ea3n)",
+      "output": "M\u1ea3ng ch\u1ee9a c\u00e1c b\u1eb1ng c\u1ea5p/ch\u1ee9ng ch\u1ec9 (v\u00ed d\u1ee5: ['C\u1eed nh\u00e2n Lu\u1eadt D\u00e2n s\u1ef1', 'Ch\u1ee9ng ch\u1ec9 \u0110\u00e0o t\u1ea1o Lu\u1eadt s\u01b0', ...])"
+    },
+    {
+      "id": 5,
+      "name": "X\u1eed l\u00fd kinh nghi\u1ec7m",
+      "description": "T\u00e1ch c\u00e1c kinh nghi\u1ec7m trong tr\u01b0\u1eddng 'Kinh nghi\u1ec7m' b\u1eb1ng d\u1ea5u ph\u00e2n t\u00e1ch (v\u00ed d\u1ee5: ',') v\u00e0 ph\u00e2n t\u00edch th\u1eddi gian, l\u0129nh v\u1ef1c.",
+      "input": "D\u1eef li\u1ec7u Kinh nghi\u1ec7m (chu\u1ed7i v\u0103n b\u1ea3n)",
+      "output": "M\u1ea3ng ch\u1ee9a c\u00e1c \u0111\u1ed1i t\u01b0\u1ee3ng kinh nghi\u1ec7m (v\u00ed d\u1ee5: {'th\u1eddi_gian': 'H\u01a1n 7 n\u0103m', 'l\u0129nh_v\u1ef1c': 'T\u01b0 v\u1ea5n ph\u00e1p l\u00fd'})"
+    },
+    {
+      "id": 6,
+      "name": "Ki\u1ec3m tra v\u00e0 x\u00e1c minh d\u1eef li\u1ec7u",
+      "description": "\u0110\u1ea3m b\u1ea3o t\u00ednh ch\u00ednh x\u00e1c c\u1ee7a c\u00e1c tr\u01b0\u1eddng d\u1eef li\u1ec7u (v\u00ed d\u1ee5: ki\u1ec3m tra \u0111\u1ecbnh d\u1ea1ng email, s\u1ed1 \u0111i\u1ec7n tho\u1ea1i, th\u1eddi gian kinh nghi\u1ec7m).",
+      "input": "D\u1eef li\u1ec7u \u0111\u00e3 tr\u00edch xu\u1ea5t",
+      "output": "D\u1eef li\u1ec7u \u0111\u00e3 \u0111\u01b0\u1ee3c ki\u1ec3m tra, lo\u1ea1i b\u1ecf l\u1ed7i ho\u1eb7c ghi ch\u00fa l\u1ed7i (n\u1ebfu c\u00f3)."
+    },
+    {
+      "id": 7,
+      "name": "T\u1ed5ng h\u1ee3p th\u00f4ng tin",
+      "description": "G\u1ed9p c\u00e1c tr\u01b0\u1eddng d\u1eef li\u1ec7u th\u00e0nh m\u1ed9t c\u1ea5u tr\u00fac JSON ho\u1eb7c \u0111\u1ed1i t\u01b0\u1ee3ng c\u00f3 c\u1ea5u tr\u00fac.",
+      "input": "D\u1eef li\u1ec7u \u0111\u00e3 x\u1eed l\u00fd",
+      "output": "\u0110\u1ed1i t\u01b0\u1ee3ng CV v\u1edbi c\u00e1c tr\u01b0\u1eddng \u0111\u01b0\u1ee3c chu\u1ea9n h\u00f3a (v\u00ed d\u1ee5: {\"t\u00ean\": \"NGUYEN THI PHUONG THAO\", \"email\": \"Nguyenphuongthao2002@gmail.com\", ...})"
+    },
+    {
+      "id": 8,
+      "name": "L\u01b0u tr\u1eef d\u1eef li\u1ec7u",
+      "description": "Ghi d\u1eef li\u1ec7u v\u00e0o c\u01a1 s\u1edf d\u1eef li\u1ec7u ho\u1eb7c file \u0111\u1ecbnh d\u1ea1ng kh\u00e1c (JSON, Excel, v.v.).",
+      "input": "\u0110\u1ed1i t\u01b0\u1ee3ng CV \u0111\u00e3 t\u1ed5ng h\u1ee3p",
+      "output": "D\u1eef li\u1ec7u \u0111\u01b0\u1ee3c l\u01b0u tr\u1eef th\u00e0nh c\u00f4ng."
+    },
+    {
+      "id": 9,
+      "name": "T\u1ea1o b\u00e1o c\u00e1o ho\u1eb7c xu\u1ea5t d\u1eef li\u1ec7u",
+      "description": "T\u1ea1o b\u00e1o c\u00e1o t\u1ed5ng h\u1ee3p ho\u1eb7c xu\u1ea5t d\u1eef li\u1ec7u sang \u0111\u1ecbnh d\u1ea1ng mong mu\u1ed1n (v\u00ed d\u1ee5: JSON, CSV, PDF).",
+      "input": "D\u1eef li\u1ec7u \u0111\u00e3 l\u01b0u tr\u1eef",
+      "output": "B\u00e1o c\u00e1o ho\u1eb7c file xu\u1ea5t d\u1eef li\u1ec7u ho\u00e0n ch\u1ec9nh."
+    }
+  ]
+}
