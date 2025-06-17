@@ -6,7 +6,7 @@ import logging                     # thư viện ghi log
 import requests                    # thư viện HTTP để gửi yêu cầu tới API OpenRouter
 from typing import List           # khai báo kiểu List cho Python 3.8+
 
-from .config import LLM_CONFIG     # import cấu hình chung LLM từ file config.py
+from .config import LLM_CONFIG, OPENROUTER_BASE_URL  # import cấu hình LLM và URL chung
 
 # --- Thiết lập logger cho module llm_client ---
 logger = logging.getLogger(__name__)        # lấy logger theo tên module hiện tại
@@ -97,7 +97,7 @@ class LLMClient:
         try:
             # Gửi POST request, timeout 30s
             res = requests.post(
-                "https://openrouter.ai/api/v1/chat/completions",
+                f"{OPENROUTER_BASE_URL}/chat/completions",
                 json=payload,
                 headers=headers,
                 timeout=30
