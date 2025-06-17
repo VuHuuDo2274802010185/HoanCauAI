@@ -145,8 +145,6 @@ streamlit run main_engine/app.py
 python main_engine/main.py --batch
 # Hoặc xử lý file đơn
 python main_engine/main.py --single path/to/cv.pdf
-# Theo dõi email liên tục (mặc định 600s)
-python main_engine/main.py --watch --interval 600
 ```
 
 ### 3. Chọn TOP 5 CV
