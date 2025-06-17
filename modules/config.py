@@ -34,6 +34,10 @@ LLM_MODEL = _get_env("LLM_MODEL", "gemini-1.5-flash-latest")
 GOOGLE_API_KEY = _get_env("GOOGLE_API_KEY")
 OPENROUTER_API_KEY = _get_env("OPENROUTER_API_KEY")
 
+# --- Base URL cho OpenRouter API ---
+# Dùng chung cho mọi client và fetcher
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+
 # --- Cấu hình email (không bắt buộc) ---
 EMAIL_HOST = _get_env("EMAIL_HOST", "imap.gmail.com")
 # EMAIL_PORT: làm sạch comment và chuyển sang int, mặc định 993
