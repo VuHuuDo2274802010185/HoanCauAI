@@ -58,7 +58,7 @@ class ModelFetcher:
         """
         Lấy danh sách model từ Google Gemini qua SDK.
         - Kiểm tra cache trước, nếu có dùng luôn.
-        - Nếu không, gọi genai.list_models(), filter và sort.
+        - Nếu không, gọi genai.list_models(), lấy tất cả tên models.
         - Lưu kết quả vào cache và trả về.
         - Nếu lỗi, log và fallback về list cứng.
         """
@@ -70,11 +70,10 @@ class ModelFetcher:
         try:
             genai.configure(api_key=api_key)           # cấu hình API key cho SDK
             models = genai.list_models()               # gọi list_models()
-            # chỉ lấy tên model hỗ trợ generation
+            # lấy tất cả tên model
             names = [
                 m.name.split("/")[-1]
                 for m in models
-                if "generate" in getattr(m, "supported_generation_methods", [])
             ]
             names = sorted(names)                      # sắp xếp alphabet
             ModelFetcher._save_cache("google", names)  # lưu cache

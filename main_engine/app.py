@@ -114,36 +114,51 @@ email_pass = st.sidebar.text_input(
     key="email_pass",
 )
 
-# --- Main UI: 4 Tabs ---
-tab1, tab2, tab3, tab4 = st.tabs(["Batch Email", "Single File", "Kết quả", "Hỏi AI"])
+# --- Main UI: 5 Tabs ---
+tab_fetch, tab_process, tab_single, tab_results, tab_chat = st.tabs([
+    "Lấy CV từ Email", "Xử lý CV", "Single File", "Kết quả", "Hỏi AI"
+])
 
-# --- Tab 1: Batch xử lý CV từ Email ---
-with tab1:
-    st.subheader("Batch xử lý CV từ Email")
-    st.markdown(f"**LLM:** `{provider}` / `{model}`")
-    if st.button("Bắt đầu xử lý từ Email"):
+# --- Tab: Lấy CV từ Email ---
+with tab_fetch:
+    st.subheader("Lấy CV từ Email")
+    st.markdown("**Email Config:** Enter Gmail và password để fetch attachments.")
+    if st.button("Lấy file từ Email"):
         if not email_user or not email_pass:
             st.error("Cần nhập Gmail và mật khẩu")
             st.stop()
         fetcher = EmailFetcher(EMAIL_HOST, EMAIL_PORT, email_user, email_pass)
         fetcher.connect()
-        files = fetcher.fetch_cv_attachments()
+        new_files = fetcher.fetch_cv_attachments()
+        if new_files:
+            st.success(f"Đã tải {len(new_files)} file mới vào thư mục attachments.")
+            st.write(new_files)
+        else:
+            st.info("Không có file mới. Xem thư mục attachments hiện tại:")
+            st.write([str(p) for p in ATTACHMENT_DIR.glob('*')])
+    if st.button("Xóa toàn bộ attachments"):
+        attachments = list(ATTACHMENT_DIR.iterdir())
+        count = sum(1 for f in attachments if f.is_file())
+        for f in attachments:
+            try:
+                f.unlink()
+            except Exception:
+                pass
+        st.success(f"Đã xóa {count} file trong thư mục attachments.")
+
+# --- Tab: Xử lý CV từ attachments ---
+with tab_process:
+    st.subheader("Xử lý CV từ attachments")
+    st.markdown(f"**LLM:** `{provider}` / `{model}`")
+    if st.button("Bắt đầu xử lý CV"): 
+        files = [str(p) for p in ATTACHMENT_DIR.glob('*') if p.suffix.lower() in ('.pdf', '.docx')]
         if not files:
-            st.info("Không tìm thấy file CV mới, dò trong thư mục attachments.")
-            files = [
-                str(ROOT / ATTACHMENT_DIR / f)
-                for f in os.listdir(ROOT / ATTACHMENT_DIR)
-                if f.lower().endswith((".pdf", ".docx"))
-            ]
-        if not files:
-            st.warning("Không có file CV để xử lý.")
+            st.warning("Không có file CV trong thư mục attachments để xử lý.")
         else:
             processor = CVProcessor()
-            # Gán provider/model/api key cho client
             processor.llm_client.provider = provider
             processor.llm_client.model = model
             processor.llm_client.api_key = api_key
-
             progress = st.progress(0)
             status = st.empty()
             results = []
@@ -161,14 +176,13 @@ with tab1:
                     "Học vấn": info.get("hoc_van", ""),
                     "Kinh nghiệm": info.get("kinh_nghiem", ""),
                 })
-                progress.progress(idx / total)
-            status.text("Hoàn tất xử lý tất cả file.")
+                progress.progress(idx/total)
             df = pd.DataFrame(results)
-            processor.save_to_csv(df, OUTPUT_CSV)
+            processor.save_to_csv(df, str(OUTPUT_CSV))
             st.success(f"Đã xử lý {len(df)} CV và lưu vào `{OUTPUT_CSV.name}`.")
 
 # --- Tab 2: Xử lý một CV đơn lẻ ---
-with tab2:
+with tab_single:
     st.subheader("Xử lý một CV đơn lẻ")
     st.markdown(f"**LLM:** `{provider}` / `{model}`")
     uploaded = st.file_uploader("Chọn file CV (.pdf, .docx)", type=["pdf", "docx"])
@@ -186,7 +200,7 @@ with tab2:
         tmp_file.unlink(missing_ok=True)
 
 # --- Tab 3: Xem và tải kết quả ---
-with tab3:
+with tab_results:
     st.subheader("Xem và tải kết quả")
     if os.path.exists(OUTPUT_CSV):
         df = pd.read_csv(OUTPUT_CSV, encoding="utf-8-sig")
@@ -202,7 +216,7 @@ with tab3:
         st.info("Chưa có kết quả. Vui lòng chạy Batch hoặc Single.")
 
 # --- Tab 4: Hỏi AI ---
-with tab4:
+with tab_chat:
     st.subheader("Hỏi AI về dữ liệu CV")
     question = st.text_area("Nhập câu hỏi", key="ai_question")
     if st.button("Gửi câu hỏi", key="ask_ai"):
@@ -222,4 +236,6 @@ with tab4:
 # --- Footer ---
 st.markdown("---")
 st.markdown(
-    "<center><small>Powered by Hoàn Cầu AI CV Processor</small></center>")
+    f"<center><small>Powered by Hoàn Cầu AI CV Processor | {provider} / {model}</small></center>",
+    unsafe_allow_html=True
+)

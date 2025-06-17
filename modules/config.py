@@ -67,8 +67,12 @@ ATTACHMENT_DIR.mkdir(parents=True, exist_ok=True)
 
 # --- Danh sách models dự phòng ---
 GOOGLE_FALLBACK_MODELS: List[str] = [
-    "gemini-1.5-flash-latest", "gemini-1.5-flash", "gemini-1.5-pro-latest",
-    "gemini-1.5-pro", "gemini-pro", "gemini-pro-vision",
+    # Common Gemini models (flash, pro, vision) and extended variants
+    "gemini-1.0", "gemini-1.0-pro", "gemini-1.5-flash", "gemini-1.5-flash-latest",
+    "gemini-1.5-pro", "gemini-1.5-pro-latest", "gemini-pro", "gemini-pro-vision",
+    # Newer and experimental variants
+    "gemini-2.0-alpha", "gemini-2.0-vision", "gemini-2.0-vision-extended",
+    "gemini-2.5-pro", "gemini-2.5-pro-latest"
 ]
 OPENROUTER_FALLBACK_MODELS: List[str] = [
     "anthropic/claude-3.5-sonnet", "anthropic/claude-3-haiku",
@@ -90,14 +94,21 @@ def get_available_models(provider: str, api_key: str) -> List[str]:
 
 
 def get_models_for_provider(provider: str, api_key: str) -> List[str]:
-    """Lấy models từ API hoặc dùng fallback"""
+    """Lấy models từ API và kết hợp với fallback để đảm bảo đầy đủ các variant"""
     available = get_available_models(provider, api_key)
-    if available:
-        logger.info(f"Đã lấy {len(available)} models từ {provider.upper()} API")
-        return available
-    fallback = GOOGLE_FALLBACK_MODELS if provider == "google" else OPENROUTER_FALLBACK_MODELS
-    logger.warning(f"Sử dụng fallback models cho {provider.upper()}")
-    return fallback
+    if provider == "google":
+        # Kết hợp API-fetched và fallback để bao gồm hết các Gemini variants
+        combined = list({*available, *GOOGLE_FALLBACK_MODELS})
+        sorted_models = sorted(combined)
+        logger.info(f"Sử dụng tổng cộng {len(sorted_models)} models Google (API + fallback)")
+        return sorted_models
+    else:
+        # OpenRouter: nếu API gọi thành công, dùng API, ngược lại dùng fallback
+        if available:
+            logger.info(f"Đã lấy {len(available)} models từ OpenRouter API")
+            return available
+        logger.warning(f"Sử dụng fallback models cho OpenRouter")
+        return OPENROUTER_FALLBACK_MODELS
 
 # --- Cấu hình LLM mặc định ---
 LLM_CONFIG = {
