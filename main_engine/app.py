@@ -254,22 +254,25 @@ with tab_flow:
                 if not isinstance(nodes, list):
                     raise ValueError("Flow phải là mảng list của node dict")
                 # normalize nodes
-                normalized = [{"id": e, "label": e, "next": []} if isinstance(e, str) else e for e in nodes]
-                # build dot
+                normalized = [
+                    {"id": e, "label": e, "next": []} if isinstance(e, str) else e
+                    for e in nodes
+                ]
+                # build GraphViz dot using .format to avoid quote issues
                 dot = ['digraph G {', '  rankdir=LR;']
+                # add nodes
                 for n in normalized:
-                    # render node
-                    dot.append(
-                        f'''  "{n['id']}" [label="{n.get('label', n['id'])}"];'''  # noqa: E999
-                    )
+                    nid = n.get('id')
+                    label = n.get('label', nid)
+                    dot.append('  "{}" [label="{}"];'.format(nid, label))
+                # add edges
                 for n in normalized:
+                    nid = n.get('id')
                     for nxt in n.get('next', []):
-                        # render edge
-                        dot.append(
-                            f'''  "{n['id']}" -> "{nxt}";'''  # noqa: E999
-                        )
+                        dot.append('  "{}" -> "{}";'.format(nid, nxt))
+                # close graph
                 dot.append('}')
-                st.graphviz_chart("\n".join(dot))
+                st.graphviz_chart('\n'.join(dot))
             except Exception as e:
                 st.error(f"Lỗi phân tích flow: {e}")
     with cols[1]:
@@ -289,13 +292,11 @@ with tab_mcp:
     st.markdown("Kết nối với MCP server và các client desktop như Cherry Studio, LangFlow, VectorShift.")
     st.markdown("**Hướng dẫn:**")
     st.markdown(
-        '''
-1. Khởi động MCP server: `uvicorn modules.mcp_server:app --reload --host 0.0.0.0 --port 8000`
-2. Base URL: `http://localhost:8000`
-3. Cherry Studio: cấu hình endpoint HTTP để lấy các API, thêm flow & models.
-4. LangFlow: thêm gRPC hoặc HTTP node mới trỏ đến FastAPI endpoints.
-5. VectorShift: sử dụng HTTP connector với URL trên và key môi trường nếu cần.
-        ''',
+        "1. Khởi động MCP server: `uvicorn modules.mcp_server:app --reload --host 0.0.0.0 --port 8000`\n"
+        "2. Base URL: `http://localhost:8000`\n"
+        "3. Cherry Studio: cấu hình endpoint HTTP để lấy các API, thêm flow & models.\n"
+        "4. LangFlow: thêm gRPC hoặc HTTP node mới trỏ đến FastAPI endpoints.\n"
+        "5. VectorShift: sử dụng HTTP connector với URL trên và key môi trường nếu cần.",
         unsafe_allow_html=True
     )
     st.markdown("---")
