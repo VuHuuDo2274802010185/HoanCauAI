@@ -219,13 +219,87 @@ with tab_results:
 # --- Tab: Xây dựng flow ---
 with tab_flow:
     st.subheader("Xây dựng flow")
-    st.info("Chức năng xây dựng flow đang phát triển.")
+    st.markdown("**1. Chọn flow có sẵn hoặc upload file**")
+    # List existing flow JSON files
+    flows = [f.name for f in ROOT.glob("*.json") if f.name.endswith("flow_config.json")] or ["flow_config.json"]
+    selected = st.selectbox("Chọn flow đã có:", options=flows)
+    flow_file = ROOT / selected
+    # Upload custom flow file
+    upload = st.file_uploader("Hoặc upload file flow JSON", type=["json"])
+    if upload:
+        flow_text = upload.getvalue().decode('utf-8')
+    else:
+        flow_text = flow_file.read_text(encoding='utf-8') if flow_file.exists() else '[]'
+
+    st.markdown("**2. Chỉnh sửa hoặc tự tạo flow**")
+    flow_text = st.text_area("Flow JSON (node: {id,label,next})", value=flow_text, height=200, key="flow_json")
+    # Auto-generate flow from modules list
+    if st.button("Tạo flow từ modules"):
+        # tạo flow đơn giản dựa trên tên file modules
+        mods = [p.stem for p in (ROOT / 'modules').glob('*.py') if p.is_file()]
+        gen = []
+        for i, m in enumerate(mods):
+            nxt = [mods[i+1]] if i+1 < len(mods) else []
+            gen.append({"id": m, "label": m, "next": nxt})
+        import json
+        flow_text = json.dumps(gen, indent=2)
+        st.experimental_rerun()
+
+    cols = st.columns(2)
+    with cols[0]:
+        if st.button("Xem sơ đồ flow"):
+            try:
+                import json
+                nodes = json.loads(flow_text)
+                if not isinstance(nodes, list):
+                    raise ValueError("Flow phải là mảng list của node dict")
+                # normalize nodes
+                normalized = [{"id": e, "label": e, "next": []} if isinstance(e, str) else e for e in nodes]
+                # build dot
+                dot = ['digraph G {', '  rankdir=LR;']
+                for n in normalized:
+                    # render node
+                    dot.append(
+                        f'''  "{n['id']}" [label="{n.get('label', n['id'])}"];'''  # noqa: E999
+                    )
+                for n in normalized:
+                    for nxt in n.get('next', []):
+                        # render edge
+                        dot.append(
+                            f'''  "{n['id']}" -> "{nxt}";'''  # noqa: E999
+                        )
+                dot.append('}')
+                st.graphviz_chart("\n".join(dot))
+            except Exception as e:
+                st.error(f"Lỗi phân tích flow: {e}")
+    with cols[1]:
+        if st.button("Lưu flow.json"):
+            try:
+                import json
+                parsed = json.loads(flow_text)
+                flow_path = ROOT / selected
+                flow_path.write_text(json.dumps(parsed, indent=2), encoding='utf-8')
+                st.success(f"Đã lưu vào {flow_path.name}")
+            except Exception as e:
+                st.error(f"Lỗi lưu: {e}")
+
 # --- Tab: MCP Server ---
 with tab_mcp:
     st.subheader("MCP Server")
     st.markdown("Kết nối với MCP server và các client desktop như Cherry Studio, LangFlow, VectorShift.")
-    st.write("FastAPI server đang chạy tại: http://localhost:8000/")
-    st.write("Xem chi tiết các endpoint trong `modules/mcp_server.py`.")
+    st.markdown("**Hướng dẫn:**")
+    st.markdown(
+        '''
+1. Khởi động MCP server: `uvicorn modules.mcp_server:app --reload --host 0.0.0.0 --port 8000`
+2. Base URL: `http://localhost:8000`
+3. Cherry Studio: cấu hình endpoint HTTP để lấy các API, thêm flow & models.
+4. LangFlow: thêm gRPC hoặc HTTP node mới trỏ đến FastAPI endpoints.
+5. VectorShift: sử dụng HTTP connector với URL trên và key môi trường nếu cần.
+        ''',
+        unsafe_allow_html=True
+    )
+    st.markdown("---")
+    st.markdown("*Xem code: `modules/mcp_server.py` để biết endpoints chi tiết.*", unsafe_allow_html=True)
 
 # --- Tab: Hỏi AI ---
 with tab_chat:
