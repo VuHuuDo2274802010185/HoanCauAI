@@ -77,6 +77,30 @@ HoanCau AI Resume Processor là hệ thống tự động trích xuất thông t
    OUTPUT_CSV=cv_summary.csv
    ```
 
+### 💻 Cài đặt nhanh trên Windows
+
+1. Truy cập trang GitHub repo và bấm **Code** → **Download ZIP** (hoặc dùng
+   `git clone <repo_url>`).
+2. Giải nén (nếu tải ZIP) và mở `cmd` trong thư mục dự án.
+3. Chạy `setup.cmd` để tự động tạo `.env`, tạo virtual env và cài đặt
+   dependencies.
+4. Mở file `.env` vừa tạo và điền các biến như `GOOGLE_API_KEY`, thông tin
+   `EMAIL_*`.
+5. Cuối cùng chạy `run_resume_ai.cmd` để khởi động (không tham số sẽ mở UI,
+   thêm `cli` để chạy qua dòng lệnh).
+
+### 🛡️ SmartScreen trên Windows
+
+Khi chạy `setup.cmd` hoặc `run_resume_ai.cmd` lần đầu, SmartScreen có thể chặn file với thông báo "Windows protected your PC". Để bỏ chặn:
+
+1. Chuột phải vào file → **Properties** → tích **Unblock** → Apply.
+2. Hoặc chạy PowerShell:
+   ```powershell
+   Unblock-File .\setup.cmd
+   Unblock-File .\run_resume_ai.cmd
+   ```
+Sau đó chạy script lại.
+
 ## ⚙️ Sử dụng CLI Agent
 
 Các lệnh chính:
