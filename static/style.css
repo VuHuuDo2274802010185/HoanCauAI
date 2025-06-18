@@ -78,3 +78,10 @@ button[data-baseweb="base-button"]:hover {
   background-color: var(--cv-bg-color) !important;
   color: var(--cv-text-color) !important;
 }
+
+/* Wrap text in DataFrame cells for readability */
+div[data-testid="stDataFrame"] td {
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  max-width: 300px;
+}

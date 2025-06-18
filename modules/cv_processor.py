@@ -8,6 +8,7 @@ import logging  # ghi log
 from typing import List, Dict, Optional  # khai báo kiểu
 
 import pandas as pd  # xử lý DataFrame
+pd.set_option("display.max_colwidth", None)  # hiển thị đầy đủ nội dung các cột
 import docx  # đọc file .docx
 
 # --- Thiết lập logger cho module ---
@@ -174,13 +175,22 @@ class CVProcessor:
                 "Họ tên": info.get("ten", ""),
                 "Email": info.get("email", ""),
                 "Điện thoại": info.get("dien_thoai", ""),
+                "Địa chỉ": info.get("dia_chi", ""),
                 "Học vấn": info.get("hoc_van", ""),
                 "Kinh nghiệm": info.get("kinh_nghiem", ""),
-                "Địa chỉ": info.get("dia_chi", ""),
                 "Kỹ năng": info.get("ky_nang", ""),
             })
 
-        df = pd.DataFrame(rows)  # tạo DataFrame từ list dict
+        df = pd.DataFrame(rows, columns=[
+            "Nguồn",
+            "Họ tên",
+            "Email",
+            "Điện thoại",
+            "Địa chỉ",
+            "Học vấn",
+            "Kinh nghiệm",
+            "Kỹ năng",
+        ])  # tạo DataFrame từ list dict với thứ tự cột cố định
         return df  # trả về kết quả
 
     def save_to_csv(self, df: pd.DataFrame, output: str = OUTPUT_CSV):
