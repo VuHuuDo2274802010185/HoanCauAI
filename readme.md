@@ -68,9 +68,9 @@ HoanCau AI Resume Processor là hệ thống tự động trích xuất thông t
    # Email IMAP
    EMAIL_HOST=imap.gmail.com
    EMAIL_PORT=993
-  EMAIL_USER=<YOUR_EMAIL>
-  EMAIL_PASS=<YOUR_PASSWORD>
-  EMAIL_UNSEEN_ONLY=1
+   EMAIL_USER=<YOUR_EMAIL>
+   EMAIL_PASS=<YOUR_PASSWORD>
+   EMAIL_UNSEEN_ONLY=1
 
    # Đường dẫn lưu trữ
    ATTACHMENT_DIR=attachments
@@ -99,7 +99,7 @@ Khi chạy `setup.cmd` hoặc `run_resume_ai.cmd` lần đầu, SmartScreen có 
    Unblock-File .\setup.cmd
    Unblock-File .\run_resume_ai.cmd
    ```
-Sau đó chạy script lại.
+   Sau đó chạy script lại.
 
 ## ⚙️ Sử dụng CLI Agent
 
