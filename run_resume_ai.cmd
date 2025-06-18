@@ -1,5 +1,12 @@
 @echo off
 setlocal enableextensions enabledelayedexpansion
+
+:: Hiển thị banner màu để giao diện thân thiện hơn
+color 0A
+cls
+echo ======================================================
+echo                  RESUME AI - RUN SCRIPT
+echo ======================================================
 :: ======================================================
 :: Resume AI - Entry Script
 :: Mục đích: Kích hoạt venv, chọn chế độ CLI/SelectTop5/UI và chạy tương ứng
@@ -19,7 +26,7 @@ if errorlevel 1 (
     pause
     exit /b 1
 )
-echo [OK] Đã tìm thấy Python.
+echo [OK] Đã có Python.
 
 :: 2) Kích hoạt virtual environment nếu có
 if exist "%~dp0.venv\Scripts\activate.bat" (
