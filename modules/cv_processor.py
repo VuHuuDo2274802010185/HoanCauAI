@@ -129,7 +129,7 @@ class CVProcessor:
 
     def _fallback_regex(self, text: str) -> Dict:
         """
-        Dùng regex đơn giản để trích xuất các trường: tên, email, điện thoại, học vấn, kinh nghiệm
+        Dùng regex đơn giản để trích xuất các trường: tên, email, điện thoại, học vấn, kinh nghiệm, địa chỉ, kỹ năng
         Trả về dict với các key tương ứng
         """
         patterns = {
@@ -138,6 +138,8 @@ class CVProcessor:
             "dien_thoai": r"(\+?\d[\d\-\s]{7,}\d)",
             "hoc_van": r"(?:(?:Học vấn|Education)[:\-\s]+)([^\n]+)",
             "kinh_nghiem": r"(?:(?:Kinh nghiệm|Experience)[:\-\s]+)([^\n]+)",
+            "dia_chi": r"(?:(?:Địa chỉ|Address)[:\-\s]+)([^\n]+)",
+            "ky_nang": r"(?:(?:Kỹ năng|Skills?)[:\-\s]+)([^\n]+)",
         }
         info: Dict[str, str] = {}
         for k, p in patterns.items():
@@ -174,6 +176,8 @@ class CVProcessor:
                 "Điện thoại": info.get("dien_thoai", ""),
                 "Học vấn": info.get("hoc_van", ""),
                 "Kinh nghiệm": info.get("kinh_nghiem", ""),
+                "Địa chỉ": info.get("dia_chi", ""),
+                "Kỹ năng": info.get("ky_nang", ""),
             })
 
         df = pd.DataFrame(rows)  # tạo DataFrame từ list dict

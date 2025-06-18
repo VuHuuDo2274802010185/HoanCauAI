@@ -214,6 +214,8 @@ with tab_process:
                     "Điện thoại": info.get("dien_thoai", ""),
                     "Học vấn": info.get("hoc_van", ""),
                     "Kinh nghiệm": info.get("kinh_nghiem", ""),
+                    "Địa chỉ": info.get("dia_chi", ""),
+                    "Kỹ năng": info.get("ky_nang", ""),
                 })
                 progress.progress(idx/total)
             df = pd.DataFrame(results)
