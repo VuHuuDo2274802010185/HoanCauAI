@@ -1,5 +1,12 @@
 @echo off
 setlocal enableextensions enabledelayedexpansion
+
+:: Thiết lập màu sắc và tiêu đề cho giao diện thân thiện hơn
+color 0A
+cls
+echo ======================================================
+echo                 RESUME AI - SETUP SCRIPT
+echo ======================================================
 :: ======================================================
 :: Resume AI - Setup Script
 :: Mục đích: Tự động thiết lập môi trường dự án
@@ -16,11 +23,24 @@ chcp 65001 >nul
 :: 1) Kiểm tra Python
 python --version >nul 2>&1
 if errorlevel 1 (
-    echo Python không được cài đặt hoặc không tìm thấy trong PATH.
-    pause
-    exit /b 1
+    echo Python không được cài đặt hoặc không tìm thấy trong PATH. Đang thử cài đặt Python...
+    where winget >nul 2>&1
+    if errorlevel 1 (
+        echo Không tìm thấy winget để cài đặt Python tự động.
+        echo Vui lòng cài đặt Python thủ công tại https://www.python.org.
+        pause
+        exit /b 1
+    )
+    winget install --id Python.Python.3.11 --silent --accept-package-agreements --accept-source-agreements
+    if errorlevel 1 (
+        echo Lỗi cài đặt Python bằng winget.
+        echo Vui lòng cài đặt Python thủ công tại https://www.python.org rồi chạy lại script.
+        pause
+        exit /b 1
+    )
+    echo Hoàn tất cài đặt Python.
 )
-echo Tìm thấy Python.
+echo Đã có Python.
 
 :: 2) Copy .env.example thành .env nếu chưa tồn tại
 if not exist "%~dp0.env" (
