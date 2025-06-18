@@ -6,6 +6,8 @@ import logging
 import argparse
 import imaplib
 
+from .config import EMAIL_UNSEEN_ONLY
+
 from .email_fetcher import EmailFetcher
 
 
@@ -15,6 +17,7 @@ def watch_loop(
     port: int | None = None,
     user: str | None = None,
     password: str | None = None,
+    unseen_only: bool = EMAIL_UNSEEN_ONLY,
 ) -> None:
     """Kết nối IMAP và gọi fetch_cv_attachments() liên tục."""
     fetcher = EmailFetcher(host, port, user, password)
@@ -24,7 +27,7 @@ def watch_loop(
     try:
         while True:
             try:
-                fetcher.fetch_cv_attachments()
+                fetcher.fetch_cv_attachments(unseen_only=unseen_only)
             except imaplib.IMAP4.abort:
                 logging.warning("Mất kết nối IMAP, thử kết nối lại...")
                 try:
@@ -56,6 +59,11 @@ def main():
     parser.add_argument("--port", type=int)
     parser.add_argument("--user")
     parser.add_argument("--password")
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Quét tất cả email thay vì chỉ UNSEEN",
+    )
     args = parser.parse_args()
     watch_loop(
         args.interval,
@@ -63,6 +71,7 @@ def main():
         port=args.port,
         user=args.user,
         password=args.password,
+        unseen_only=not args.all,
     )
 
 

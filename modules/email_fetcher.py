@@ -9,7 +9,7 @@ import logging                   # ghi log
 from datetime import date        # dùng để lọc email theo ngày
 from typing import List, Optional
 
-from .config import ATTACHMENT_DIR  # đường dẫn lưu file đính kèm
+from .config import ATTACHMENT_DIR, EMAIL_UNSEEN_ONLY  # đường dẫn lưu file đính kèm và chế độ quét
 
 # --- Logger của module (tránh nhân đôi handler khi tạo nhiều instance) ---
 logger = logging.getLogger(__name__)
@@ -59,12 +59,15 @@ class EmailFetcher:
         keywords: Optional[List[str]] = None,
         since: Optional[date] = None,
         batch_size: int = 100,
+        unseen_only: bool = EMAIL_UNSEEN_ONLY,
     ) -> List[str]:
         """
         Tìm và tải xuống file đính kèm PDF/DOCX từ các email thoả mãn:
         - Tiêu đề hoặc nội dung chứa bất kỳ từ khoá nào trong ``keywords``.
         - Ngày gửi >= ``since`` nếu được cung cấp.
         Quét theo từng đợt ``batch_size`` email mới nhất.
+        Nếu ``unseen_only`` được bật (mặc định), chỉ tìm trong các email chưa đọc
+        để tránh quét lại những thư đã xử lý.
         """
         if self.mail is None:
             raise RuntimeError("Chưa kết nối IMAP. Gọi connect() trước.")
@@ -75,9 +78,9 @@ class EmailFetcher:
         new_files: List[str] = []
 
         # --- Tìm email với optional SINCE ---
-        criteria = ['ALL']
+        criteria = ['UNSEEN'] if unseen_only else ['ALL']
         if since:
-            criteria = ['SINCE', since.strftime('%d-%b-%Y')]
+            criteria += ['SINCE', since.strftime('%d-%b-%Y')]
 
         typ, data = self.mail.search(None, *criteria)
         if typ != 'OK':
@@ -156,8 +159,11 @@ class EmailFetcher:
                     new_files.append(path)
                     self.logger.info(f"[OK] Lưu đính kèm mới: {path}")
 
-            # Đánh dấu email đã đọc
-            self.mail.store(num, "+FLAGS", "\\Seen")
+                # Đánh dấu email đã đọc để tránh xử lý lại lần sau
+                try:
+                    self.mail.store(num, "+FLAGS", "\\Seen")
+                except Exception:
+                    pass
 
         if not new_files:
             self.logger.info("[INFO] Không tìm thấy đính kèm mới.")

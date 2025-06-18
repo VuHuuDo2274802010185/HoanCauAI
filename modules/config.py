@@ -53,6 +53,16 @@ else:
 EMAIL_USER = _get_env("EMAIL_USER")
 EMAIL_PASS = _get_env("EMAIL_PASS")
 
+# --- Tuỳ chọn quét email: chỉ UNSEEN hay tất cả ---
+def _get_bool(varname: str, default: bool = True) -> bool:
+    val = os.getenv(varname)
+    if val is None:
+        return default
+    cleaned = val.split('#', 1)[0].strip().lower()
+    return cleaned not in ("0", "false", "no", "")
+
+EMAIL_UNSEEN_ONLY = _get_bool("EMAIL_UNSEEN_ONLY", True)
+
 # --- Thư mục lưu file đính kèm và file xuất kết quả ---
 def _clean_path(varname: str, default: str) -> Path:
     """
