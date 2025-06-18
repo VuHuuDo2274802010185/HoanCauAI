@@ -17,6 +17,7 @@ import pandas as pd
 from modules.config import (
     LLM_CONFIG,
     get_models_for_provider,
+    get_model_price,
     GOOGLE_API_KEY,
     OPENROUTER_API_KEY,
     ATTACHMENT_DIR,
@@ -100,8 +101,10 @@ model = st.sidebar.selectbox(
     help="Chọn mô hình LLM"
 )
 
+price = get_model_price(model)
+label = f"{model} ({price})" if price != "unknown" else model
 # Hiển thị cấu hình đang dùng
-st.sidebar.markdown(f"**Đang dùng:** `{provider}` / `{model}`")
+st.sidebar.markdown(f"**Đang dùng:** `{provider}` / `{label}`")
 
 st.sidebar.header("Thông tin Email")
 email_user = st.sidebar.text_input(
@@ -177,7 +180,9 @@ with tab_fetch:
 # --- Tab: Xử lý CV từ attachments ---
 with tab_process:
     st.subheader("Xử lý CV từ attachments")
-    st.markdown(f"**LLM:** `{provider}` / `{model}`")
+    price = get_model_price(model)
+    label = f"{model} ({price})" if price != 'unknown' else model
+    st.markdown(f"**LLM:** `{provider}` / `{label}`")
     if st.button("Bắt đầu xử lý CV"): 
         files = [str(p) for p in ATTACHMENT_DIR.glob('*') if p.suffix.lower() in ('.pdf', '.docx')]
         if not files:
@@ -212,12 +217,14 @@ with tab_process:
 # --- Tab 2: Xử lý một CV đơn lẻ ---
 with tab_single:
     st.subheader("Xử lý một CV đơn lẻ")
-    st.markdown(f"**LLM:** `{provider}` / `{model}`")
+    price = get_model_price(model)
+    label = f"{model} ({price})" if price != 'unknown' else model
+    st.markdown(f"**LLM:** `{provider}` / `{label}`")
     uploaded = st.file_uploader("Chọn file CV (.pdf, .docx)", type=["pdf", "docx"])
     if uploaded:
         tmp_file = ROOT / f"tmp_{uploaded.name}"
         tmp_file.write_bytes(uploaded.getbuffer())
-        with st.spinner(f"Đang trích xuất & phân tích... (LLM: {provider}/{model})"):
+        with st.spinner(f"Đang trích xuất & phân tích... (LLM: {provider}/{label})"):
             proc = CVProcessor()
             proc.llm_client.provider = provider
             proc.llm_client.model = model
@@ -367,6 +374,6 @@ with tab_chat:
 # --- Footer ---
 st.markdown("---")
 st.markdown(
-    f"<center><small>Powered by Hoàn Cầu AI CV Processor | {provider} / {model}</small></center>",
+    f"<center><small>Powered by Hoàn Cầu AI CV Processor | {provider} / {label}</small></center>",
     unsafe_allow_html=True
 )
