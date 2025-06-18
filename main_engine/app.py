@@ -93,12 +93,18 @@ if not models:
 # Đặt model mặc định nếu session chưa có hoặc không hợp lệ
 if 'selected_model' not in st.session_state or st.session_state.selected_model not in models:
     st.session_state.selected_model = models[0]
+
 # Chọn model, lưu tự động vào session_state
+def _fmt_option(m: str) -> str:
+    p = get_model_price(m)
+    return f"{m} ({p})" if p != "unknown" else m
+
 model = st.sidebar.selectbox(
     "Model",
     options=models,
     key="selected_model",
-    help="Chọn mô hình LLM"
+    help="Chọn mô hình LLM",
+    format_func=_fmt_option,
 )
 
 price = get_model_price(model)
