@@ -212,13 +212,25 @@ with tab_process:
                     "Họ tên": info.get("ten", ""),
                     "Email": info.get("email", ""),
                     "Điện thoại": info.get("dien_thoai", ""),
+                    "Địa chỉ": info.get("dia_chi", ""),
                     "Học vấn": info.get("hoc_van", ""),
                     "Kinh nghiệm": info.get("kinh_nghiem", ""),
-                    "Địa chỉ": info.get("dia_chi", ""),
                     "Kỹ năng": info.get("ky_nang", ""),
                 })
                 progress.progress(idx/total)
-            df = pd.DataFrame(results)
+            df = pd.DataFrame(
+                results,
+                columns=[
+                    "Nguồn",
+                    "Họ tên",
+                    "Email",
+                    "Điện thoại",
+                    "Địa chỉ",
+                    "Học vấn",
+                    "Kinh nghiệm",
+                    "Kỹ năng",
+                ],
+            )
             processor.save_to_csv(df, str(OUTPUT_CSV))
             st.success(f"Đã xử lý {len(df)} CV và lưu vào `{OUTPUT_CSV.name}`.")
 
