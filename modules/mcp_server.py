@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     email_pass: str        # mật khẩu/app-password email
     attachment_dir: Path   # thư mục lưu tệp đính kèm
     output_csv: Path       # đường dẫn file CSV xuất kết quả
+    email_unseen_only: bool = True  # chỉ quét email chưa đọc nếu True
 
 
 # Khởi tạo cấu hình từ biến môi trường

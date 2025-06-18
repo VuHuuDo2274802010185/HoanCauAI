@@ -21,19 +21,21 @@ def cli():
 @click.option('--port', default=lambda: settings.email_port, type=int, help='IMAP port')
 @click.option('--user', default=lambda: settings.email_user, help='Email user')
 @click.option('--password', default=lambda: settings.email_pass, help='Email password')
-def watch(interval, host, port, user, password):
+@click.option('--unseen/--all', 'unseen_only', default=settings.email_unseen_only, show_default=True, help='Chỉ quét email chưa đọc')
+def watch(interval, host, port, user, password, unseen_only):
     """Tự động fetch CV từ email liên tục"""
     click.echo(f"Bắt đầu auto fetch với interval={interval}s...")
-    watch_loop(interval, host=host, port=port, user=user, password=password)
+    watch_loop(interval, host=host, port=port, user=user, password=password, unseen_only=unseen_only)
 
 @cli.command()
-def full_process():
+@click.option('--unseen/--all', 'unseen_only', default=settings.email_unseen_only, show_default=True, help='Chỉ quét email chưa đọc')
+def full_process(unseen_only):
     """Chạy đầy đủ quy trình fetch và xử lý CV"""
     click.echo("Bắt đầu full process...")
     # Fetch email
     fetcher = EmailFetcher(settings.email_host, settings.email_port, settings.email_user, settings.email_pass)
     fetcher.connect()
-    fetcher.fetch_cv_attachments()
+    fetcher.fetch_cv_attachments(unseen_only=unseen_only)
     # Process CVs
     processor = CVProcessor(fetcher)
     df = processor.process()

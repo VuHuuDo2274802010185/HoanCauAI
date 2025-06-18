@@ -26,6 +26,7 @@ from modules.config import (
     EMAIL_PORT,
     EMAIL_USER,
     EMAIL_PASS,
+    EMAIL_UNSEEN_ONLY,
 )
 from modules.email_fetcher import EmailFetcher
 from modules.cv_processor import CVProcessor
@@ -124,6 +125,11 @@ email_pass = st.sidebar.text_input(
     value=st.session_state.get("email_pass", EMAIL_PASS),
     key="email_pass",
 )
+unseen_only = st.sidebar.checkbox(
+    "Chỉ quét email chưa đọc",
+    value=st.session_state.get("unseen_only", EMAIL_UNSEEN_ONLY),
+    key="unseen_only",
+)
 
 # Tự động khởi động auto fetcher khi đã nhập đủ thông tin
 if email_user and email_pass and "auto_fetcher_thread" not in st.session_state:
@@ -136,6 +142,7 @@ if email_user and email_pass and "auto_fetcher_thread" not in st.session_state:
             port=EMAIL_PORT,
             user=email_user,
             password=email_pass,
+            unseen_only=unseen_only,
         )
 
     t = threading.Thread(target=_auto_fetch, daemon=True)
@@ -164,7 +171,7 @@ with tab_fetch:
                 EMAIL_HOST, EMAIL_PORT, email_user, email_pass
             )
             fetcher.connect()
-            new_files = fetcher.fetch_cv_attachments()
+            new_files = fetcher.fetch_cv_attachments(unseen_only=unseen_only)
             if new_files:
                 st.success(f"Đã tải {len(new_files)} file mới:")
                 st.write(new_files)

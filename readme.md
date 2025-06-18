@@ -68,8 +68,9 @@ HoanCau AI Resume Processor là hệ thống tự động trích xuất thông t
    # Email IMAP
    EMAIL_HOST=imap.gmail.com
    EMAIL_PORT=993
-   EMAIL_USER=<YOUR_EMAIL>
-   EMAIL_PASS=<YOUR_PASSWORD>
+  EMAIL_USER=<YOUR_EMAIL>
+  EMAIL_PASS=<YOUR_PASSWORD>
+  EMAIL_UNSEEN_ONLY=1
 
    # Đường dẫn lưu trữ
    ATTACHMENT_DIR=attachments
@@ -85,10 +86,12 @@ Các lệnh chính:
 python3 cli_agent.py --help
 
 # Tự động fetch CV từ email (watch loop)
-python3 cli_agent.py watch --interval 600
+python3 cli_agent.py watch --interval 600     # chỉ quét UNSEEN
+python3 cli_agent.py watch --all             # quét toàn bộ email
 
 # Chạy full process: fetch + xử lý batch
-python3 cli_agent.py full-process
+python3 cli_agent.py full-process            # chỉ quét UNSEEN
+python3 cli_agent.py full-process --all      # quét toàn bộ
 
 # Xử lý một file CV đơn lẻ
 python3 cli_agent.py single path/to/cv.pdf
