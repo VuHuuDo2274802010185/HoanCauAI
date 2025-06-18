@@ -9,7 +9,7 @@ if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
 import click                               # CLI framework
-from modules.config import LLM_CONFIG       # cấu hình LLM
+from modules.config import LLM_CONFIG, get_model_price       # cấu hình LLM
 from modules.model_fetcher import ModelFetcher  # fetch list models
 
 @click.group()
@@ -22,7 +22,9 @@ def info():
     """Hiển thị cấu hình LLM hiện tại."""
     click.echo("="*60)
     click.echo(f"Provider:      {LLM_CONFIG['provider'].upper()}")
-    click.echo(f"Model:         {LLM_CONFIG['model']}")
+    price = get_model_price(LLM_CONFIG['model'])
+    model_label = f"{LLM_CONFIG['model']} ({price})" if price != 'unknown' else LLM_CONFIG['model']
+    click.echo(f"Model:         {model_label}")
     key_status = "OK" if LLM_CONFIG.get("api_key") else "Không"
     click.echo(f"API Key set:   {key_status}")
     count = len(LLM_CONFIG.get("available_models", []))
@@ -42,7 +44,9 @@ def list_models():
 
     for m in models:
         mark = "*" if m == LLM_CONFIG["model"] else " "
-        click.echo(f"{mark} {m}")
+        price = get_model_price(m)
+        label = f"{m} ({price})" if price != 'unknown' else m
+        click.echo(f"{mark} {label}")
 
 if __name__ == "__main__":
     cli()

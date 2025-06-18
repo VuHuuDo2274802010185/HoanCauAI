@@ -83,6 +83,27 @@ OPENROUTER_FALLBACK_MODELS: List[str] = [
     "openai/gpt-4o", "openai/gpt-4o-mini", "openai/gpt-3.5-turbo",
 ]
 
+# --- Bảng giá tham khảo cho từng model ---
+MODEL_PRICES: Dict[str, str] = {
+    # Google Gemini
+    "gemini-1.5-flash": "free",
+    "gemini-1.5-flash-latest": "free",
+    "gemini-1.5-pro": "1$/token",
+    "gemini-1.5-pro-latest": "1$/token",
+    "gemini-pro": "1$/token",
+    "gemini-pro-vision": "1$/token",
+    # OpenRouter fallback models (giá tham khảo, có thể thay đổi)
+    "anthropic/claude-3.5-sonnet": "variable",
+    "anthropic/claude-3-haiku": "variable",
+    "openai/gpt-4o": "variable",
+    "openai/gpt-4o-mini": "variable",
+    "openai/gpt-3.5-turbo": "variable",
+}
+
+def get_model_price(model: str) -> str:
+    """Trả về giá (chuỗi) của model hoặc 'unknown' nếu không có."""
+    return MODEL_PRICES.get(model, "unknown")
+
 from .model_fetcher import ModelFetcher
 
 def get_available_models(provider: str, api_key: str) -> List[str]:
