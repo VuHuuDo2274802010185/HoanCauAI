@@ -5,3 +5,4 @@ __pycache__/
 *.log
 attachments/
 cv_summary.csv
+.venv
