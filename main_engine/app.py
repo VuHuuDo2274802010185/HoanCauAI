@@ -10,6 +10,12 @@ ROOT = HERE.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+# Khi chạy bằng `streamlit run`, __package__ sẽ là None dẫn tới lỗi khi
+# dùng relative imports. Thiết lập thủ công để các import như
+# `from .tabs import fetch_tab` hoạt động.
+if __package__ is None:
+    __package__ = "main_engine"
+
 import streamlit as st
 from typing import cast
 import requests
