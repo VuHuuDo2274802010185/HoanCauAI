@@ -11,6 +11,7 @@ if str(ROOT) not in sys.path:
 
 import streamlit as st
 from typing import cast
+import requests
 import pandas as pd
 
 # Import cấu hình và modules
@@ -27,6 +28,7 @@ from modules.config import (
     EMAIL_USER,
     EMAIL_PASS,
     EMAIL_UNSEEN_ONLY,
+    MCP_API_KEY,
 )
 from modules.email_fetcher import EmailFetcher
 from modules.cv_processor import CVProcessor
@@ -40,6 +42,38 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+# --- Tự nhận diện platform từ API key ---
+def detect_platform(api_key: str) -> str | None:
+    if not api_key:
+        return None
+    if api_key.startswith("sk-or-"):
+        return "openrouter"
+    if api_key.startswith("AIza"):
+        return "google"
+    if api_key.lower().startswith("vs-") or "vectorshift" in api_key.lower():
+        return "vectorshift"
+    # Thử gọi các endpoint đơn giản để nhận diện
+    try:
+        r = requests.get(
+            "https://openrouter.ai/api/v1/models",
+            headers={"Authorization": f"Bearer {api_key}"},
+            timeout=3,
+        )
+        if r.status_code == 200:
+            return "openrouter"
+    except Exception:
+        pass
+    try:
+        r = requests.get(
+            f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}",
+            timeout=3,
+        )
+        if r.status_code == 200:
+            return "google"
+    except Exception:
+        pass
+    return None
 
 # --- Load CSS tuỳ chỉnh ---
 def load_css():
@@ -353,15 +387,68 @@ with tab_mcp:
     st.markdown("Kết nối với MCP server và các client desktop như Cherry Studio, LangFlow, VectorShift.")
     st.markdown("**Hướng dẫn:**")
     st.markdown(
-        "1. Khởi động MCP server: `uvicorn modules.mcp_server:app --reload --host 0.0.0.0 --port 8000`\n"
+        "1. Khởi động MCP server bằng nút bên dưới hoặc chạy: `uvicorn modules.mcp_server:app --reload --host 0.0.0.0 --port 8000`\n"
         "2. Base URL: `http://localhost:8000`\n"
         "3. Cherry Studio: cấu hình endpoint HTTP để lấy các API, thêm flow & models.\n"
         "4. LangFlow: thêm gRPC hoặc HTTP node mới trỏ đến FastAPI endpoints.\n"
-        "5. VectorShift: sử dụng HTTP connector với URL trên và key môi trường nếu cần.",
-        unsafe_allow_html=True
+        "5. Nhập API key (Google, OpenRouter, VectorShift...) và hệ thống sẽ tự"
+        " nhận diện.",
+        unsafe_allow_html=True,
     )
+
+    mcp_key = st.text_input(
+        "API Key cho platform",
+        type="password",
+        value=st.session_state.get("mcp_api_key", MCP_API_KEY),
+        key="mcp_api_key",
+    )
+
+    mcp_running = (
+        "mcp_process" in st.session_state
+        and st.session_state.mcp_process.poll() is None
+    )
+
+    col1, col2 = st.columns(2)
+    with col1:
+        if not mcp_running and st.button("Khởi động MCP server"):
+            detected = detect_platform(mcp_key)
+            if detected == "openrouter":
+                os.environ["OPENROUTER_API_KEY"] = mcp_key
+            elif detected == "google":
+                os.environ["GOOGLE_API_KEY"] = mcp_key
+            elif detected == "vectorshift":
+                os.environ["MCP_API_KEY"] = mcp_key
+            st.session_state.mcp_api_key = mcp_key
+            import subprocess
+
+            cmd = [
+                "uvicorn",
+                "modules.mcp_server:app",
+                "--host",
+                "0.0.0.0",
+                "--port",
+                "8000",
+            ]
+            st.session_state.mcp_process = subprocess.Popen(cmd)
+            msg = "Đã khởi động MCP server"
+            if detected:
+                msg += f" (platform: {detected})"
+            st.success(msg)
+        elif mcp_running:
+            st.success("MCP server đang chạy")
+
+    with col2:
+        if mcp_running and st.button("Dừng MCP server"):
+            st.session_state.mcp_process.terminate()
+            st.session_state.mcp_process.wait()
+            del st.session_state.mcp_process
+            st.info("Đã dừng MCP server")
+
     st.markdown("---")
-    st.markdown("*Xem code: `modules/mcp_server.py` để biết endpoints chi tiết.*", unsafe_allow_html=True)
+    st.markdown(
+        "*Xem code: `modules/mcp_server.py` để biết endpoints chi tiết.*",
+        unsafe_allow_html=True,
+    )
 
 # --- Tab: Hỏi AI ---
 with tab_chat:
