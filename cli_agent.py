@@ -3,6 +3,7 @@ import threading
 import click
 import pandas as pd
 import uvicorn
+from modules.config import LLM_CONFIG
 
 from modules.auto_fetcher import watch_loop
 from modules.email_fetcher import EmailFetcher
@@ -74,7 +75,7 @@ def chat(question):
     # Chọn provider và model từ env hoặc default
     provider = os.getenv('LLM_PROVIDER', 'google')
     model = os.getenv('LLM_MODEL', '')
-    api_key = os.getenv('LLM_API_KEY', '')
+    api_key = LLM_CONFIG.get('api_key', '')
     answer = answer_question(question, df, provider, model, api_key)
     click.echo(answer)
 

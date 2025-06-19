@@ -113,6 +113,8 @@ python3 cli_agent.py serve --host 0.0.0.0 --port 8000
 # Hỏi AI dựa trên kết quả CSV
 python3 cli_agent.py chat "Câu hỏi của bạn"
 ```
+Lệnh `chat` tự động sử dụng khóa API tương ứng với `LLM_PROVIDER`
+được khai báo trong file `.env` (`GOOGLE_API_KEY` hoặc `OPENROUTER_API_KEY`).
 
 ## 🌐 Giao diện web (Streamlit)
 
