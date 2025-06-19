@@ -35,6 +35,7 @@ HoanCau AI Resume Processor là hệ thống tự động trích xuất thông t
 - Xử lý một file CV đơn lẻ.
 - Chạy lệnh CLI, web UI hoặc FastAPI server.
 - Hỏi AI (chat) dựa trên dữ liệu đã xử lý.
+- Lưu log cuộc trò chuyện của tính năng Hỏi AI.
 - Không gây cảnh báo Streamlit khi chạy CLI: `DynamicLLMClient` tự kiểm tra session context.
 
 ## 🚀 Bắt đầu nhanh
@@ -117,6 +118,7 @@ python3 cli_agent.py chat "Câu hỏi của bạn"
 ```
 Lệnh `chat` tự động sử dụng khóa API tương ứng với `LLM_PROVIDER`
 được khai báo trong file `.env` (`GOOGLE_API_KEY` hoặc `OPENROUTER_API_KEY`).
+Mỗi lần hỏi đáp sẽ được lưu vào file log tại `chat_logs/chat_log.json` (có thể thay đổi qua biến `CHAT_LOG_FILE`).
 
 ## 🌐 Giao diện web (Streamlit)
 
