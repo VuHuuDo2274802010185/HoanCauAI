@@ -8,6 +8,7 @@ from modules.config import LLM_CONFIG
 from modules.auto_fetcher import watch_loop
 from modules.email_fetcher import EmailFetcher
 from modules.cv_processor import CVProcessor
+from modules.llm_client import LLMClient
 from modules.qa_chatbot import answer_question
 from modules.mcp_server import settings
 
@@ -38,7 +39,7 @@ def full_process(unseen_only):
     fetcher.connect()
     fetcher.fetch_cv_attachments(unseen_only=unseen_only)
     # Process CVs
-    processor = CVProcessor(fetcher)
+    processor = CVProcessor(fetcher, llm_client=LLMClient())
     df = processor.process()
     if df.empty:
         click.echo("Không có CV mới để xử lý.")
@@ -51,7 +52,7 @@ def full_process(unseen_only):
 def single(file):
     """Xử lý một file CV đơn lẻ"""
     click.echo(f"Xử lý file: {file}")
-    processor = CVProcessor()
+    processor = CVProcessor(llm_client=LLMClient())
     text = processor.extract_text(file)
     info = processor.extract_info_with_llm(text)
     click.echo(info)
