@@ -76,7 +76,7 @@ def select_top5_sources(df: pd.DataFrame) -> list:
 
 def main():
     """Entry-point: đọc CSV và in TOP 5."""
-    path = OUTPUT_CSV if os.path.isfile(OUTPUT_CSV) else "cv_summary.csv"
+    path = OUTPUT_CSV if os.path.isfile(OUTPUT_CSV) else "csv/cv_summary.csv"
     df = read_cv_summary(path)
     top5 = select_top5_sources(df)
     print("\n=== TOP 5 Hồ sơ ===")

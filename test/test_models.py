@@ -1,7 +1,9 @@
 # test_models.py
 
 import os               # thư viện để truy cập biến môi trường
+import sys
 import pytest           # pytest framework để viết và chạy unit tests
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from modules.model_fetcher import ModelFetcher  # import lớp dùng để lấy danh sách models
 
 @pytest.fixture
