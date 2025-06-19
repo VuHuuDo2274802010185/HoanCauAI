@@ -3,7 +3,7 @@ import os
 import subprocess
 import streamlit as st
 
-from ..modules.config import MCP_API_KEY
+from modules.config import MCP_API_KEY
 
 
 def render(detect_platform) -> None:

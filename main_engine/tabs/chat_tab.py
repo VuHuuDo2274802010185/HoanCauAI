@@ -4,8 +4,8 @@ import pandas as pd
 import streamlit as st
 from typing import cast
 
-from ..modules.qa_chatbot import answer_question
-from ..modules.config import OUTPUT_CSV
+from modules.qa_chatbot import answer_question
+from modules.config import OUTPUT_CSV
 
 
 def render(provider: str, model: str, api_key: str) -> None:

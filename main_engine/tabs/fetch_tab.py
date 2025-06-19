@@ -3,8 +3,8 @@ import os
 from typing import List
 import streamlit as st
 
-from ..modules.config import ATTACHMENT_DIR, EMAIL_HOST, EMAIL_PORT
-from ..modules.email_fetcher import EmailFetcher
+from modules.config import ATTACHMENT_DIR, EMAIL_HOST, EMAIL_PORT
+from modules.email_fetcher import EmailFetcher
 
 
 def render(email_user: str, email_pass: str, unseen_only: bool) -> None:
