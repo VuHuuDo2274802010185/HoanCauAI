@@ -57,25 +57,12 @@ HoanCau AI Resume Processor là hệ thống tự động trích xuất thông t
 
 3. **Tạo file `.env`**
 
-   Tạo file `.env` tại gốc dự án với nội dung:
-   ```env
-   # LLM
-   LLM_PROVIDER=google
-   LLM_MODEL=gemini-2.0-flask
-   GOOGLE_API_KEY=<YOUR_GOOGLE_KEY>
-   OPENROUTER_API_KEY=<YOUR_OPENROUTER_KEY>
-
-   # Email IMAP
-   EMAIL_HOST=imap.gmail.com
-   EMAIL_PORT=993
-   EMAIL_USER=<YOUR_EMAIL>
-   EMAIL_PASS=<YOUR_PASSWORD>
-   EMAIL_UNSEEN_ONLY=1
-
-   # Đường dẫn lưu trữ
-   ATTACHMENT_DIR=attachments
-   OUTPUT_CSV=cv_summary.csv
+   Sao chép file mẫu `.env.example` thành `.env` rồi điền các khoá API của bạn:
+   ```bash
+   cp .env.example .env
    ```
+   Sau đó mở `.env` và thay thế các giá trị placeholder (như `your_google_api_key`)
+   bằng thông tin thực tế.
 
 ### 💻 Cài đặt nhanh trên Windows
 
