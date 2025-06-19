@@ -5,6 +5,7 @@ import pandas as pd
 
 from modules.cv_processor import CVProcessor
 from modules.config import get_model_price
+from modules.dynamic_llm_client import DynamicLLMClient
 
 
 def render(provider: str, model: str, api_key: str, root: Path) -> None:
@@ -19,10 +20,13 @@ def render(provider: str, model: str, api_key: str, root: Path) -> None:
         tmp_file.write_bytes(uploaded.getbuffer())
         with st.spinner(f"Đang trích xuất & phân tích... (LLM: {provider}/{label})"):
             logging.info(f"Xử lý file đơn {uploaded.name}")
-            proc = CVProcessor()
-            proc.llm_client.provider = provider
-            proc.llm_client.model = model
-            proc.llm_client.api_key = api_key
+            proc = CVProcessor(
+                llm_client=DynamicLLMClient(
+                    provider=provider,
+                    model=model,
+                    api_key=api_key,
+                )
+            )
             text = proc.extract_text(str(tmp_file))
             info = proc.extract_info_with_llm(text)
         st.json(info)
