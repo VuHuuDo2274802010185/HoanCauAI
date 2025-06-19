@@ -40,6 +40,7 @@ def render(provider: str, model: str, api_key: str) -> None:
                 results.append({
                     "Nguồn": fname,
                     "Họ tên": info.get("ten", ""),
+                    "Tuổi": info.get("tuoi", ""),
                     "Email": info.get("email", ""),
                     "Điện thoại": info.get("dien_thoai", ""),
                     "Địa chỉ": info.get("dia_chi", ""),
@@ -53,6 +54,7 @@ def render(provider: str, model: str, api_key: str) -> None:
                 columns=[
                     "Nguồn",
                     "Họ tên",
+                    "Tuổi",
                     "Email",
                     "Điện thoại",
                     "Địa chỉ",

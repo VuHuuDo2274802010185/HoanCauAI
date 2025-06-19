@@ -132,11 +132,12 @@ class CVProcessor:
 
     def _fallback_regex(self, text: str) -> Dict:
         """
-        Dùng regex đơn giản để trích xuất các trường: tên, email, điện thoại, học vấn, kinh nghiệm, địa chỉ, kỹ năng
+        Dùng regex đơn giản để trích xuất các trường: tên, tuổi, email, điện thoại, học vấn, kinh nghiệm, địa chỉ, kỹ năng
         Trả về dict với các key tương ứng
         """
         patterns = {
             "ten": r"(?:(?:Họ tên|Tên)[:\-\s]+)([^\n]+)",
+            "tuoi": r"(?:(?:Tuổi|Age)[:\-\s]+)(\d{1,3})",
             "email": r"([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)",
             "dien_thoai": r"(\+?\d[\d\-\s]{7,}\d)",
             "hoc_van": r"(?:(?:Học vấn|Education)[:\-\s]+)([^\n]+)",
@@ -175,6 +176,7 @@ class CVProcessor:
             rows.append({
                 "Nguồn": os.path.basename(path),
                 "Họ tên": info.get("ten", ""),
+                "Tuổi": info.get("tuoi", ""),
                 "Email": info.get("email", ""),
                 "Điện thoại": info.get("dien_thoai", ""),
                 "Địa chỉ": info.get("dia_chi", ""),
@@ -186,6 +188,7 @@ class CVProcessor:
         df = pd.DataFrame(rows, columns=[
             "Nguồn",
             "Họ tên",
+            "Tuổi",
             "Email",
             "Điện thoại",
             "Địa chỉ",
