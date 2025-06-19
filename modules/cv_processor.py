@@ -6,6 +6,7 @@ import json  # parse và dump JSON
 import time  # xử lý thời gian và sleep retry
 import logging  # ghi log
 from typing import List, Dict, Optional  # khai báo kiểu
+from pathlib import Path
 
 import pandas as pd  # xử lý DataFrame
 pd.set_option("display.max_colwidth", None)  # hiển thị đầy đủ nội dung các cột
@@ -19,8 +20,9 @@ fmt = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")  # định 
 stream_h = logging.StreamHandler()  
 stream_h.setFormatter(fmt)
 logger.addHandler(stream_h)
-# handler xuất log ra file cv_processor.log
-file_h = logging.FileHandler("cv_processor.log", encoding="utf-8")
+# handler xuất log ra file trong thư mục log
+Path("log").mkdir(parents=True, exist_ok=True)
+file_h = logging.FileHandler("log/cv_processor.log", encoding="utf-8")
 file_h.setFormatter(fmt)
 logger.addHandler(file_h)
 

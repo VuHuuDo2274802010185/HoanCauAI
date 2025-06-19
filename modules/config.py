@@ -79,11 +79,12 @@ def _clean_path(varname: str, default: str) -> Path:
     return Path(cleaned)
 
 ATTACHMENT_DIR = _clean_path("ATTACHMENT_DIR", "attachments")
-OUTPUT_CSV = _clean_path("OUTPUT_CSV", "cv_summary.csv")
+OUTPUT_CSV = _clean_path("OUTPUT_CSV", "csv/cv_summary.csv")
 # File lưu log hội thoại chat
-CHAT_LOG_FILE = _clean_path("CHAT_LOG_FILE", "chat_logs/chat_log.json")
+CHAT_LOG_FILE = _clean_path("CHAT_LOG_FILE", "log/chat_log.json")
 # tạo thư mục nếu chưa tồn tại
 ATTACHMENT_DIR.mkdir(parents=True, exist_ok=True)
+OUTPUT_CSV.parent.mkdir(parents=True, exist_ok=True)
 CHAT_LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
 
 # --- Danh sách models dự phòng ---
