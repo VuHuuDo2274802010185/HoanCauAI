@@ -80,8 +80,11 @@ def _clean_path(varname: str, default: str) -> Path:
 
 ATTACHMENT_DIR = _clean_path("ATTACHMENT_DIR", "attachments")
 OUTPUT_CSV = _clean_path("OUTPUT_CSV", "cv_summary.csv")
+# File lưu log hội thoại chat
+CHAT_LOG_FILE = _clean_path("CHAT_LOG_FILE", "chat_logs/chat_log.json")
 # tạo thư mục nếu chưa tồn tại
 ATTACHMENT_DIR.mkdir(parents=True, exist_ok=True)
+CHAT_LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
 
 # --- Danh sách models dự phòng ---
 GOOGLE_FALLBACK_MODELS: List[str] = [
