@@ -4,4 +4,6 @@ __pycache__/
 .env
 *.log
 attachments/
+log/*
+!log/.gitkeep
 *.csv
