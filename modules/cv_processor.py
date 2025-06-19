@@ -151,6 +151,33 @@ class CVProcessor:
             info[k] = m.group(1).strip() if m else ""
         return info
 
+    def process_file(self, path: str) -> pd.DataFrame:
+        """Xử lý một file CV đơn lẻ và trả về DataFrame 1 dòng."""
+        txt = self.extract_text(path)
+        info = self.extract_info_with_llm(txt) or {}
+        row = {
+            "Nguồn": os.path.basename(path),
+            "Họ tên": info.get("ten", ""),
+            "Tuổi": info.get("tuoi", ""),
+            "Email": info.get("email", ""),
+            "Điện thoại": info.get("dien_thoai", ""),
+            "Địa chỉ": info.get("dia_chi", ""),
+            "Học vấn": info.get("hoc_van", ""),
+            "Kinh nghiệm": info.get("kinh_nghiem", ""),
+            "Kỹ năng": info.get("ky_nang", ""),
+        }
+        return pd.DataFrame([row], columns=[
+            "Nguồn",
+            "Họ tên",
+            "Tuổi",
+            "Email",
+            "Điện thoại",
+            "Địa chỉ",
+            "Học vấn",
+            "Kinh nghiệm",
+            "Kỹ năng",
+        ])
+
     def process(self) -> pd.DataFrame:
         """
         Tìm tất cả file CV (fetcher hoặc thư mục attachments), trích xuất info, trả về DataFrame
@@ -198,9 +225,10 @@ class CVProcessor:
         ])  # tạo DataFrame từ list dict với thứ tự cột cố định
         return df  # trả về kết quả
 
-    def save_to_csv(self, df: pd.DataFrame, output: str = OUTPUT_CSV):
-        """
-        Ghi đè file CSV mỗi lần chạy; nếu muốn append, có thể chuyển mode và header
-        """
-        df.to_csv(output, index=False, encoding="utf-8-sig")  # lưu file
+    def save_to_csv(self, df: pd.DataFrame, output: str = OUTPUT_CSV, append: bool = False):
+        """Lưu DataFrame vào CSV. Nếu append=True thì nối thêm."""
+        if append and os.path.exists(output):
+            df.to_csv(output, mode="a", header=False, index=False, encoding="utf-8-sig")
+        else:
+            df.to_csv(output, index=False, encoding="utf-8-sig")
         logger.info(f"✅ Đã lưu {len(df)} hồ sơ vào {output}")
