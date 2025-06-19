@@ -61,7 +61,7 @@ HoanCau AI Resume Processor là hệ thống tự động trích xuất thông t
    ```env
    # LLM
    LLM_PROVIDER=google
-   LLM_MODEL=gemini-1.5-flash-latest
+   LLM_MODEL=gemini-2.0-flask
    GOOGLE_API_KEY=<YOUR_GOOGLE_KEY>
    OPENROUTER_API_KEY=<YOUR_OPENROUTER_KEY>
 
