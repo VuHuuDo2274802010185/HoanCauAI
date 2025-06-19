@@ -2,6 +2,7 @@
 
 import os, sys
 from pathlib import Path
+import logging
 
 # Đưa thư mục gốc (chứa `modules/`) vào sys.path để import modules
 HERE = Path(__file__).parent
@@ -34,6 +35,24 @@ from modules.email_fetcher import EmailFetcher
 from modules.cv_processor import CVProcessor
 from modules.qa_chatbot import answer_question
 from modules.auto_fetcher import watch_loop
+
+# --- Streamlit logging handler ---
+class StreamlitLogHandler(logging.Handler):
+    def emit(self, record: logging.LogRecord) -> None:
+        msg = self.format(record)
+        logs = st.session_state.get("logs", [])
+        logs.append(msg)
+        st.session_state["logs"] = logs
+
+if "streamlit_log_handler" not in st.session_state:
+    _h = StreamlitLogHandler()
+    _h.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+    logging.getLogger().addHandler(_h)
+    st.session_state["streamlit_log_handler"] = True
+
+def update_log(box):
+    lines = st.session_state.get("logs", [])
+    box.code("\n".join(lines[-100:]), language="text")
 
 # --- Cấu hình chung cho trang Streamlit ---
 st.set_page_config(
@@ -182,6 +201,7 @@ if email_user and email_pass and "auto_fetcher_thread" not in st.session_state:
     t = threading.Thread(target=_auto_fetch, daemon=True)
     t.start()
     st.session_state.auto_fetcher_thread = t
+    logging.info("Đã khởi động auto fetcher background thread")
     st.sidebar.info("Đang tự động lấy CV từ email...")
 
 # --- Main UI: 5 Tabs ---
@@ -201,6 +221,7 @@ with tab_fetch:
         st.info("Auto fetch đang chạy ngầm. Bạn có thể nhấn 'Fetch Now' để kiểm tra ngay.")
         # Nút kích hoạt fetch ngay lập tức
         if st.button("Fetch Now"):
+            logging.info("Thực hiện fetch email thủ công")
             fetcher = EmailFetcher(
                 EMAIL_HOST, EMAIL_PORT, email_user, email_pass
             )
@@ -222,6 +243,7 @@ with tab_fetch:
                 f.unlink()
             except Exception:
                 pass
+        logging.info(f"Đã xóa {count} file trong attachments")
         st.success(f"Đã xóa {count} file trong thư mục attachments.")
 
 # --- Tab: Xử lý CV từ attachments ---
@@ -230,7 +252,8 @@ with tab_process:
     price = get_model_price(model)
     label = f"{model} ({price})" if price != 'unknown' else model
     st.markdown(f"**LLM:** `{provider}` / `{label}`")
-    if st.button("Bắt đầu xử lý CV"): 
+    if st.button("Bắt đầu xử lý CV"):
+        logging.info("Bắt đầu xử lý batch CV từ attachments")
         files = [str(p) for p in ATTACHMENT_DIR.glob('*') if p.suffix.lower() in ('.pdf', '.docx')]
         if not files:
             st.warning("Không có file CV trong thư mục attachments để xử lý.")
@@ -246,6 +269,7 @@ with tab_process:
             for idx, path in enumerate(files, start=1):
                 fname = os.path.basename(path)
                 status.text(f"({idx}/{total}) Đang xử lý: {fname}")
+                logging.info(f"Đang xử lý {fname}")
                 text = processor.extract_text(path)
                 info = processor.extract_info_with_llm(text)
                 results.append({
@@ -273,6 +297,7 @@ with tab_process:
                 ],
             )
             processor.save_to_csv(df, str(OUTPUT_CSV))
+            logging.info(f"Đã xử lý {len(df)} CV và lưu kết quả")
             st.success(f"Đã xử lý {len(df)} CV và lưu vào `{OUTPUT_CSV.name}`.")
 
 # --- Tab 2: Xử lý một CV đơn lẻ ---
@@ -286,6 +311,7 @@ with tab_single:
         tmp_file = ROOT / f"tmp_{uploaded.name}"
         tmp_file.write_bytes(uploaded.getbuffer())
         with st.spinner(f"Đang trích xuất & phân tích... (LLM: {provider}/{label})"):
+            logging.info(f"Xử lý file đơn {uploaded.name}")
             proc = CVProcessor()
             proc.llm_client.provider = provider
             proc.llm_client.model = model
@@ -464,6 +490,7 @@ with tab_chat:
         "Nhập câu hỏi và nhấn Enter để gửi", key="ai_question", on_change=submit_ai
     )
     # Process on trigger
+
     if st.session_state.trigger_ai:
         st.session_state.trigger_ai = False
         if not question.strip():
@@ -474,6 +501,7 @@ with tab_chat:
             df = pd.read_csv(OUTPUT_CSV, encoding="utf-8-sig")
             with st.spinner("Đang hỏi AI..."):
                 try:
+                    logging.info("Đang gửi câu hỏi tới AI")
                     answer = answer_question(
                         question,
                         df,
@@ -483,7 +511,15 @@ with tab_chat:
                     )
                     st.markdown(answer)
                 except Exception as e:
+                    logging.error(f"Lỗi hỏi AI: {e}")
                     st.error(f"Lỗi khi hỏi AI: {e}")
+
+# --- Log Viewer ---
+log_expander = st.expander("Xem log xử lý", expanded=False)
+with log_expander:
+    log_box = st.empty()
+    log_lines = st.session_state.get("logs", [])
+    update_log(log_box)
 
 # --- Footer ---
 st.markdown("---")
