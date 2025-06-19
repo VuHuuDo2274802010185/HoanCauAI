@@ -37,7 +37,8 @@ class ModelFetcher:
         path = ModelFetcher._cache_path(provider)
         if os.path.exists(path):
             try:
-                return json.load(open(path, "r", encoding="utf-8"))
+                with open(path, "r", encoding="utf-8") as f:
+                    return json.load(f)
             except Exception:
                 pass
         return []
@@ -49,7 +50,8 @@ class ModelFetcher:
         """
         path = ModelFetcher._cache_path(provider)
         try:
-            json.dump(data, open(path, "w", encoding="utf-8"), indent=2)
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2)
         except Exception:
             pass
 
