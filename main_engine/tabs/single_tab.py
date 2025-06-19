@@ -3,8 +3,8 @@ from pathlib import Path
 import streamlit as st
 import pandas as pd
 
-from ..modules.cv_processor import CVProcessor
-from ..modules.config import get_model_price
+from modules.cv_processor import CVProcessor
+from modules.config import get_model_price
 
 
 def render(provider: str, model: str, api_key: str, root: Path) -> None:

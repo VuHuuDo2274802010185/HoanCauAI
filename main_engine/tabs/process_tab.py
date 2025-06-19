@@ -3,8 +3,8 @@ import os
 import pandas as pd
 import streamlit as st
 
-from ..modules.cv_processor import CVProcessor
-from ..modules.config import ATTACHMENT_DIR, OUTPUT_CSV, get_model_price
+from modules.cv_processor import CVProcessor
+from modules.config import ATTACHMENT_DIR, OUTPUT_CSV, get_model_price
 
 
 def render(provider: str, model: str, api_key: str) -> None:
