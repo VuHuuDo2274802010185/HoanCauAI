@@ -13,8 +13,6 @@ if str(ROOT) not in sys.path:
 import streamlit as st
 from typing import cast
 import requests
-import pandas as pd
-
 # Import cấu hình và modules
 from modules.config import (
     LLM_CONFIG,
@@ -22,8 +20,6 @@ from modules.config import (
     get_model_price,
     GOOGLE_API_KEY,
     OPENROUTER_API_KEY,
-    ATTACHMENT_DIR,
-    OUTPUT_CSV,
     EMAIL_HOST,
     EMAIL_PORT,
     EMAIL_USER,
@@ -31,10 +27,17 @@ from modules.config import (
     EMAIL_UNSEEN_ONLY,
     MCP_API_KEY,
 )
-from modules.email_fetcher import EmailFetcher
-from modules.cv_processor import CVProcessor
-from modules.qa_chatbot import answer_question
 from modules.auto_fetcher import watch_loop
+
+from .tabs import (
+    fetch_tab,
+    process_tab,
+    single_tab,
+    results_tab,
+    flow_tab,
+    mcp_tab,
+    chat_tab,
+)
 
 # --- Streamlit logging handler ---
 class StreamlitLogHandler(logging.Handler):
@@ -144,9 +147,15 @@ models = st.session_state.get("available_models", get_models_for_provider(provid
 if not models:
     st.sidebar.error("Không lấy được models, vui lòng kiểm tra API Key.")
     models = [LLM_CONFIG.get("model")]
-# Đặt model mặc định nếu session chưa có hoặc không hợp lệ
-if 'selected_model' not in st.session_state or st.session_state.selected_model not in models:
-    st.session_state.selected_model = models[0]
+# Đặt model mặc định "gemini-2.0-flask" khi khởi động lần đầu
+default_model = LLM_CONFIG.get("model", "gemini-2.0-flask")
+if default_model not in models:
+    default_model = models[0]
+if (
+    "selected_model" not in st.session_state
+    or st.session_state.selected_model not in models
+):
+    st.session_state.selected_model = default_model
 
 # Chọn model, lưu tự động vào session_state
 def _fmt_option(m: str) -> str:
@@ -209,310 +218,26 @@ tab_fetch, tab_process, tab_single, tab_results, tab_flow, tab_mcp, tab_chat = s
     "Lấy CV từ Email", "Xử lý CV", "Single File", "Kết quả", "Xây dựng flow", "MCP Server", "Hỏi AI"
 ])
 
-# --- Tab: Lấy CV từ Email ---
 with tab_fetch:
-    st.subheader("Lấy CV từ Email")
-    st.markdown(
-        "**Email Config:** Khi đã nhập Gmail và mật khẩu ở sidebar, hệ thống sẽ tự động tải CV mới."
-    )
-    if not email_user or not email_pass:
-        st.warning("Cần nhập Gmail và mật khẩu trong sidebar để bắt đầu auto fetch.")
-    else:
-        st.info("Auto fetch đang chạy ngầm. Bạn có thể nhấn 'Fetch Now' để kiểm tra ngay.")
-        # Nút kích hoạt fetch ngay lập tức
-        if st.button("Fetch Now"):
-            logging.info("Thực hiện fetch email thủ công")
-            fetcher = EmailFetcher(
-                EMAIL_HOST, EMAIL_PORT, email_user, email_pass
-            )
-            fetcher.connect()
-            new_files = fetcher.fetch_cv_attachments(unseen_only=unseen_only)
-            if new_files:
-                st.success(f"Đã tải {len(new_files)} file mới:")
-                st.write(new_files)
-            else:
-                st.info("Không có file đính kèm mới.")
-        # Hiển thị danh sách hiện tại trong thư mục attachments
-        attachments = [str(p) for p in ATTACHMENT_DIR.glob('*')]
-        st.write(attachments)
-    if st.button("Xóa toàn bộ attachments"):
-        attachments = list(ATTACHMENT_DIR.iterdir())
-        count = sum(1 for f in attachments if f.is_file())
-        for f in attachments:
-            try:
-                f.unlink()
-            except Exception:
-                pass
-        logging.info(f"Đã xóa {count} file trong attachments")
-        st.success(f"Đã xóa {count} file trong thư mục attachments.")
+    fetch_tab.render(email_user, email_pass, unseen_only)
 
-# --- Tab: Xử lý CV từ attachments ---
 with tab_process:
-    st.subheader("Xử lý CV từ attachments")
-    price = get_model_price(model)
-    label = f"{model} ({price})" if price != 'unknown' else model
-    st.markdown(f"**LLM:** `{provider}` / `{label}`")
-    if st.button("Bắt đầu xử lý CV"):
-        logging.info("Bắt đầu xử lý batch CV từ attachments")
-        files = [str(p) for p in ATTACHMENT_DIR.glob('*') if p.suffix.lower() in ('.pdf', '.docx')]
-        if not files:
-            st.warning("Không có file CV trong thư mục attachments để xử lý.")
-        else:
-            processor = CVProcessor()
-            processor.llm_client.provider = provider
-            processor.llm_client.model = model
-            processor.llm_client.api_key = api_key
-            progress = st.progress(0)
-            status = st.empty()
-            results = []
-            total = len(files)
-            for idx, path in enumerate(files, start=1):
-                fname = os.path.basename(path)
-                status.text(f"({idx}/{total}) Đang xử lý: {fname}")
-                logging.info(f"Đang xử lý {fname}")
-                text = processor.extract_text(path)
-                info = processor.extract_info_with_llm(text)
-                results.append({
-                    "Nguồn": fname,
-                    "Họ tên": info.get("ten", ""),
-                    "Email": info.get("email", ""),
-                    "Điện thoại": info.get("dien_thoai", ""),
-                    "Địa chỉ": info.get("dia_chi", ""),
-                    "Học vấn": info.get("hoc_van", ""),
-                    "Kinh nghiệm": info.get("kinh_nghiem", ""),
-                    "Kỹ năng": info.get("ky_nang", ""),
-                })
-                progress.progress(idx/total)
-            df = pd.DataFrame(
-                results,
-                columns=[
-                    "Nguồn",
-                    "Họ tên",
-                    "Email",
-                    "Điện thoại",
-                    "Địa chỉ",
-                    "Học vấn",
-                    "Kinh nghiệm",
-                    "Kỹ năng",
-                ],
-            )
-            processor.save_to_csv(df, str(OUTPUT_CSV))
-            logging.info(f"Đã xử lý {len(df)} CV và lưu kết quả")
-            st.success(f"Đã xử lý {len(df)} CV và lưu vào `{OUTPUT_CSV.name}`.")
+    process_tab.render(provider, model, api_key)
 
-# --- Tab 2: Xử lý một CV đơn lẻ ---
 with tab_single:
-    st.subheader("Xử lý một CV đơn lẻ")
-    price = get_model_price(model)
-    label = f"{model} ({price})" if price != 'unknown' else model
-    st.markdown(f"**LLM:** `{provider}` / `{label}`")
-    uploaded = st.file_uploader("Chọn file CV (.pdf, .docx)", type=["pdf", "docx"])
-    if uploaded:
-        tmp_file = ROOT / f"tmp_{uploaded.name}"
-        tmp_file.write_bytes(uploaded.getbuffer())
-        with st.spinner(f"Đang trích xuất & phân tích... (LLM: {provider}/{label})"):
-            logging.info(f"Xử lý file đơn {uploaded.name}")
-            proc = CVProcessor()
-            proc.llm_client.provider = provider
-            proc.llm_client.model = model
-            proc.llm_client.api_key = api_key
-            text = proc.extract_text(str(tmp_file))
-            info = proc.extract_info_with_llm(text)
-        st.json(info)
-        tmp_file.unlink(missing_ok=True)
+    single_tab.render(provider, model, api_key, ROOT)
 
-# --- Tab 3: Xem và tải kết quả ---
 with tab_results:
-    st.subheader("Xem và tải kết quả")
-    if os.path.exists(OUTPUT_CSV):
-        df = pd.read_csv(OUTPUT_CSV, encoding="utf-8-sig")
-        st.dataframe(df, use_container_width=True)
-        csv_bytes = df.to_csv(index=False, encoding="utf-8-sig").encode()
-        st.download_button(
-            label="Tải xuống CSV",
-            data=csv_bytes,
-            file_name=OUTPUT_CSV.name,
-            mime="text/csv"
-        )
-    else:
-        st.info("Chưa có kết quả. Vui lòng chạy Batch hoặc Single.")
+    results_tab.render()
 
-# --- Tab: Xây dựng flow ---
 with tab_flow:
-    st.subheader("Xây dựng flow")
-    st.markdown("**1. Chọn flow có sẵn hoặc upload file**")
-    # List existing flow JSON files
-    flows = [f.name for f in ROOT.glob("*.json") if f.name.endswith("flow_config.json")] or ["flow_config.json"]
-    selected = st.selectbox("Chọn flow đã có:", options=flows)
-    flow_file = ROOT / selected
-    # Upload custom flow file
-    upload = st.file_uploader("Hoặc upload file flow JSON", type=["json"])
-    if upload:
-        flow_text = upload.getvalue().decode('utf-8')
-    else:
-        flow_text = flow_file.read_text(encoding='utf-8') if flow_file.exists() else '[]'
+    flow_tab.render(ROOT)
 
-    st.markdown("**2. Chỉnh sửa hoặc tự tạo flow**")
-    flow_text = st.text_area("Flow JSON (node: {id,label,next})", value=flow_text, height=200, key="flow_json")
-    # Auto-generate flow from modules list
-    if st.button("Tạo flow từ modules"):
-        # Tạo flow đơn giản dựa trên tên file modules và lưu vào session_state
-        mods = [p.stem for p in (ROOT / 'modules').glob('*.py') if p.is_file()]
-        gen = []
-        for i, m in enumerate(mods):
-            nxt = [mods[i+1]] if i+1 < len(mods) else []
-            gen.append({"id": m, "label": m, "next": nxt})
-        import json
-        # Cập nhật lại nội dung flow trong session state, widget text_area sẽ tự động cập nhật
-        st.session_state["flow_json"] = json.dumps(gen, indent=2)
-
-    cols = st.columns(2)
-    with cols[0]:
-        if st.button("Xem sơ đồ flow"):
-            try:
-                import json
-                nodes = json.loads(flow_text)
-                if not isinstance(nodes, list):
-                    raise ValueError("Flow phải là mảng list của node dict")
-                # normalize nodes
-                normalized = [
-                    {"id": e, "label": e, "next": []} if isinstance(e, str) else e
-                    for e in nodes
-                ]
-                # build GraphViz dot using .format to avoid quote issues
-                dot = ['digraph G {', '  rankdir=LR;']
-                # add nodes
-                for n in normalized:
-                    nid = n.get('id')
-                    label = n.get('label', nid)
-                    dot.append('  "{}" [label="{}"];'.format(nid, label))
-                # add edges
-                for n in normalized:
-                    nid = n.get('id')
-                    for nxt in n.get('next', []):
-                        dot.append('  "{}" -> "{}";'.format(nid, nxt))
-                # close graph
-                dot.append('}')
-                st.graphviz_chart('\n'.join(dot))
-            except Exception as e:
-                st.error(f"Lỗi phân tích flow: {e}")
-    with cols[1]:
-        if st.button("Lưu flow.json"):
-            try:
-                import json
-                parsed = json.loads(flow_text)
-                flow_path = ROOT / selected
-                flow_path.write_text(json.dumps(parsed, indent=2), encoding='utf-8')
-                st.success(f"Đã lưu vào {flow_path.name}")
-            except Exception as e:
-                st.error(f"Lỗi lưu: {e}")
-
-# --- Tab: MCP Server ---
 with tab_mcp:
-    st.subheader("MCP Server")
-    st.markdown("Kết nối với MCP server và các client desktop như Cherry Studio, LangFlow, VectorShift.")
-    st.markdown("**Hướng dẫn:**")
-    st.markdown(
-        "1. Khởi động MCP server bằng nút bên dưới hoặc chạy: `uvicorn modules.mcp_server:app --reload --host 0.0.0.0 --port 8000`\n"
-        "2. Base URL: `http://localhost:8000`\n"
-        "3. Cherry Studio: cấu hình endpoint HTTP để lấy các API, thêm flow & models.\n"
-        "4. LangFlow: thêm gRPC hoặc HTTP node mới trỏ đến FastAPI endpoints.\n"
-        "5. Nhập API key (Google, OpenRouter, VectorShift...) và hệ thống sẽ tự"
-        " nhận diện.",
-        unsafe_allow_html=True,
-    )
+    mcp_tab.render(detect_platform)
 
-    mcp_key = st.text_input(
-        "API Key cho platform",
-        type="password",
-        value=st.session_state.get("mcp_api_key", MCP_API_KEY),
-        key="mcp_api_key",
-    )
-
-    mcp_running = (
-        "mcp_process" in st.session_state
-        and st.session_state.mcp_process.poll() is None
-    )
-
-    col1, col2 = st.columns(2)
-    with col1:
-        if not mcp_running and st.button("Khởi động MCP server"):
-            detected = detect_platform(mcp_key)
-            if detected == "openrouter":
-                os.environ["OPENROUTER_API_KEY"] = mcp_key
-            elif detected == "google":
-                os.environ["GOOGLE_API_KEY"] = mcp_key
-            elif detected == "vectorshift":
-                os.environ["MCP_API_KEY"] = mcp_key
-            st.session_state.mcp_api_key = mcp_key
-            import subprocess
-
-            cmd = [
-                "uvicorn",
-                "modules.mcp_server:app",
-                "--host",
-                "0.0.0.0",
-                "--port",
-                "8000",
-            ]
-            st.session_state.mcp_process = subprocess.Popen(cmd)
-            msg = "Đã khởi động MCP server"
-            if detected:
-                msg += f" (platform: {detected})"
-            st.success(msg)
-        elif mcp_running:
-            st.success("MCP server đang chạy")
-
-    with col2:
-        if mcp_running and st.button("Dừng MCP server"):
-            st.session_state.mcp_process.terminate()
-            st.session_state.mcp_process.wait()
-            del st.session_state.mcp_process
-            st.info("Đã dừng MCP server")
-
-    st.markdown("---")
-    st.markdown(
-        "*Xem code: `modules/mcp_server.py` để biết endpoints chi tiết.*",
-        unsafe_allow_html=True,
-    )
-
-# --- Tab: Hỏi AI ---
 with tab_chat:
-    st.subheader("Hỏi AI về dữ liệu CV")
-    # Initialize trigger flag
-    if 'trigger_ai' not in st.session_state:
-        st.session_state.trigger_ai = False
-    # Define callback to set trigger on Enter
-    def submit_ai():
-        st.session_state.trigger_ai = True
-    # Use text_input to allow Enter key submission
-    question = st.text_input(
-        "Nhập câu hỏi và nhấn Enter để gửi", key="ai_question", on_change=submit_ai
-    )
-    # Process on trigger
-
-    if st.session_state.trigger_ai:
-        st.session_state.trigger_ai = False
-        if not question.strip():
-            st.warning("Vui lòng nhập câu hỏi trước khi gửi.")
-        elif not os.path.exists(OUTPUT_CSV):
-            st.warning("Chưa có dữ liệu CSV để hỏi.")
-        else:
-            df = pd.read_csv(OUTPUT_CSV, encoding="utf-8-sig")
-            with st.spinner("Đang hỏi AI..."):
-                try:
-                    logging.info("Đang gửi câu hỏi tới AI")
-                    answer = answer_question(
-                        question,
-                        df,
-                        cast(str, provider),
-                        cast(str, model),
-                        cast(str, api_key)
-                    )
-                    st.markdown(answer)
-                except Exception as e:
-                    logging.error(f"Lỗi hỏi AI: {e}")
-                    st.error(f"Lỗi khi hỏi AI: {e}")
+    chat_tab.render(provider, model, api_key)
 
 # --- Log Viewer ---
 log_expander = st.expander("Xem log xử lý", expanded=False)
