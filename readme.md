@@ -136,6 +136,8 @@ Truy cập `http://localhost:8501` để:
 - Nhập API key và email.
 - Theo dõi tự động fetch.
 - Xử lý batch, xử lý đơn, xem CSV và chat với AI.
+- Trong tab **MCP Server**, nhập API key (Google/OpenRouter/VectorShift) và nhấn
+  "Khởi động" để server tự nhận diện platform.
 
 ## 🗂️ Cấu trúc dự án
 

@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     attachment_dir: Path   # thư mục lưu tệp đính kèm
     output_csv: Path       # đường dẫn file CSV xuất kết quả
     email_unseen_only: bool = True  # chỉ quét email chưa đọc nếu True
+    platform_api_key: str | None = None  # API key cho các platform (tùy chọn)
 
 
 # Khởi tạo cấu hình từ biến môi trường

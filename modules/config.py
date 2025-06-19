@@ -30,9 +30,10 @@ def _get_env(varname: str, default: str = "") -> str:
 LLM_PROVIDER = _get_env("LLM_PROVIDER", "google").lower()
 LLM_MODEL = _get_env("LLM_MODEL", "gemini-1.5-flash-latest")
 
-# --- Khóa API cho Google và OpenRouter (không bắt buộc) ---
+# --- Khóa API cho Google, OpenRouter và các platform khác (không bắt buộc) ---
 GOOGLE_API_KEY = _get_env("GOOGLE_API_KEY")
 OPENROUTER_API_KEY = _get_env("OPENROUTER_API_KEY")
+MCP_API_KEY = _get_env("MCP_API_KEY")  # API key dùng cho MCP server (tự nhận diện)
 
 # --- Base URL cho OpenRouter API ---
 # Dùng chung cho mọi client và fetcher
