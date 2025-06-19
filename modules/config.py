@@ -36,8 +36,11 @@ OPENROUTER_API_KEY = _get_env("OPENROUTER_API_KEY")
 MCP_API_KEY = _get_env("MCP_API_KEY")  # API key dùng cho MCP server (tự nhận diện)
 
 # --- Base URL cho OpenRouter API ---
+# Có thể tuỳ chỉnh qua biến môi trường OPENROUTER_BASE_URL
 # Dùng chung cho mọi client và fetcher
-OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+OPENROUTER_BASE_URL = _get_env(
+    "OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"
+)
 
 # --- Cấu hình email (không bắt buộc) ---
 EMAIL_HOST = _get_env("EMAIL_HOST", "imap.gmail.com")
