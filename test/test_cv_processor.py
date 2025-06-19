@@ -49,6 +49,7 @@ CVProcessor = cvp.CVProcessor
         }
     ),
     (
+
         """Họ tên: John Smith\nAge: 35\nEmail: john@example.com\nĐiện thoại: 555-123-4567\nAddress: 1 Main St\nEducation: BSc\nExperience: 3 years\nSkills: Java""",
         {
             'ten': 'John Smith',
