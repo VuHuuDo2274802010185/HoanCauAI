@@ -10,8 +10,8 @@ from fastapi.responses import FileResponse    # trả về file như response
 from pydantic_settings import BaseSettings, SettingsConfigDict      # sử dụng BaseSettings với cấu hình cho Pydantic v2
 
 
-from modules.cv_processor import CVProcessor    # lớp xử lý CV thành DataFrame
-from modules.email_fetcher import EmailFetcher  # lớp fetch email và tải đính kèm
+from .cv_processor import CVProcessor    # lớp xử lý CV thành DataFrame
+from .email_fetcher import EmailFetcher  # lớp fetch email và tải đính kèm
 
 
 class Settings(BaseSettings):
