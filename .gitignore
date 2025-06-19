@@ -4,4 +4,4 @@ __pycache__/
 .env
 *.log
 attachments/
-cv_summary.csv
+*.csv
