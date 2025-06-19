@@ -28,7 +28,7 @@ def _get_env(varname: str, default: str = "") -> str:
 
 # --- Nhà cung cấp (provider) và model mặc định ---
 LLM_PROVIDER = _get_env("LLM_PROVIDER", "google").lower()
-LLM_MODEL = _get_env("LLM_MODEL", "gemini-1.5-flash-latest")
+LLM_MODEL = _get_env("LLM_MODEL", "gemini-2.0-flask")
 
 # --- Khóa API cho Google và OpenRouter (không bắt buộc) ---
 GOOGLE_API_KEY = _get_env("GOOGLE_API_KEY")
@@ -86,6 +86,7 @@ GOOGLE_FALLBACK_MODELS: List[str] = [
     "gemini-1.5-pro", "gemini-1.5-pro-latest", "gemini-pro", "gemini-pro-vision",
     # Newer and experimental variants
     "gemini-2.0-alpha", "gemini-2.0-vision", "gemini-2.0-vision-extended",
+    "gemini-2.0-flask",
     "gemini-2.5-pro", "gemini-2.5-pro-latest"
 ]
 OPENROUTER_FALLBACK_MODELS: List[str] = [
@@ -102,6 +103,7 @@ MODEL_PRICES: Dict[str, str] = {
     "gemini-1.5-pro-latest": "1$/token",
     "gemini-pro": "1$/token",
     "gemini-pro-vision": "1$/token",
+    "gemini-2.0-flask": "unknown",
     # OpenRouter fallback models (giá tham khảo, có thể thay đổi)
     "anthropic/claude-3.5-sonnet": "variable",
     "anthropic/claude-3-haiku": "variable",
