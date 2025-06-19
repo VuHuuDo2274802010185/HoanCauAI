@@ -63,7 +63,8 @@ HoanCau AI Resume Processor là hệ thống tự động trích xuất thông t
    cp .env.example .env
    ```
    Sau đó mở `.env` và thay thế các giá trị placeholder (như `your_google_api_key`)
-   bằng thông tin thực tế.
+   bằng thông tin thực tế. Nếu sử dụng OpenRouter qua proxy, có thể sửa
+   `OPENROUTER_BASE_URL` để trỏ tới endpoint mong muốn.
 
 ### 💻 Cài đặt nhanh trên Windows
 
