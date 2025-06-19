@@ -40,7 +40,7 @@ except ImportError:
         except ImportError:
             _PDF_EX = None  # không có thư viện PDF nào
 
-from .dynamic_llm_client import DynamicLLMClient  # client gọi LLM động
+from .llm_client import LLMClient  # client LLM mặc định
 from .config import ATTACHMENT_DIR, OUTPUT_CSV  # cấu hình thư mục và file xuất
 from .prompts import CV_EXTRACTION_PROMPT  # prompt LLM để trích xuất CV
 
@@ -48,10 +48,10 @@ class CVProcessor:
     """
     Lớp xử lý file CV: đọc text, gọi LLM hoặc regex fallback, trả về DataFrame
     """
-    def __init__(self, fetcher: Optional[object] = None):
-        """Khởi tạo: cấp fetcher (đọc email), khởi tạo LLM client"""
+    def __init__(self, fetcher: Optional[object] = None, llm_client: Optional[LLMClient] = None):
+        """Khởi tạo: cấp fetcher (đọc email) và LLM client"""
         self.fetcher = fetcher  # đối tượng có method fetch_cv_attachments()
-        self.llm_client = DynamicLLMClient()  # khởi tạo client gọi LLM
+        self.llm_client = llm_client or LLMClient()  # client LLM mặc định
 
     def _extract_pdf(self, path: str) -> str:
         """

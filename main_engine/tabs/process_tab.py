@@ -5,6 +5,7 @@ import streamlit as st
 
 from modules.cv_processor import CVProcessor
 from modules.config import ATTACHMENT_DIR, OUTPUT_CSV, get_model_price
+from modules.dynamic_llm_client import DynamicLLMClient
 
 
 def render(provider: str, model: str, api_key: str) -> None:
@@ -19,10 +20,13 @@ def render(provider: str, model: str, api_key: str) -> None:
         if not files:
             st.warning("Không có file CV trong thư mục attachments để xử lý.")
         else:
-            processor = CVProcessor()
-            processor.llm_client.provider = provider
-            processor.llm_client.model = model
-            processor.llm_client.api_key = api_key
+            processor = CVProcessor(
+                llm_client=DynamicLLMClient(
+                    provider=provider,
+                    model=model,
+                    api_key=api_key,
+                )
+            )
             progress = st.progress(0)
             status = st.empty()
             results = []
