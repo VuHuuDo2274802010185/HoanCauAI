@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import streamlit as st
 
-from ..modules.config import OUTPUT_CSV
+from modules.config import OUTPUT_CSV
 
 
 def render() -> None:
