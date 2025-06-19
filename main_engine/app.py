@@ -48,6 +48,23 @@ from .tabs import (
 # --- Streamlit logging handler ---
 class StreamlitLogHandler(logging.Handler):
     def emit(self, record: logging.LogRecord) -> None:
+        # Only attempt to access st.session_state when a ScriptRunContext exists
+        try:
+            ctx_exists = bool(st.runtime.exists())
+        except Exception:
+            try:
+                ctx_exists = (
+                    st.runtime.scriptrunner.get_script_run_ctx(
+                        suppress_warning=True
+                    )
+                    is not None
+                )
+            except Exception:
+                ctx_exists = False
+
+        if not ctx_exists:
+            return
+
         msg = self.format(record)
         logs = st.session_state.get("logs", [])
         logs.append(msg)
