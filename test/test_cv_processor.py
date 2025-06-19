@@ -1,4 +1,5 @@
 import sys
+import os
 import types
 import pytest
 
@@ -17,6 +18,7 @@ class DummyGenAI:
     def list_models(self):
         return []
 
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 sys.modules.setdefault('streamlit', DummyStreamlit())
 sys.modules.setdefault('google', types.SimpleNamespace(generativeai=DummyGenAI()))
 sys.modules.setdefault('google.generativeai', DummyGenAI())
