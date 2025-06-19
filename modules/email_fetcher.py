@@ -143,8 +143,6 @@ class EmailFetcher:
                     name, ext = os.path.splitext(filename)
                     if ext.lower() not in ['.pdf', '.docx']:
                         continue
-                    if not re.search(r"\b(cv|resume|curriculum vitae)\b", name, re.I):
-                        continue
                     safe_name = re.sub(r'[^\w\-\_ ]', '_', name)
                     safe = safe_name + ext
 

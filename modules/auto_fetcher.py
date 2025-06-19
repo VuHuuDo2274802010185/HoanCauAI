@@ -6,11 +6,9 @@ import logging
 import argparse
 import imaplib
 
-from .config import EMAIL_UNSEEN_ONLY, OUTPUT_CSV
+from .config import EMAIL_UNSEEN_ONLY
 
 from .email_fetcher import EmailFetcher
-from .cv_processor import CVProcessor
-from .llm_client import LLMClient
 
 
 def watch_loop(
@@ -21,20 +19,15 @@ def watch_loop(
     password: str | None = None,
     unseen_only: bool = EMAIL_UNSEEN_ONLY,
 ) -> None:
-    """Kết nối IMAP, fetch và xử lý CV liên tục."""
+    """Kết nối IMAP và gọi fetch_cv_attachments() liên tục."""
     fetcher = EmailFetcher(host, port, user, password)
-    processor = CVProcessor(fetcher, llm_client=LLMClient())
     fetcher.connect()
     logging.info(f"Bắt đầu auto fetch, interval={interval}s")
 
     try:
         while True:
             try:
-                files = fetcher.fetch_cv_attachments(unseen_only=unseen_only)
-                for path in files:
-                    df = processor.process_file(path)
-                    if not df.empty:
-                        processor.save_to_csv(df, str(OUTPUT_CSV), append=True)
+                fetcher.fetch_cv_attachments(unseen_only=unseen_only)
             except imaplib.IMAP4.abort:
                 logging.warning("Mất kết nối IMAP, thử kết nối lại...")
                 try:
