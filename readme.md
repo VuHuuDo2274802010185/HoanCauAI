@@ -35,6 +35,7 @@ HoanCau AI Resume Processor là hệ thống tự động trích xuất thông t
 - Xử lý một file CV đơn lẻ.
 - Chạy lệnh CLI, web UI hoặc FastAPI server.
 - Hỏi AI (chat) dựa trên dữ liệu đã xử lý.
+- Không gây cảnh báo Streamlit khi chạy CLI: `DynamicLLMClient` tự kiểm tra session context.
 
 ## 🚀 Bắt đầu nhanh
 

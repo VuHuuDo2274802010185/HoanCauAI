@@ -13,30 +13,50 @@ logger = logging.getLogger(__name__)  # lấy logger theo tên module
 logger.setLevel(logging.INFO)  # mức log tối thiểu INFO
 logger.addHandler(logging.StreamHandler())  # xuất log ra console
 
+def _streamlit_ctx_exists() -> bool:
+    """Kiểm tra có đang chạy trong context Streamlit không."""
+    try:
+        return bool(st.runtime.exists())
+    except Exception:
+        try:
+            return (
+                st.runtime.scriptrunner.get_script_run_ctx(
+                    suppress_warning=True
+                )
+                is not None
+            )
+        except Exception:
+            return False
+
 class DynamicLLMClient:
     """
-    Client LLM động sử dụng cho giao diện Streamlit.
-    - Lấy provider và model từ session_state hoặc LLM_CONFIG
-    - Tự cấu hình API key và client phù hợp
+    Client LLM động cho giao diện Streamlit.
+    - Lấy provider và model từ ``st.session_state`` nếu có context,
+      ngược lại dùng ``LLM_CONFIG``.
+    - Tự cấu hình API key và client phù hợp.
     """
     def __init__(self,
                  provider: str = None,
                  model: str = None,
                  api_key: str = None):
+        ctx = _streamlit_ctx_exists()
         # Chọn provider: ưu tiên tham số, sau đó session_state, cuối cùng LLM_CONFIG
-        self.provider = provider or st.session_state.get(
-            "selected_provider", LLM_CONFIG["provider"]
-        )
+        self.provider = provider or (
+            st.session_state.get("selected_provider") if ctx else None
+        ) or LLM_CONFIG["provider"]
         # Chọn model: ưu tiên tham số, sau đó session_state, cuối cùng LLM_CONFIG
-        self.model = model or st.session_state.get(
-            "selected_model", LLM_CONFIG["model"]
-        )
+        self.model = model or (
+            st.session_state.get("selected_model") if ctx else None
+        ) or LLM_CONFIG["model"]
         # Lấy api_key: ưu tiên tham số, sau đó session_state, cuối cùng config
-        session_key = (
-            st.session_state.get("google_api_key")
-            if self.provider == "google"
-            else st.session_state.get("openrouter_api_key")
-        )
+        if ctx:
+            session_key = (
+                st.session_state.get("google_api_key")
+                if self.provider == "google"
+                else st.session_state.get("openrouter_api_key")
+            )
+        else:
+            session_key = None
         self.api_key = api_key or session_key or LLM_CONFIG.get("api_key", "")
         # Thiết lập client theo provider đã chọn
         self._setup()
