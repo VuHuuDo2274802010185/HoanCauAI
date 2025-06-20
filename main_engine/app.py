@@ -43,6 +43,7 @@ try:
         LLM_CONFIG,
         get_models_for_provider,
         get_model_price,
+        OUTPUT_CSV,
         GOOGLE_API_KEY,
         OPENROUTER_API_KEY,
         EMAIL_HOST,
@@ -398,11 +399,11 @@ def render_enhanced_chat_tab():
 def load_dataset_for_chat():
     """Load CV dataset for chat context"""
     try:
-        csv_path = ROOT / "cv_summary.csv"
+        csv_path = OUTPUT_CSV
         if not csv_path.exists():
             return None
-        
-        df = pd.read_csv(csv_path)
+
+        df = pd.read_csv(csv_path, encoding="utf-8-sig")
         if df.empty:
             return None
         
