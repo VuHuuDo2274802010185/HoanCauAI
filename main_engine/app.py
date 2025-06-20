@@ -138,6 +138,18 @@ def load_css():
 
 load_css()
 
+# --- Theme selection ---
+theme = st.sidebar.selectbox(
+    "Theme",
+    options=["light", "dark"],
+    index=0,
+    key="theme",
+)
+st.markdown(
+    f"<script>document.documentElement.setAttribute('data-theme', '{theme}');</script>",
+    unsafe_allow_html=True,
+)
+
 # --- Sidebar: logo và cấu hình LLM ---
 logo_path = ROOT / "static" / "logo.png"
 if logo_path.exists():
