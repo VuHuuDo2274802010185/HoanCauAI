@@ -2,7 +2,7 @@
 
 /* Simple theme variables */
 :root[data-theme="light"] {
-  --cv-text-color: #2d1810;
+  --cv-text-color: #000000;
   --cv-bg-color: #fffbf0;
   --cv-accent-color: #f4e09c;
   --btn-gold: #d4af37;
@@ -10,7 +10,7 @@
 }
 
 :root[data-theme="dark"] {
-  --cv-text-color: #ffffff;
+  --cv-text-color: #ffff33;
   --cv-bg-color: #332a16;
   --cv-accent-color: #9b7e3c;
   --btn-gold: #d4af37;

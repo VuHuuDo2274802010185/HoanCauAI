@@ -136,7 +136,7 @@ def initialize_session_state():
     defaults = {
         "conversation_history": [],
         "background_color": "#fffbf0",
-        "text_color": "#2d1810", 
+        "text_color": "#000000",
         "accent_color": "#d4af37",
         "secondary_color": "#f4e09c",
         "font_family_index": 0,
@@ -489,7 +489,7 @@ def render_chat_history():
                 <div style="display: flex; justify-content: flex-start; margin: 10px 0;">
                     <div class="chat-message" style="
                         background: linear-gradient(135deg, {st.session_state.get('background_color', '#fffbf0')} 0%, {st.session_state.get('secondary_color', '#f4e09c')}44 100%);
-                        color: {st.session_state.get('text_color', '#2d1810')};
+                        color: {st.session_state.get('text_color', '#000000')};
                         border: 2px solid {st.session_state.get('secondary_color', '#f4e09c')};
                         margin-right: 20%;
                     ">
@@ -721,11 +721,11 @@ st.markdown(
 
 # Adjust style variables based on chosen Streamlit theme
 if theme == "dark":
-    st.session_state["text_color"] = "#ffffff"
+    st.session_state["text_color"] = "#ffff33"
     st.session_state["background_color"] = "#332a16"
     st.session_state["secondary_color"] = "#9b7e3c"
 else:
-    st.session_state["text_color"] = "#2d1810"
+    st.session_state["text_color"] = "#000000"
     st.session_state["background_color"] = "#fffbf0"
     st.session_state["secondary_color"] = "#f4e09c"
 st.session_state["accent_color"] = "#d4af37"
@@ -943,7 +943,7 @@ email_user, email_pass, unseen_only = render_email_config()
 
 # Load style preferences from session state
 background_color = st.session_state.get("background_color", "#fffbf0")
-text_color = st.session_state.get("text_color", "#2d1810")
+text_color = st.session_state.get("text_color", "#000000")
 accent_color = st.session_state.get("accent_color", "#d4af37")
 secondary_color = st.session_state.get("secondary_color", "#f4e09c")
 font_options = [
