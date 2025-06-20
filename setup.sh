@@ -2,12 +2,18 @@
 
 set -e
 
-GREEN="\033[0;32m"
+YELLOW="\033[1;33m"
+WHITE="\033[1;37m"
+GREEN="\033[0;92m"
 RESET="\033[0m"
 
-echo -e "${GREEN}======================================================"
-echo -e "             RESUME AI - SETUP SCRIPT             "
-echo -e "======================================================${RESET}"
+echo -e "${GREEN}======================================================${RESET}"
+if command -v lolcat >/dev/null 2>&1; then
+  echo "             RESUME AI - SETUP SCRIPT             " | lolcat
+else
+  echo -e "${YELLOW}             RESUME AI - SETUP SCRIPT             ${RESET}"
+fi
+echo -e "${GREEN}======================================================${RESET}"
 
 # 1) Check Python
 if ! command -v python3 >/dev/null 2>&1; then
@@ -47,4 +53,4 @@ pip install -r requirements.txt
 # 6) Create folders
 mkdir -p attachments output log
 
-echo -e "${GREEN}Setup hoàn tất!${RESET}"
+echo -e "${YELLOW}Setup hoàn tất!${RESET}"
