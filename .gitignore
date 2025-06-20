@@ -7,3 +7,5 @@ attachments/
 log/*
 !log/.gitkeep
 *.csv
+!cv_summary.csv
+.venv
