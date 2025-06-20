@@ -9,7 +9,9 @@ from modules.config import MCP_API_KEY
 def render(detect_platform) -> None:
     """Render UI for MCP server management."""
     st.subheader("MCP Server")
-    st.markdown("Kết nối với MCP server và các client desktop như Cherry Studio, LangFlow, VectorShift.")
+    st.markdown(
+        "Kết nối với MCP server và các client desktop như Cherry Studio, LangFlow, VectorShift."
+    )
     st.markdown("**Hướng dẫn:**")
     st.markdown(
         "1. Khởi động MCP server bằng nút bên dưới hoặc chạy: `uvicorn modules.mcp_server:app --reload --host 0.0.0.0 --port 8000`\n"
@@ -29,6 +31,7 @@ def render(detect_platform) -> None:
         type="password",
         value=st.session_state.mcp_api_key,
         key="mcp_api_key",
+        help="Nhập API key cho VectorShift hoặc dịch vụ tương thích",
     )
 
     mcp_running = (

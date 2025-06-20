@@ -11,6 +11,23 @@ HoanCau AI Resume Processor là hệ thống tự động trích xuất thông t
 - Tài khoản email IMAP (Gmail, Outlook, v.v.) với quyền truy cập IMAP hiện bật
 - Trình duyệt web hiện đại (Chrome, Firefox) để sử dụng giao diện Streamlit
 
+## 🚦 Beginner Setup
+
+1. **Cài Python và Git**
+   - Tải Python từ [python.org](https://www.python.org/downloads/) rồi cài đặt
+     như hướng dẫn (Windows nhớ tick "Add python to PATH").
+   - Tải Git tại [git-scm.com](https://git-scm.com/downloads) và cài đặt mặc định.
+2. **Mở Terminal / Command Prompt**
+   - **Windows**: nhấn `Win + R` → gõ `cmd` → Enter.
+   - **macOS**: mở **Terminal** từ Spotlight hoặc Applications.
+   - **Linux**: mở ứng dụng **Terminal**.
+3. **Kiểm tra phiên bản**
+   ```bash
+   python --version   # hoặc python3 --version
+   git --version
+   ```
+   Nếu cả hai lệnh đều in phiên bản, bạn đã sẵn sàng tiếp tục.
+
 ## ✉️ Troubleshooting Email Fetch
 
 - Đảm bảo IMAP đã được bật trong cài đặt email (Gmail: Settings → Forwarding and POP/IMAP → Enable IMAP).
@@ -56,6 +73,8 @@ HoanCau AI Resume Processor là hệ thống tự động trích xuất thông t
    pip install --upgrade pip
    pip install -r requirements.txt
    ```
+   Hoặc đơn giản chạy `./setup.sh` (macOS/Linux) hoặc `setup.cmd` (Windows)
+   để tự động thực hiện các bước trên.
 
 3. **Tạo file `.env`**
 
@@ -63,9 +82,14 @@ HoanCau AI Resume Processor là hệ thống tự động trích xuất thông t
    ```bash
    cp .env.example .env
    ```
-   Sau đó mở `.env` và thay thế các giá trị placeholder (như `your_google_api_key`)
-   bằng thông tin thực tế. Nếu sử dụng OpenRouter qua proxy, có thể sửa
-   `OPENROUTER_BASE_URL` để trỏ tới endpoint mong muốn.
+   Sau đó mở `.env` bằng editor bất kỳ và thay thế các giá trị placeholder
+   (như `your_google_api_key`) bằng thông tin thực tế. Những biến quan trọng gồm:
+   `LLM_PROVIDER`, `LLM_MODEL`, một trong các khóa API (`GOOGLE_API_KEY` hoặc
+   `OPENROUTER_API_KEY`), `EMAIL_USER` và `EMAIL_PASS`. File `.env` đã nằm trong
+   `.gitignore` nên **không commit** lên Git. Nếu gặp lỗi cấu hình, hãy so sánh
+   với file mẫu [`.env.example`](./.env.example) để biết các biến cần thiết.
+   Bạn có thể tạo sẵn các thư mục `attachments`, `output` và `log` (hoặc để
+   script tự tạo) để lưu file tải về và log.
 
 ### 💻 Cài đặt nhanh trên Windows
 
@@ -76,8 +100,18 @@ HoanCau AI Resume Processor là hệ thống tự động trích xuất thông t
    dependencies.
 4. Mở file `.env` vừa tạo và điền các biến như `GOOGLE_API_KEY`, thông tin
    `EMAIL_*`.
-5. Cuối cùng chạy `run_resume_ai.cmd` để khởi động (không tham số sẽ mở UI,
-   thêm `cli` để chạy qua dòng lệnh).
+5. Cuối cùng chạy `run_resume_ai.cmd` để mở ngay giao diện Streamlit.
+
+### 📦 Tự động setup trên macOS/Linux
+
+Trong thư mục dự án, chạy:
+
+```bash
+./setup.sh
+```
+
+Script sẽ tạo `.env`, virtualenv và cài dependencies tương tự `setup.cmd`.
+Sau khi hoàn tất, chạy tiếp `./run_resume_ai.sh` để mở giao diện Streamlit.
 
 ### 🛡️ SmartScreen trên Windows
 
@@ -131,6 +165,16 @@ Truy cập `http://localhost:8501` để:
 - Xử lý batch, xử lý đơn, xem CSV và chat với AI.
 - Trong tab **MCP Server**, nhập API key (Google/OpenRouter/VectorShift) và nhấn
   "Khởi động" để server tự nhận diện platform.
+
+### 🚲 Simple Mode
+
+Nếu chỉ cần các bước cơ bản, chạy:
+
+```bash
+streamlit run simple_app.py
+```
+
+Ứng dụng sẽ hướng dẫn tuần tự nhập API key → fetch CV → xử lý → xem kết quả và ẩn các tab nâng cao.
 
 ## 🗂️ Cấu trúc dự án
 
