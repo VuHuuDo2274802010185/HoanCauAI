@@ -8,6 +8,7 @@
   --cv-accent-color: #f4e09c;
   --btn-gold: #d4af37;
   --btn-gold-border: #d4af37;
+  --btn-text-color: #000000;
 }
 
 :root[data-theme="dark"] {
@@ -16,6 +17,7 @@
   --cv-accent-color: #2c2c2c;
   --btn-gold: #d4af37;
   --btn-gold-border: #d4af37;
+  --btn-text-color: #ffff33;
 }
 
 img[src*="logo.png"] {
@@ -33,7 +35,7 @@ body {
 /* Button styling for BaseWeb buttons */
 button[data-baseweb="base-button"] {
   background-color: var(--btn-gold) !important;
-  color: var(--cv-bg-color) !important;
+  color: var(--btn-text-color) !important;
   border: 2px solid var(--btn-gold-border) !important;
   border-radius: 4px !important;
   font-size: 1rem !important;
