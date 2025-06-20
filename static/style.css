@@ -1,8 +1,8 @@
 /* static/style.css */
 
 /* Theme variables */
-:root {
-  /* Default palette is Office Light; overridden dynamically for dark mode */
+html[data-theme='light'] {
+  /* Office Light Theme Palette */
   --cv-text-color: #2D3748; /* Text Primary */
   --cv-bg-color: #FFFFFF; /* Background */
   --cv-accent-color: #F4F6F8; /* Surface */
@@ -12,10 +12,26 @@
   --logo-shadow: rgba(252, 209, 41, 0.4);
 }
 
-/* Logo contrast enhancement */
-img[src*="logo.png"] {
-  filter: drop-shadow(0 0 12px rgba(0, 0, 0, 0.8));
+/* Logo contrast enhancement: specific to logo filename */
+html[data-theme='light'] img[src*="logo.png"] {
+  /* dark drop shadow around bright logo */
+  filter: drop-shadow(0 0 12px rgba(0,0,0,0.8));
   max-width: 180px;
+}
+html[data-theme='dark'] img[src*="logo.png"] {
+  /* light drop shadow around logo */
+  filter: drop-shadow(0 0 12px rgba(255,255,255,0.9));
+  max-width: 180px;
+}
+html[data-theme='dark'] {
+  /* Dark Neon Cyberpunk Coder Palette */
+  --cv-text-color: #E6E6E6; /* Text Primary */
+  --cv-bg-color: #0D0F12; /* Background */
+  --cv-accent-color: #0D0F12; /* No separate surface color provided */
+  --btn-gold: #00FFF7; /* Primary Neon */
+  --btn-gold-border: #FF31FF; /* Secondary Neon */
+  --logo-gold: #FFFB00; /* Tertiary Neon */
+  --logo-shadow: rgba(255, 251, 0, 0.4);
 }
 
 /* Global background and text */
