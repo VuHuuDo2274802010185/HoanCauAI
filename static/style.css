@@ -1,37 +1,16 @@
 /* static/style.css */
 
-/* Theme variables */
-html[data-theme='light'] {
-  /* Office Light Theme Palette */
-  --cv-text-color: #2D3748; /* Text Primary */
-  --cv-bg-color: #FFFFFF; /* Background */
-  --cv-accent-color: #F4F6F8; /* Surface */
-  --btn-gold: #2B6CB0; /* Primary Accent */
+/* Simple theme variables */
+:root {
+  --cv-text-color: #2D3748;
+  --cv-bg-color: #FFFFFF;
+  --cv-accent-color: #F4F6F8;
+  --btn-gold: #2B6CB0;
   --btn-gold-border: #2B6CB0;
-  --logo-gold: #FCD129;
-  --logo-shadow: rgba(252, 209, 41, 0.4);
 }
 
-/* Logo contrast enhancement: specific to logo filename */
-html[data-theme='light'] img[src*="logo.png"] {
-  /* dark drop shadow around bright logo */
-  filter: drop-shadow(0 0 12px rgba(0,0,0,0.8));
-  max-width: 180px;
-}
-html[data-theme='dark'] img[src*="logo.png"] {
-  /* light drop shadow around logo */
-  filter: drop-shadow(0 0 12px rgba(255,255,255,0.9));
-  max-width: 180px;
-}
-html[data-theme='dark'] {
-  /* Dark Neon Cyberpunk Coder Palette */
-  --cv-text-color: #E6E6E6; /* Text Primary */
-  --cv-bg-color: #0D0F12; /* Background */
-  --cv-accent-color: #0D0F12; /* No separate surface color provided */
-  --btn-gold: #00FFF7; /* Primary Neon */
-  --btn-gold-border: #FF31FF; /* Secondary Neon */
-  --logo-gold: #FFFB00; /* Tertiary Neon */
-  --logo-shadow: rgba(255, 251, 0, 0.4);
+img[src*="logo.png"] {
+  max-width: 160px;
 }
 
 /* Global background and text */
@@ -39,23 +18,6 @@ body {
   background-color: var(--cv-bg-color) !important;
   color: var(--cv-text-color) !important;
   font-size: 1.05rem;
-}
-
-.stApp {
-  border: 2px solid var(--logo-gold);
-  box-shadow: 0 0 12px var(--logo-shadow);
-  border-radius: 8px;
-  padding: 8px;
-}
-
-/* Enhance logo contrast: apply drop-shadow to any image in sidebar */
-aside[data-testid="stSidebar"] img,
-div[data-testid="stSidebar"] img {
-  filter: drop-shadow(0 0 8px rgba(0,0,0,0.8)) !important;
-}
-
-h1, h2, h3 {
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
 }
 
 /* Button styling for BaseWeb buttons */

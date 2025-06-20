@@ -10,6 +10,8 @@ from modules.config import (
     OUTPUT_CSV,
     EMAIL_HOST,
     EMAIL_PORT,
+    LLM_PROVIDER,
+    LLM_MODEL,
 )
 
 ROOT = Path(__file__).parent
@@ -27,20 +29,18 @@ st.set_page_config(page_title="Resume AI Simple Mode", page_icon=page_icon)
 load_css()
 
 if logo_path.exists():
-    st.image(str(logo_path), width=180)
+    st.image(str(logo_path))
 
-st.title("Resume AI - Simple Mode")
-st.markdown("Làm theo từng bước để tải và xử lý CV một cách dễ dàng.")
+st.title("Resume AI")
+st.markdown("Nhập thông tin cần thiết và xử lý CV đơn giản.")
 
-# --- Step 1: API config ---
-provider = st.selectbox(
-    "Provider", ["google", "openrouter"], help="Chọn nhà cung cấp LLM"
-)
-api_key = st.text_input("API Key", type="password", help="Nhập khóa API cho provider")
-model = st.text_input("Model", "gemini-2.0-flash", help="Tên model muốn sử dụng")
+# --- API config ---
+provider = LLM_PROVIDER
+model = LLM_MODEL
+api_key = st.text_input("API Key", type="password", help="Khóa API cho mô hình")
 
-# --- Step 2: Fetch CV from email ---
-st.header("Bước 1: Lấy CV từ Email")
+# --- Fetch CV from email ---
+st.header("Lấy CV từ Email")
 email_user = st.text_input("Gmail", help="Địa chỉ Gmail để lấy CV")
 email_pass = st.text_input(
     "Mật khẩu", type="password", help="Mật khẩu hoặc App Password"
@@ -59,8 +59,8 @@ if st.button("Fetch CV"):
         else:
             st.info("Không có file mới.")
 
-# --- Step 3: Process CV ---
-st.header("Bước 2: Xử lý CV")
+# --- Process CV ---
+st.header("Xử lý CV")
 if st.button("Process CV"):
     cv_files = [
         str(p)
@@ -97,8 +97,8 @@ if st.button("Process CV"):
         processor.save_to_csv(df, str(OUTPUT_CSV))
         st.success(f"Đã xử lý {len(df)} CV. Kết quả lưu ở {OUTPUT_CSV}")
 
-# --- Step 4: View results ---
-st.header("Bước 3: Xem kết quả")
+# --- View results ---
+st.header("Xem kết quả")
 if OUTPUT_CSV.exists():
     df = pd.read_csv(OUTPUT_CSV, encoding="utf-8-sig")
     st.dataframe(df, use_container_width=True)
