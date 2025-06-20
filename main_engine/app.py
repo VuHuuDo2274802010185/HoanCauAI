@@ -559,22 +559,12 @@ def process_chat_message(user_input: str):
                     st.error("❌ API Key chưa được cấu hình!")
                     return
                 
-                # Load dataset for context
                 dataset_info = load_dataset_for_chat()
-                dataset_context = ""
+                if not dataset_info or dataset_info.get("data") is None:
+                    st.error("❌ Chưa có dataset CV để chat. Hãy xử lý CV trước.")
+                    return
+                df = dataset_info["data"]
                 
-                if dataset_info and dataset_info.get("data") is not None:
-                    df = dataset_info["data"]
-                    # Create context from CV data
-                    dataset_context = f"""
-Thông tin dataset hiện tại:
-- Tổng số CV: {len(df)}
-- Các cột dữ liệu: {', '.join(df.columns.tolist())}
-- Dữ liệu mẫu (5 dòng đầu):
-{df.head().to_string()}
-"""
-                
-                # Initialize chatbot
                 chatbot = QAChatbot(provider=provider, model=model, api_key=api_key)
                 
                 # Prepare conversation context
@@ -587,20 +577,8 @@ Thông tin dataset hiện tại:
                         "content": msg["content"]
                     })
                 
-                # Get AI response
-                full_query = f"""
-Bối cảnh dataset CV:
-{dataset_context}
-
-Lịch sử trò chuyện gần đây:
-{str(conversation_context) if conversation_context else "Không có lịch sử"}
-
-Câu hỏi hiện tại: {user_input}
-
-Hãy trả lời một cách chi tiết, chuyên nghiệp và hữu ích. Nếu câu hỏi liên quan đến CV trong dataset, hãy phân tích dựa trên dữ liệu có sẵn.
-"""
-                
-                response = chatbot.ask_question(full_query)
+                context = {"history": conversation_context} if conversation_context else None
+                response = chatbot.ask_question(user_input, df, context=context)
                 
                 if response:
                     # Add AI response to history

@@ -9,7 +9,7 @@ from modules.auto_fetcher import watch_loop
 from modules.email_fetcher import EmailFetcher
 from modules.cv_processor import CVProcessor
 from modules.llm_client import LLMClient
-from modules.qa_chatbot import answer_question
+from modules.qa_chatbot import QAChatbot
 from modules.mcp_server import settings
 
 @click.group()
@@ -73,11 +73,11 @@ def chat(question):
         click.echo("File kết quả không tồn tại, hãy chạy full_process trước.")
         return
     df = pd.read_csv(settings.output_csv)
-    # Chọn provider và model từ env hoặc default
     provider = os.getenv('LLM_PROVIDER', 'google')
     model = os.getenv('LLM_MODEL', '')
     api_key = LLM_CONFIG.get('api_key', '')
-    answer = answer_question(question, df, provider, model, api_key)
+    chatbot = QAChatbot(provider=provider, model=model, api_key=api_key)
+    answer = chatbot.ask_question(question, df)
     click.echo(answer)
 
 if __name__ == '__main__':
