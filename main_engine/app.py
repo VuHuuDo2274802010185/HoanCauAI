@@ -1,12 +1,11 @@
 # main_engine/app.py
 
-import os, sys
+import sys
 from pathlib import Path
 import logging
 import traceback
 import time
 from typing import Optional, Dict, Any
-import asyncio
 
 # Đưa thư mục gốc (chứa `modules/`) vào sys.path để import modules
 HERE = Path(__file__).parent
@@ -21,7 +20,7 @@ if __package__ is None:
     __package__ = "main_engine"
 
 import streamlit as st
-from typing import cast
+
 import requests
 import pandas as pd
 from datetime import datetime
@@ -50,7 +49,6 @@ try:
         EMAIL_USER,
         EMAIL_PASS,
         EMAIL_UNSEEN_ONLY,
-        MCP_API_KEY,
     )
     from modules.auto_fetcher import watch_loop
     
@@ -63,7 +61,7 @@ try:
         )
         # Import chat_tab only if exists, otherwise use built-in
         try:
-            from .tabs import chat_tab
+            from .tabs import chat_tab  # noqa: F401
             HAS_EXTERNAL_CHAT_TAB = True
         except ImportError:
             HAS_EXTERNAL_CHAT_TAB = False
@@ -123,7 +121,7 @@ def validate_configuration() -> Dict[str, bool]:
     
     # Check if required modules are importable
     try:
-        import modules.qa_chatbot
+        import modules.qa_chatbot  # noqa: F401
         config_status["qa_module"] = True
     except ImportError:
         config_status["qa_module"] = False
