@@ -138,6 +138,13 @@ def load_css():
 
 load_css()
 
+# --- Apply theme from Streamlit config ---
+theme = st.get_option("theme.base") or "light"
+st.markdown(
+    f"<script>document.documentElement.setAttribute('data-theme', '{theme}');</script>",
+    unsafe_allow_html=True,
+)
+
 # --- Sidebar: logo và cấu hình LLM ---
 logo_path = ROOT / "static" / "logo.png"
 if logo_path.exists():
