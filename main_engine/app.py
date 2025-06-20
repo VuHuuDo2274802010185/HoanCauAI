@@ -3,6 +3,10 @@
 import os, sys
 from pathlib import Path
 import logging
+import traceback
+import time
+from typing import Optional, Dict, Any
+import asyncio
 
 # Đưa thư mục gốc (chứa `modules/`) vào sys.path để import modules
 HERE = Path(__file__).parent
@@ -19,250 +23,1197 @@ if __package__ is None:
 import streamlit as st
 from typing import cast
 import requests
+import pandas as pd
+from datetime import datetime
 
-# Import cấu hình và modules
-from modules.config import (
-    LLM_CONFIG,
-    get_models_for_provider,
-    get_model_price,
-    GOOGLE_API_KEY,
-    OPENROUTER_API_KEY,
-    EMAIL_HOST,
-    EMAIL_PORT,
-    EMAIL_USER,
-    EMAIL_PASS,
-    EMAIL_UNSEEN_ONLY,
-    MCP_API_KEY,
+# Configure logging with better formatting
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler(ROOT / "app.log", encoding='utf-8')
+    ]
 )
-from modules.auto_fetcher import watch_loop
+logger = logging.getLogger(__name__)
 
-from .tabs import (
-    fetch_tab,
-    process_tab,
-    single_tab,
-    results_tab,
-    flow_tab,
-    mcp_tab,
-    chat_tab,
-)
+# Import cấu hình và modules with error handling
+try:
+    from modules.config import (
+        LLM_CONFIG,
+        get_models_for_provider,
+        get_model_price,
+        GOOGLE_API_KEY,
+        OPENROUTER_API_KEY,
+        EMAIL_HOST,
+        EMAIL_PORT,
+        EMAIL_USER,
+        EMAIL_PASS,
+        EMAIL_UNSEEN_ONLY,
+        MCP_API_KEY,
+    )
+    from modules.auto_fetcher import watch_loop
+    
+    try:
+        from .tabs import (
+            fetch_tab,
+            process_tab,
+            single_tab,
+            results_tab,
+        )
+        # Import chat_tab only if exists, otherwise use built-in
+        try:
+            from .tabs import chat_tab
+            HAS_EXTERNAL_CHAT_TAB = True
+        except ImportError:
+            HAS_EXTERNAL_CHAT_TAB = False
+            logger.info("Using built-in chat tab implementation")
+    except ImportError as ie:
+        logger.warning(f"Some tab imports failed: {ie}")
+        # Set fallback flags
+        HAS_EXTERNAL_CHAT_TAB = False
+except ImportError as e:
+    logger.error(f"Failed to import modules: {e}")
+    st.error(f"Lỗi import modules: {e}")
+    st.stop()
 
 
-# --- Streamlit logging handler ---
+# --- Error handling utilities ---
+def handle_error(func):
+    """Decorator for error handling"""
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            logger.error(f"Error in {func.__name__}: {str(e)}")
+            logger.error(traceback.format_exc())
+            st.error(f"Lỗi trong {func.__name__}: {str(e)}")
+            return None
+    return wrapper
+
+
+def safe_session_state_get(key: str, default: Any = None) -> Any:
+    """Safely get value from session state"""
+    try:
+        return st.session_state.get(key, default)
+    except Exception as e:
+        logger.warning(f"Error accessing session state key '{key}': {e}")
+        return default
+
+
+def safe_session_state_set(key: str, value: Any) -> bool:
+    """Safely set value in session state"""
+    try:
+        st.session_state[key] = value
+        return True
+    except Exception as e:
+        logger.warning(f"Error setting session state key '{key}': {e}")
+        return False
+
+
+# --- Configuration validation ---
+def validate_configuration() -> Dict[str, bool]:
+    """Validate application configuration"""
+    config_status = {
+        "env_file": (ROOT / ".env").exists(),
+        "config_module": True,
+        "static_files": (ROOT / "static").exists(),
+        "modules": True
+    }
+    
+    # Check if required modules are importable
+    try:
+        import modules.qa_chatbot
+        config_status["qa_module"] = True
+    except ImportError:
+        config_status["qa_module"] = False
+        
+    return config_status
+
+
+# --- Initialize session state with defaults ---
+def initialize_session_state():
+    """Initialize session state with safe defaults"""
+    defaults = {
+        "conversation_history": [],
+        "background_color": "#fffbf0",
+        "text_color": "#2d1810", 
+        "accent_color": "#d4af37",
+        "secondary_color": "#f4e09c",
+        "font_family_index": 0,
+        "font_size": 14,
+        "border_radius": 8,
+        "layout_compact": False,
+        "app_initialized": False,
+        "last_error": None,
+        "error_count": 0,
+        "logs": []
+    }
+    
+    for key, value in defaults.items():
+        if key not in st.session_state:
+            safe_session_state_set(key, value)
+
+
+# --- Enhanced Streamlit logging handler ---
 class StreamlitLogHandler(logging.Handler):
     def emit(self, record: logging.LogRecord) -> None:
-        # Only attempt to access st.session_state when a ScriptRunContext exists
         try:
-            ctx_exists = bool(st.runtime.exists())
+            # Check if Streamlit context exists
+            ctx_exists = self._check_streamlit_context()
+            if not ctx_exists:
+                return
+
+            msg = self.format(record)
+            logs = safe_session_state_get("logs", [])
+            
+            # Limit log size to prevent memory issues
+            if len(logs) > 500:
+                logs = logs[-400:]  # Keep last 400 entries
+                
+            logs.append({
+                "timestamp": datetime.now().strftime("%H:%M:%S"),
+                "level": record.levelname,
+                "message": msg,
+                "module": record.module
+            })
+            safe_session_state_set("logs", logs)
+            
+        except Exception as e:
+            # Fallback to standard logging if Streamlit fails
+            print(f"StreamlitLogHandler error: {e}")
+
+    def _check_streamlit_context(self) -> bool:
+        """Check if Streamlit context is available"""
+        try:
+            return bool(st.runtime.exists())
         except Exception:
             try:
-                ctx_exists = (
+                return (
                     st.runtime.scriptrunner.get_script_run_ctx(suppress_warning=True)
                     is not None
                 )
             except Exception:
-                ctx_exists = False
-
-        if not ctx_exists:
-            return
-
-        msg = self.format(record)
-        logs = st.session_state.get("logs", [])
-        logs.append(msg)
-        st.session_state["logs"] = logs
+                return False
 
 
-if "streamlit_log_handler" not in st.session_state:
-    _h = StreamlitLogHandler()
-    _h.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
-    logging.getLogger().addHandler(_h)
-    st.session_state["streamlit_log_handler"] = True
+# Install enhanced logging handler
+if not safe_session_state_get("enhanced_log_handler_installed", False):
+    handler = StreamlitLogHandler()
+    handler.setFormatter(logging.Formatter("%(levelname)s - %(name)s - %(message)s"))
+    logging.getLogger().addHandler(handler)
+    safe_session_state_set("enhanced_log_handler_installed", True)
 
 
-def update_log(box):
-    lines = st.session_state.get("logs", [])
-    box.code("\n".join(lines[-100:]), language="text")
+def update_log_display(container):
+    """Update log display with enhanced formatting"""
+    logs = safe_session_state_get("logs", [])
+    if not logs:
+        container.info("Chưa có log nào.")
+        return
+        
+    # Display recent logs with color coding
+    recent_logs = logs[-50:]  # Show last 50 logs
+    log_text = ""
+    
+    for log_entry in recent_logs:
+        if isinstance(log_entry, dict):
+            timestamp = log_entry.get("timestamp", "")
+            level = log_entry.get("level", "INFO")
+            message = log_entry.get("message", "")
+            log_text += f"[{timestamp}] {level}: {message}\n"
+        else:
+            log_text += f"{log_entry}\n"
+    
+    container.code(log_text, language="text")
 
 
 # --- Cấu hình chung cho trang Streamlit ---
-st.set_page_config(
-    page_title="Hoàn Cầu AI CV Processor",
-    page_icon=str(ROOT / "static" / "logo.png"),
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
+@handle_error
+def configure_streamlit_page():
+    """Configure Streamlit page with error handling"""
+    try:
+        st.set_page_config(
+            page_title="Hoàn Cầu AI CV Processor",
+            page_icon=str(ROOT / "static" / "logo.png"),
+            layout="wide",
+            initial_sidebar_state="expanded",
+        )
+        logger.info("Streamlit page configured successfully")
+    except Exception as e:
+        logger.error(f"Failed to configure Streamlit page: {e}")
+        # Fallback configuration
+        st.set_page_config(
+            page_title="Hoàn Cầu AI CV Processor",
+            layout="wide"
+        )
 
 
-# --- Tự nhận diện platform từ API key ---
-def detect_platform(api_key: str) -> str | None:
-    if not api_key:
+# --- Enhanced platform detection ---
+@handle_error  
+def detect_platform(api_key: str) -> Optional[str]:
+    """Enhanced platform detection with better error handling"""
+    if not api_key or not isinstance(api_key, str):
         return None
-    if api_key.startswith("sk-or-"):
-        return "openrouter"
-    if api_key.startswith("AIza"):
-        return "google"
-    if api_key.lower().startswith("vs-") or "vectorshift" in api_key.lower():
-        return "vectorshift"
-    # Thử gọi các endpoint đơn giản để nhận diện
-    try:
-        r = requests.get(
-            "https://openrouter.ai/api/v1/models",
-            headers={"Authorization": f"Bearer {api_key}"},
-            timeout=3,
-        )
-        if r.status_code == 200:
-            return "openrouter"
-    except Exception:
-        pass
-    try:
-        r = requests.get(
-            f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}",
-            timeout=3,
-        )
-        if r.status_code == 200:
-            return "google"
-    except Exception:
-        pass
+        
+    api_key = api_key.strip()
+    
+    # Pattern-based detection
+    patterns = {
+        "openrouter": ["sk-or-", "or-"],
+        "google": ["AIza"],
+        "vectorshift": ["vs-", "vectorshift"]
+    }
+    
+    for platform, prefixes in patterns.items():
+        if any(api_key.lower().startswith(prefix.lower()) for prefix in prefixes):
+            logger.info(f"Detected platform: {platform}")
+            return platform
+    
+    # API-based detection with timeout and retry
+    endpoints = [
+        ("openrouter", "https://openrouter.ai/api/v1/models", {"Authorization": f"Bearer {api_key}"}),
+        ("google", f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}", {})
+    ]
+    
+    for platform, url, headers in endpoints:
+        try:
+            response = requests.get(url, headers=headers, timeout=5)
+            if response.status_code == 200:
+                logger.info(f"API verification successful for platform: {platform}")
+                return platform
+        except requests.RequestException as e:
+            logger.debug(f"API check failed for {platform}: {e}")
+            continue
+    
+    logger.warning(f"Could not detect platform for API key: {api_key[:10]}...")
     return None
 
 
-# --- Load CSS tuỳ chỉnh ---
+# --- Enhanced CSS loading ---
+@handle_error
 def load_css():
-    path = ROOT / "static" / "style.css"
-    if path.exists():
-        st.markdown(
-            f"<style>{path.read_text(encoding='utf-8')}</style>", unsafe_allow_html=True
-        )
+    """Load CSS with enhanced error handling"""
+    css_path = ROOT / "static" / "style.css"
+    
+    if css_path.exists():
+        try:
+            css_content = css_path.read_text(encoding='utf-8')
+            st.markdown(f"<style>{css_content}</style>", unsafe_allow_html=True)
+            logger.info("Custom CSS loaded successfully")
+        except Exception as e:
+            logger.error(f"Failed to load CSS: {e}")
+            st.warning(f"Không thể tải CSS: {e}")
     else:
-        st.warning(f"Không tìm thấy CSS tại: {path}")
+        logger.info(f"CSS file not found at: {css_path}")
 
 
-load_css()
+# --- Enhanced model management ---
+@handle_error
+def get_available_models(provider: str, api_key: str) -> list:
+    """Get available models with caching and error handling"""
+    cache_key = f"models_{provider}_{hash(api_key) if api_key else 'none'}"
+    cached_models = safe_session_state_get(cache_key, None)
+    
+    # Use cached models if available and recent
+    if cached_models and isinstance(cached_models, dict):
+        cache_time = cached_models.get("timestamp", 0)
+        if time.time() - cache_time < 300:  # 5 minutes cache
+            return cached_models.get("models", [])
+    
+    try:
+        models = get_models_for_provider(provider, api_key)
+        if models:
+            # Cache the results
+            safe_session_state_set(cache_key, {
+                "models": models,
+                "timestamp": time.time()
+            })
+            logger.info(f"Retrieved {len(models)} models for {provider}")
+            return models
+    except Exception as e:
+        logger.error(f"Failed to get models for {provider}: {e}")
+    
+    # Fallback to default model
+    default_model = LLM_CONFIG.get("model", "gemini-2.0-flash")
+    return [default_model]
+
+
+# --- Enhanced Chat Tab Implementation ---
+@handle_error
+def render_enhanced_chat_tab():
+    """Render enhanced chat tab with full functionality"""
+    st.header("🤖 Chat với AI - Trợ lý thông minh")
+    
+    # Initialize chat history if not exists
+    if "conversation_history" not in st.session_state:
+        st.session_state.conversation_history = []
+    
+    # Load CV dataset for context
+    dataset_info = load_dataset_for_chat()
+    
+    # Display dataset info
+    if dataset_info:
+        with st.expander("📊 Thông tin dataset hiện tại", expanded=False):
+            st.success(f"✅ Đã tải {dataset_info['count']} CV từ file: `{dataset_info['file']}`")
+            st.info(f"📅 Last modified: {dataset_info['modified']}")
+    else:
+        st.warning("⚠️ Chưa có dataset CV. Hãy xử lý CV ở tab 'Xử lý CV' trước.")
+    
+    # Chat statistics
+    render_chat_statistics()
+    
+    # Chat history display
+    chat_container = st.container()
+    with chat_container:
+        render_chat_history()
+    
+    # Chat input form
+    render_chat_input_form()
+    
+    # Action buttons
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        if st.button("🗑️ Xóa lịch sử", help="Xóa toàn bộ lịch sử chat"):
+            st.session_state.conversation_history = []
+            st.success("Đã xóa lịch sử chat!")
+            st.rerun()
+    
+    with col2:
+        if st.button("📥 Xuất chat", help="Xuất lịch sử chat ra file"):
+            export_chat_history()
+    
+    with col3:
+        if st.button("📊 Thống kê", help="Xem thống kê chi tiết"):
+            st.session_state["show_chat_stats"] = not st.session_state.get("show_chat_stats", False)
+            st.rerun()
+    
+    with col4:
+        if st.button("❓ Hướng dẫn", help="Xem hướng dẫn sử dụng"):
+            render_chat_help()
+
+
+@handle_error
+def load_dataset_for_chat():
+    """Load CV dataset for chat context"""
+    try:
+        csv_path = ROOT / "cv_summary.csv"
+        if not csv_path.exists():
+            return None
+        
+        df = pd.read_csv(csv_path)
+        if df.empty:
+            return None
+        
+        modified_time = datetime.fromtimestamp(csv_path.stat().st_mtime)
+        
+        return {
+            "count": len(df),
+            "file": csv_path.name,
+            "modified": modified_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "data": df
+        }
+    except Exception as e:
+        logger.error(f"Error loading dataset for chat: {e}")
+        return None
+
+
+@handle_error
+def render_chat_statistics():
+    """Render chat statistics"""
+    if not st.session_state.get("show_chat_stats", False):
+        return
+    
+    history = st.session_state.get("conversation_history", [])
+    if not history:
+        st.info("Chưa có cuộc trò chuyện nào.")
+        return
+    
+    with st.expander("📊 Thống kê chi tiết", expanded=True):
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.metric("Tổng tin nhắn", len(history))
+        
+        with col2:
+            user_messages = len([msg for msg in history if msg["role"] == "user"])
+            st.metric("Tin nhắn của bạn", user_messages)
+        
+        with col3:
+            ai_messages = len([msg for msg in history if msg["role"] == "assistant"])
+            st.metric("Phản hồi AI", ai_messages)
+        
+        with col4:
+            if history:
+                first_message = history[0].get("timestamp", "N/A")
+                st.metric("Bắt đầu lúc", first_message[:19] if first_message != "N/A" else "N/A")
+
+
+@handle_error
+def render_chat_history():
+    """Render chat conversation history"""
+    history = st.session_state.get("conversation_history", [])
+    if not history:
+        st.info("💬 Bắt đầu cuộc trò chuyện bằng cách gửi tin nhắn bên dưới!")
+        return
+    
+    for i, message in enumerate(history):
+        role = message.get("role", "user")
+        content = message.get("content", "")
+        timestamp = message.get("timestamp", "")
+        
+        if role == "user":
+            # User message - aligned right
+            st.markdown(
+                f"""
+                <div style="display: flex; justify-content: flex-end; margin: 10px 0;">
+                    <div class="chat-message" style="
+                        background: linear-gradient(135deg, {st.session_state.get('accent_color', '#d4af37')} 0%, {st.session_state.get('secondary_color', '#f4e09c')} 100%);
+                        color: white;
+                        margin-left: 20%;
+                    ">
+                        <strong>👤 Bạn:</strong><br>
+                        {content}
+                        <div style="font-size: 0.8em; opacity: 0.8; margin-top: 5px;">
+                            {timestamp[:19] if timestamp else ''}
+                        </div>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+        else:
+            # AI message - aligned left
+            st.markdown(
+                f"""
+                <div style="display: flex; justify-content: flex-start; margin: 10px 0;">
+                    <div class="chat-message" style="
+                        background: linear-gradient(135deg, {st.session_state.get('background_color', '#fffbf0')} 0%, {st.session_state.get('secondary_color', '#f4e09c')}44 100%);
+                        color: {st.session_state.get('text_color', '#2d1810')};
+                        border: 2px solid {st.session_state.get('secondary_color', '#f4e09c')};
+                        margin-right: 20%;
+                    ">
+                        <strong>🤖 AI:</strong><br>
+                        {content}
+                        <div style="font-size: 0.8em; opacity: 0.7; margin-top: 5px;">
+                            {timestamp[:19] if timestamp else ''}
+                        </div>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+
+@handle_error
+def render_chat_input_form():
+    """Render chat input form"""
+    with st.form("chat_form", clear_on_submit=True):
+        col1, col2 = st.columns([4, 1])
+        
+        with col1:
+            user_input = st.text_area(
+                "💬 Nhập câu hỏi của bạn:",
+                placeholder="Ví dụ: Tóm tắt thông tin các ứng viên có kinh nghiệm AI...",
+                height=100,
+                help="Nhấn Ctrl+Enter để gửi nhanh"
+            )
+        
+        with col2:
+            st.markdown("<br>", unsafe_allow_html=True)  # Spacing
+            submit_button = st.form_submit_button(
+                "📨 Gửi",
+                help="Gửi câu hỏi cho AI",
+                use_container_width=True
+            )
+    
+    if submit_button and user_input.strip():
+        process_chat_message(user_input.strip())
+
+
+@handle_error
+def process_chat_message(user_input: str):
+    """Process chat message and get AI response"""
+    try:
+        # Add user message to history
+        timestamp = datetime.now().isoformat()
+        st.session_state.conversation_history.append({
+            "role": "user",
+            "content": user_input,
+            "timestamp": timestamp
+        })
+        
+        # Get AI response
+        with st.spinner("🤖 AI đang suy nghĩ..."):
+            # Import QA chatbot
+            try:
+                from modules.qa_chatbot import QAChatbot
+                
+                # Get current LLM configuration
+                provider = st.session_state.get("selected_provider", "google")
+                model = st.session_state.get("selected_model", "gemini-2.0-flash")
+                api_key = st.session_state.get(f"{provider}_api_key", "")
+                
+                if not api_key:
+                    st.error("❌ API Key chưa được cấu hình!")
+                    return
+                
+                # Load dataset for context
+                dataset_info = load_dataset_for_chat()
+                dataset_context = ""
+                
+                if dataset_info and dataset_info.get("data") is not None:
+                    df = dataset_info["data"]
+                    # Create context from CV data
+                    dataset_context = f"""
+Thông tin dataset hiện tại:
+- Tổng số CV: {len(df)}
+- Các cột dữ liệu: {', '.join(df.columns.tolist())}
+- Dữ liệu mẫu (5 dòng đầu):
+{df.head().to_string()}
+"""
+                
+                # Initialize chatbot
+                chatbot = QAChatbot(provider=provider, model=model, api_key=api_key)
+                
+                # Prepare conversation context
+                conversation_context = []
+                recent_history = st.session_state.conversation_history[-10:]  # Last 10 messages
+                
+                for msg in recent_history[:-1]:  # Exclude the current message
+                    conversation_context.append({
+                        "role": msg["role"],
+                        "content": msg["content"]
+                    })
+                
+                # Get AI response
+                full_query = f"""
+Bối cảnh dataset CV:
+{dataset_context}
+
+Lịch sử trò chuyện gần đây:
+{str(conversation_context) if conversation_context else "Không có lịch sử"}
+
+Câu hỏi hiện tại: {user_input}
+
+Hãy trả lời một cách chi tiết, chuyên nghiệp và hữu ích. Nếu câu hỏi liên quan đến CV trong dataset, hãy phân tích dựa trên dữ liệu có sẵn.
+"""
+                
+                response = chatbot.ask_question(full_query)
+                
+                if response:
+                    # Add AI response to history
+                    st.session_state.conversation_history.append({
+                        "role": "assistant", 
+                        "content": response,
+                        "timestamp": datetime.now().isoformat()
+                    })
+                    
+                    logger.info(f"Chat processed successfully. History length: {len(st.session_state.conversation_history)}")
+                    st.rerun()
+                else:
+                    st.error("❌ Không thể lấy phản hồi từ AI. Vui lòng thử lại.")
+                    
+            except ImportError as e:
+                st.error(f"❌ Lỗi import QAChatbot: {e}")
+                logger.error(f"QAChatbot import error: {e}")
+            except Exception as e:
+                st.error(f"❌ Lỗi xử lý chat: {str(e)}")
+                logger.error(f"Chat processing error: {e}")
+                logger.error(traceback.format_exc())
+                
+    except Exception as e:
+        st.error(f"❌ Lỗi không mong muốn: {str(e)}")
+        logger.error(f"Unexpected chat error: {e}")
+
+
+@handle_error
+def export_chat_history():
+    """Export chat history to file"""
+    try:
+        history = st.session_state.get("conversation_history", [])
+        if not history:
+            st.warning("Không có lịch sử chat để xuất.")
+            return
+        
+        # Create export content
+        export_content = "# Lịch sử Chat - Hoàn Cầu AI CV Processor\n\n"
+        export_content += f"Xuất lúc: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+        export_content += f"Tổng số tin nhắn: {len(history)}\n\n"
+        export_content += "---\n\n"
+        
+        for i, message in enumerate(history, 1):
+            role = "👤 Bạn" if message["role"] == "user" else "🤖 AI"
+            timestamp = message.get("timestamp", "")[:19]
+            content = message.get("content", "")
+            
+            export_content += f"## Tin nhắn {i} - {role}\n"
+            export_content += f"**Thời gian:** {timestamp}\n\n"
+            export_content += f"{content}\n\n"
+            export_content += "---\n\n"
+        
+        # Provide download
+        st.download_button(
+            label="💾 Tải xuống lịch sử chat",
+            data=export_content,
+            file_name=f"chat_history_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
+            mime="text/markdown",
+            help="Tải xuống lịch sử chat dưới dạng file Markdown"
+        )
+        
+        st.success("✅ File xuất sẵn sàng để tải xuống!")
+        
+    except Exception as e:
+        st.error(f"❌ Lỗi xuất file: {str(e)}")
+        logger.error(f"Export error: {e}")
+
+
+@handle_error
+def render_chat_help():
+    """Render chat help and usage guide"""
+    with st.expander("❓ Hướng dẫn sử dụng Chat AI", expanded=True):
+        st.markdown("""
+        ### 🎯 Tính năng chính:
+        - **Chat thông minh** với AI về dữ liệu CV
+        - **Lưu lịch sử** cuộc trò chuyện tự động
+        - **Xuất file** lịch sử chat
+        - **Thống kê** chi tiết cuộc trò chuyện
+        - **Giao diện đẹp** với theme tùy chỉnh
+        
+        ### 💡 Cách sử dụng:
+        1. **Xử lý CV trước:** Hãy xử lý CV ở tab "Xử lý CV" để có dữ liệu
+        2. **Đặt câu hỏi:** Nhập câu hỏi vào ô bên dưới
+        3. **Gửi tin nhắn:** Nhấn "Gửi" hoặc Ctrl+Enter
+        4. **Theo dõi lịch sử:** Tất cả cuộc trò chuyện được lưu tự động
+        
+        ### 🔥 Câu hỏi mẫu:
+        - "Tóm tắt thông tin các ứng viên có kinh nghiệm AI"
+        - "Ứng viên nào có kỹ năng Python tốt nhất?"
+        - "Phân tích điểm mạnh của từng ứng viên"
+        - "Gợi ý ứng viên phù hợp cho vị trí Senior Developer"
+        
+        ### ⚡ Mẹo sử dụng:
+        - **Câu hỏi cụ thể** sẽ cho kết quả tốt hơn
+        - **Sử dụng ngữ cảnh** từ cuộc trò chuyện trước
+        - **Xuất lịch sử** để lưu trữ thông tin quan trọng
+        - **Xóa lịch sử** khi muốn bắt đầu cuộc trò chuyện mới
+        
+        ### 🛠️ Cấu hình:
+        - **API Key:** Cấu hình ở sidebar bên trái
+        - **Model:** Chọn model phù hợp (Gemini, GPT, v.v.)
+        - **Theme:** Tùy chỉnh giao diện theo sở thích
+        """)
+
+
+# Initialize application
+def initialize_app():
+    """Initialize the application with comprehensive setup"""
+    if safe_session_state_get("app_initialized", False):
+        return
+    
+    logger.info("Initializing Hoàn Cầu AI CV Processor...")
+    
+    # Validate configuration
+    config_status = validate_configuration()
+    if not all(config_status.values()):
+        st.warning("Một số cấu hình có thể chưa đầy đủ. Ứng dụng vẫn sẽ hoạt động nhưng có thể thiếu một số tính năng.")
+        logger.warning(f"Configuration issues detected: {config_status}")
+    
+    # Initialize session state
+    initialize_session_state()
+    
+    # Configure page
+    configure_streamlit_page()
+    
+    # Load CSS
+    load_css()
+    
+    safe_session_state_set("app_initialized", True)
+    logger.info("Application initialization completed")
+
+# Initialize the application
+initialize_app()
 
 # --- Sidebar: logo và cấu hình LLM ---
-logo_path = ROOT / "static" / "logo.png"
-if logo_path.exists():
-    st.sidebar.image(str(logo_path), use_container_width=True)
+@handle_error
+def render_sidebar():
+    """Render sidebar with enhanced error handling"""
+    
+    # Logo display
+    logo_path = ROOT / "static" / "logo.png"
+    if logo_path.exists():
+        try:
+            st.sidebar.image(str(logo_path), use_container_width=True)
+        except Exception as e:
+            logger.warning(f"Failed to load logo: {e}")
+            st.sidebar.markdown("**🏢 Hoàn Cầu AI CV Processor**")
+    
+    # System status indicator
+    with st.sidebar.expander("📊 Trạng thái hệ thống", expanded=False):
+        config_status = validate_configuration()
+        for component, status in config_status.items():
+            emoji = "✅" if status else "❌"
+            st.write(f"{emoji} {component.replace('_', ' ').title()}")
+    
+    st.sidebar.header("⚙️ Cấu hình LLM")
 
-st.sidebar.header("Cấu hình LLM")
-
-# Chọn provider
-provider = st.sidebar.selectbox(
-    "Provider",
-    options=["google", "openrouter"],
-    key="selected_provider",
-    help="Chọn nhà cung cấp LLM",
-)
-
-# Nhập API key theo provider
-if provider == "google":
-    api_key = st.sidebar.text_input(
-        "Google API Key",
-        type="password",
-        value=st.session_state.get("google_api_key", GOOGLE_API_KEY),
-        key="google_api_key",
-        help="Khóa API dùng cho Google Gemini",
-    )
-else:
-    api_key = st.sidebar.text_input(
-        "OpenRouter API Key",
-        type="password",
-        value=st.session_state.get("openrouter_api_key", OPENROUTER_API_KEY),
-        key="openrouter_api_key",
-        help="Khóa API cho OpenRouter",
+    # Provider selection with validation
+    provider = st.sidebar.selectbox(
+        "🔧 Provider",
+        options=["google", "openrouter"],
+        key="selected_provider",
+        help="Chọn nhà cung cấp LLM",
     )
 
-if st.sidebar.button("Lấy models", help="Lấy danh sách model từ API"):
-    if not api_key:
-        st.sidebar.warning("Vui lòng nhập API Key trước khi lấy models")
+    # API key input with enhanced validation
+    if provider == "google":
+        api_key = st.sidebar.text_input(
+            "🔑 Google API Key",
+            type="password",
+            value=safe_session_state_get("google_api_key", GOOGLE_API_KEY),
+            key="google_api_key",
+            help="Khóa API dùng cho Google Gemini",
+        )
     else:
-        st.session_state.available_models = get_models_for_provider(provider, api_key)
-
-models = st.session_state.get(
-    "available_models", get_models_for_provider(provider, api_key)
-)
-if not models:
-    st.sidebar.error("Không lấy được models, vui lòng kiểm tra API Key.")
-    models = [LLM_CONFIG.get("model")]
-# Đặt model mặc định "gemini-2.0-flask" khi khởi động lần đầu
-default_model = LLM_CONFIG.get("model", "gemini-2.0-flask")
-if default_model not in models:
-    default_model = models[0]
-if (
-    "selected_model" not in st.session_state
-    or st.session_state.selected_model not in models
-):
-    st.session_state.selected_model = default_model
-
-
-# Chọn model, lưu tự động vào session_state
-def _fmt_option(m: str) -> str:
-    p = get_model_price(m)
-    return f"{m} ({p})" if p != "unknown" else m
-
-
-model = st.sidebar.selectbox(
-    "Model",
-    options=models,
-    key="selected_model",
-    help="Chọn mô hình LLM",
-    format_func=_fmt_option,
-)
-
-price = get_model_price(model)
-label = f"{model} ({price})" if price != "unknown" else model
-# Hiển thị cấu hình đang dùng
-st.sidebar.markdown(f"**Đang dùng:** `{provider}` / `{label}`")
-
-st.sidebar.header("Thông tin Email")
-email_user = st.sidebar.text_input(
-    "Gmail",
-    value=st.session_state.get("email_user", EMAIL_USER),
-    key="email_user",
-    help="Địa chỉ Gmail dùng để tự động tải CV",
-)
-email_pass = st.sidebar.text_input(
-    "Mật khẩu",
-    type="password",
-    value=st.session_state.get("email_pass", EMAIL_PASS),
-    key="email_pass",
-    help="Mật khẩu hoặc App Password của Gmail",
-)
-unseen_only = st.sidebar.checkbox(
-    "Chỉ quét email chưa đọc",
-    value=st.session_state.get("unseen_only", EMAIL_UNSEEN_ONLY),
-    key="unseen_only",
-    help="Nếu bỏ chọn, hệ thống sẽ quét toàn bộ hộp thư",
-)
-
-# Tự động khởi động auto fetcher khi đã nhập đủ thông tin
-if email_user and email_pass and "auto_fetcher_thread" not in st.session_state:
-    import threading
-
-    def _auto_fetch():
-        watch_loop(
-            600,
-            host=EMAIL_HOST,
-            port=EMAIL_PORT,
-            user=email_user,
-            password=email_pass,
-            unseen_only=unseen_only,
+        api_key = st.sidebar.text_input(
+            "🔑 OpenRouter API Key", 
+            type="password",
+            value=safe_session_state_get("openrouter_api_key", OPENROUTER_API_KEY),
+            key="openrouter_api_key",
+            help="Khóa API cho OpenRouter",
         )
 
-    t = threading.Thread(target=_auto_fetch, daemon=True)
-    t.start()
-    st.session_state.auto_fetcher_thread = t
-    logging.info("Đã khởi động auto fetcher background thread")
-    st.sidebar.info("Đang tự động lấy CV từ email...")
+    # API key validation
+    if api_key:
+        detected_platform = detect_platform(api_key)
+        if detected_platform and detected_platform != provider:
+            st.sidebar.warning(f"⚠️ API key có vẻ thuộc về {detected_platform}, không phải {provider}")
+        elif detected_platform == provider:
+            st.sidebar.success(f"✅ API key hợp lệ cho {provider}")
 
-# --- Main UI: 5 Tabs ---
-tab_fetch, tab_process, tab_single, tab_results, tab_flow, tab_mcp, tab_chat = st.tabs(
+    # Model fetching with better error handling
+    col1, col2 = st.sidebar.columns([2, 1])
+    with col1:
+        if st.button("🔄 Lấy models", help="Lấy danh sách model từ API"):
+            if not api_key:
+                st.sidebar.warning("⚠️ Vui lòng nhập API Key trước khi lấy models")
+            else:
+                with st.spinner("Đang lấy danh sách models..."):
+                    models = get_available_models(provider, api_key)
+                    if models:
+                        safe_session_state_set("available_models", models)
+                        st.sidebar.success(f"✅ Đã lấy {len(models)} models")
+                    else:
+                        st.sidebar.error("❌ Không thể lấy models")
+
+    with col2:
+        if st.button("🗑️", help="Xóa cache models"):
+            cache_key = f"models_{provider}_{hash(api_key) if api_key else 'none'}"
+            if cache_key in st.session_state:
+                del st.session_state[cache_key]
+            st.sidebar.info("Cache đã được xóa")
+
+    # Model selection
+    models = safe_session_state_get("available_models", get_available_models(provider, api_key))
+    
+    if not models:
+        st.sidebar.error("❌ Không lấy được models, vui lòng kiểm tra API Key.")
+        models = [LLM_CONFIG.get("model", "gemini-2.0-flash")]
+
+    # Set default model
+    default_model = LLM_CONFIG.get("model", "gemini-2.0-flash")
+    if default_model not in models and models:
+        default_model = models[0]
+    
+    if not safe_session_state_get("selected_model") or safe_session_state_get("selected_model") not in models:
+        safe_session_state_set("selected_model", default_model)
+
+    # Model selection with pricing
+    def format_model_option(model: str) -> str:
+        try:
+            price = get_model_price(model)
+            return f"{model} ({price})" if price != "unknown" else model
+        except Exception:
+            return model
+
+    model = st.sidebar.selectbox(
+        "🤖 Model",
+        options=models,
+        key="selected_model", 
+        help="Chọn mô hình LLM",
+        format_func=format_model_option,
+    )
+
+    # Display current configuration
+    try:
+        price = get_model_price(model)
+        label = f"{model} ({price})" if price != "unknown" else model
+    except Exception:
+        label = model
+        
+    st.sidebar.markdown(f"**🎯 Đang dùng:** `{provider}` / `{label}`")
+    
+    return provider, api_key, model
+
+# Render sidebar and get configuration
+provider, api_key, model = render_sidebar()
+
+# --- Email configuration with enhanced validation ---
+@handle_error
+def render_email_config():
+    """Render email configuration section"""
+    st.sidebar.header("📧 Thông tin Email")
+    
+    email_user = st.sidebar.text_input(
+        "📮 Gmail",
+        value=safe_session_state_get("email_user", EMAIL_USER),
+        key="email_user",
+        help="Địa chỉ Gmail dùng để tự động tải CV",
+    )
+    
+    email_pass = st.sidebar.text_input(
+        "🔐 Mật khẩu",
+        type="password",
+        value=safe_session_state_get("email_pass", EMAIL_PASS),
+        key="email_pass",
+        help="Mật khẩu hoặc App Password của Gmail",
+    )
+    
+    unseen_only = st.sidebar.checkbox(
+        "👁️ Chỉ quét email chưa đọc",
+        value=safe_session_state_get("unseen_only", EMAIL_UNSEEN_ONLY),
+        key="unseen_only",
+        help="Nếu bỏ chọn, hệ thống sẽ quét toàn bộ hộp thư",
+    )
+    
+    # Email validation
+    if email_user and "@" not in email_user:
+        st.sidebar.warning("⚠️ Địa chỉ email không hợp lệ")
+    
+    # Auto fetcher management
+    manage_auto_fetcher(email_user, email_pass, unseen_only)
+    
+    return email_user, email_pass, unseen_only
+
+
+@handle_error
+def manage_auto_fetcher(email_user: str, email_pass: str, unseen_only: bool):
+    """Manage auto fetcher thread with better error handling"""
+    if not (email_user and email_pass):
+        return
+    
+    # Check if auto fetcher is already running
+    if safe_session_state_get("auto_fetcher_thread"):
+        st.sidebar.success("✅ Auto fetcher đang chạy")
+        
+        if st.sidebar.button("🛑 Dừng auto fetcher"):
+            safe_session_state_set("auto_fetcher_thread", None)
+            st.sidebar.info("Auto fetcher đã được dừng")
+            st.rerun()
+        return
+    
+    # Start auto fetcher
+    try:
+        import threading
+        
+        def auto_fetch_worker():
+            try:
+                logger.info("Starting auto fetcher thread")
+                watch_loop(
+                    600,  # 10 minutes interval
+                    host=EMAIL_HOST,
+                    port=EMAIL_PORT,
+                    user=email_user,
+                    password=email_pass,
+                    unseen_only=unseen_only,
+                )
+            except Exception as e:
+                logger.error(f"Auto fetcher error: {e}")
+                safe_session_state_set("auto_fetcher_error", str(e))
+
+        thread = threading.Thread(target=auto_fetch_worker, daemon=True)
+        thread.start()
+        safe_session_state_set("auto_fetcher_thread", thread)
+        
+        logger.info("Auto fetcher started successfully")
+        st.sidebar.info("🔄 Đang tự động lấy CV từ email...")
+        
+    except Exception as e:
+        logger.error(f"Failed to start auto fetcher: {e}")
+        st.sidebar.error(f"Lỗi khởi động auto fetcher: {e}")
+
+# Render email configuration
+email_user, email_pass, unseen_only = render_email_config()
+
+# --- Sidebar: Tùy chỉnh giao diện ---
+st.sidebar.header("🎨 Tùy chỉnh giao diện")
+
+# Theme presets with beautiful color combinations
+theme_presets = {
+    "Vàng Kim (Mặc định)": {"bg": "#fffbf0", "text": "#2d1810", "accent": "#d4af37", "secondary": "#f4e09c"},
+    "Xanh Biển Sang Trọng": {"bg": "#f0f8ff", "text": "#1e3a5f", "accent": "#2c5aa0", "secondary": "#87ceeb"},
+    "Tím Hoàng Gia": {"bg": "#faf5ff", "text": "#3c1361", "accent": "#7c3aed", "secondary": "#c4b5fd"},
+    "Xanh Lá Tự Nhiên": {"bg": "#f0fff4", "text": "#065f46", "accent": "#059669", "secondary": "#86efac"},
+    "Đỏ Burgundy": {"bg": "#fef2f2", "text": "#7f1d1d", "accent": "#dc2626", "secondary": "#fca5a5"},
+    "Cam Sunset": {"bg": "#fff7ed", "text": "#9a3412", "accent": "#ea580c", "secondary": "#fdba74"},
+    "Hồng Sakura": {"bg": "#fdf2f8", "text": "#831843", "accent": "#ec4899", "secondary": "#f9a8d4"},
+    "Xám Platinum": {"bg": "#f9fafb", "text": "#374151", "accent": "#6b7280", "secondary": "#d1d5db"},
+    "Tối Elegant": {"bg": "#1f2937", "text": "#f9fafb", "accent": "#fbbf24", "secondary": "#4b5563"},
+    "Gradient Twilight": {"bg": "#0f172a", "text": "#e2e8f0", "accent": "#8b5cf6", "secondary": "#06b6d4"},
+}
+
+selected_theme = st.sidebar.selectbox(
+    "🎨 Chọn theme có sẵn:",
+    options=list(theme_presets.keys()),
+    index=0,
+    help="Chọn một theme có sẵn hoặc tùy chỉnh bên dưới"
+)
+
+# Apply theme if not default
+theme = theme_presets[selected_theme]
+st.session_state["background_color"] = theme["bg"]
+st.session_state["text_color"] = theme["text"]
+st.session_state["accent_color"] = theme["accent"]
+st.session_state["secondary_color"] = theme["secondary"]
+
+st.sidebar.markdown("---")
+st.sidebar.markdown("**🎨 Tùy chỉnh chi tiết:**")
+
+# Color customization with better defaults
+background_color = st.sidebar.color_picker(
+    "� Màu nền chính",
+    value=st.session_state.get("background_color", "#fffbf0"),
+    help="Chọn màu nền cho ứng dụng"
+)
+
+text_color = st.sidebar.color_picker(
+    "📝 Màu chữ",
+    value=st.session_state.get("text_color", "#2d1810"),
+    help="Chọn màu cho văn bản"
+)
+
+accent_color = st.sidebar.color_picker(
+    "⭐ Màu nhấn chính",
+    value=st.session_state.get("accent_color", "#d4af37"),
+    help="Chọn màu nhấn cho các thành phần UI quan trọng"
+)
+
+secondary_color = st.sidebar.color_picker(
+    "🌟 Màu phụ",
+    value=st.session_state.get("secondary_color", "#f4e09c"),
+    help="Chọn màu phụ cho các thành phần UI"
+)
+
+# Font customization with more elegant options
+font_options = [
+    "Poppins", "Roboto", "Open Sans", "Lato", "Montserrat",
+    "Inter", "Arial", "Verdana", "Times New Roman", "Georgia"
+]
+font_family_index = st.session_state.get("font_family_index", 0)
+if font_family_index >= len(font_options):
+    font_family_index = 0
+
+font_family = st.sidebar.selectbox(
+    "🔤 Phông chữ",
+    options=font_options,
+    index=font_family_index,
+    help="Chọn kiểu phông chữ"
+)
+
+font_size = st.sidebar.slider(
+    "📏 Cỡ chữ",
+    min_value=12, max_value=20,
+    value=st.session_state.get("font_size", 14),
+    help="Điều chỉnh kích thước chữ"
+)
+
+# Advanced styling options
+border_radius = st.sidebar.slider(
+    "🔘 Bo góc",
+    min_value=0, max_value=20,
+    value=st.session_state.get("border_radius", 8),
+    help="Độ bo góc của các thành phần"
+)
+
+# Layout options
+layout_compact = st.sidebar.checkbox(
+    "📐 Giao diện gọn",
+    value=st.session_state.get("layout_compact", False),
+    help="Giảm khoảng cách giữa các thành phần"
+)
+
+# Reset button
+if st.sidebar.button("🔄 Khôi phục theme vàng kim", help="Đặt lại về theme vàng kim mặc định"):
+    st.session_state["background_color"] = "#fffbf0"
+    st.session_state["text_color"] = "#2d1810"
+    st.session_state["accent_color"] = "#d4af37"
+    st.session_state["secondary_color"] = "#f4e09c"
+    st.session_state["font_family_index"] = 0
+    st.session_state["font_size"] = 14
+    st.session_state["border_radius"] = 8
+    st.session_state["layout_compact"] = False
+    st.rerun()
+
+# Save preferences
+st.session_state["background_color"] = background_color
+st.session_state["text_color"] = text_color
+st.session_state["accent_color"] = accent_color
+st.session_state["secondary_color"] = secondary_color
+st.session_state["font_family_index"] = font_options.index(font_family)
+st.session_state["font_size"] = font_size
+st.session_state["border_radius"] = border_radius
+st.session_state["layout_compact"] = layout_compact
+
+# Apply custom styling with beautiful gradients and shadows
+padding = "0.5rem" if layout_compact else "1rem"
+custom_css = f"""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@300;400;500;600;700&family=Lato:wght@300;400;700&family=Montserrat:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    .main .block-container {{
+        padding-top: {padding};
+        padding-bottom: {padding};
+        background: linear-gradient(135deg, {background_color} 0%, {secondary_color}22 100%);
+        min-height: 100vh;
+    }}
+    
+    .stApp {{
+        background: linear-gradient(135deg, {background_color} 0%, {secondary_color}22 100%);
+        color: {text_color};
+        font-family: '{font_family}', sans-serif;
+        font-size: {font_size}px;
+    }}
+    
+    .stSidebar {{
+        background: linear-gradient(180deg, {background_color} 0%, {secondary_color}33 100%);
+        border-right: 2px solid {accent_color}22;
+    }}
+    
+    .stButton > button {{
+        background: linear-gradient(135deg, {accent_color} 0%, {secondary_color} 100%);
+        color: white;
+        border-radius: {border_radius}px;
+        border: none;
+        padding: 0.6rem 1.2rem;
+        font-weight: 500;
+        font-family: '{font_family}', sans-serif;
+        box-shadow: 0 4px 15px {accent_color}33;
+        transition: all 0.3s ease;
+    }}
+    
+    .stButton > button:hover {{
+        background: linear-gradient(135deg, {accent_color}dd 0%, {secondary_color}dd 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px {accent_color}44;
+    }}
+    
+    .stSelectbox > div > div {{
+        background-color: {background_color};
+        color: {text_color};
+        border: 2px solid {secondary_color};
+        border-radius: {border_radius}px;
+    }}
+    
+    .stTextInput > div > div > input {{
+        background-color: {background_color};
+        color: {text_color};
+        border: 2px solid {secondary_color};
+        border-radius: {border_radius}px;
+        font-family: '{font_family}', sans-serif;
+    }}
+    
+    .stTextInput > div > div > input:focus {{
+        border-color: {accent_color};
+        box-shadow: 0 0 0 2px {accent_color}33;
+    }}
+    
+    .stTextArea > div > div > textarea {{
+        background-color: {background_color};
+        color: {text_color};
+        border: 2px solid {secondary_color};
+        border-radius: {border_radius}px;
+        font-family: '{font_family}', sans-serif;
+    }}
+    
+    .stTextArea > div > div > textarea:focus {{
+        border-color: {accent_color};
+        box-shadow: 0 0 0 2px {accent_color}33;
+    }}
+    
+    h1, h2, h3, h4, h5, h6 {{
+        color: {accent_color};
+        font-family: '{font_family}', sans-serif;
+        font-weight: 600;
+        text-shadow: 1px 1px 2px {accent_color}22;
+    }}
+    
+    .stTabs [data-baseweb="tab-list"] {{
+        gap: 8px;
+    }}
+    
+    .stTabs [data-baseweb="tab"] {{
+        background: linear-gradient(135deg, {secondary_color}44 0%, {background_color} 100%);
+        border-radius: {border_radius}px;
+        color: {text_color};
+        border: 2px solid {secondary_color}66;
+    }}
+    
+    .stTabs [aria-selected="true"] {{
+        background: linear-gradient(135deg, {accent_color} 0%, {secondary_color} 100%);
+        color: white;
+        border-color: {accent_color};
+    }}
+    
+    .chat-message {{
+        margin: 10px 0;
+        padding: 12px 18px;
+        border-radius: {border_radius + 10}px;
+        max-width: 70%;
+        word-wrap: break-word;
+        font-family: '{font_family}', sans-serif;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }}
+    
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {{
+        width: 8px;
+    }}
+    
+    ::-webkit-scrollbar-track {{
+        background: {secondary_color}33;
+        border-radius: 4px;
+    }}
+    
+    ::-webkit-scrollbar-thumb {{
+        background: {accent_color};
+        border-radius: 4px;
+    }}
+    
+    ::-webkit-scrollbar-thumb:hover {{
+        background: {accent_color}dd;
+    }}
+    
+    /* Form styling */
+    .stForm {{
+        background: linear-gradient(135deg, {background_color}aa 0%, {secondary_color}22 100%);
+        border: 2px solid {secondary_color}66;
+        border-radius: {border_radius}px;
+        padding: 1rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }}
+</style>
+"""
+
+st.markdown(custom_css, unsafe_allow_html=True)
+
+# --- Main UI: 3 Tabs ---
+tab_fetch, tab_process, tab_single, tab_results, tab_chat = st.tabs(
     [
         "Lấy CV từ Email",
         "Xử lý CV",
         "Single File",
         "Kết quả",
-        "Xây dựng flow",
-        "MCP Server",
         "Hỏi AI",
     ]
 )
@@ -279,25 +1230,380 @@ with tab_single:
 with tab_results:
     results_tab.render()
 
-with tab_flow:
-    flow_tab.render(ROOT)
-
-with tab_mcp:
-    mcp_tab.render(detect_platform)
-
 with tab_chat:
-    chat_tab.render(provider, model, api_key)
+    # Use built-in enhanced chat implementation
+    render_enhanced_chat_tab()
 
-# --- Log Viewer ---
-log_expander = st.expander("Xem log xử lý", expanded=False)
-with log_expander:
-    log_box = st.empty()
-    log_lines = st.session_state.get("logs", [])
-    update_log(log_box)
+
+# --- Footer ---
+@handle_error
+def render_enhanced_chat_tab():
+    """Render enhanced chat tab with full functionality"""
+    st.header("🤖 Chat với AI - Trợ lý thông minh")
+    
+    # Initialize chat history if not exists
+    if "conversation_history" not in st.session_state:
+        st.session_state.conversation_history = []
+    
+    # Load CV dataset for context
+    dataset_info = load_dataset_for_chat()
+    
+    # Display dataset info
+    if dataset_info:
+        with st.expander("📊 Thông tin dataset hiện tại", expanded=False):
+            st.success(f"✅ Đã tải {dataset_info['count']} CV từ file: `{dataset_info['file']}`")
+            st.info(f"📅 Last modified: {dataset_info['modified']}")
+    else:
+        st.warning("⚠️ Chưa có dataset CV. Hãy xử lý CV ở tab 'Xử lý CV' trước.")
+    
+    # Chat statistics
+    render_chat_statistics()
+    
+    # Chat history display
+    chat_container = st.container()
+    with chat_container:
+        render_chat_history()
+    
+    # Chat input form
+    render_chat_input_form()
+    
+    # Action buttons
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        if st.button("🗑️ Xóa lịch sử", help="Xóa toàn bộ lịch sử chat"):
+            st.session_state.conversation_history = []
+            st.success("Đã xóa lịch sử chat!")
+            st.rerun()
+    
+    with col2:
+        if st.button("📥 Xuất chat", help="Xuất lịch sử chat ra file"):
+            export_chat_history()
+    
+    with col3:
+        if st.button("📊 Thống kê", help="Xem thống kê chi tiết"):
+            st.session_state["show_chat_stats"] = not st.session_state.get("show_chat_stats", False)
+            st.rerun()
+    
+    with col4:
+        if st.button("❓ Hướng dẫn", help="Xem hướng dẫn sử dụng"):
+            render_chat_help()
+
+
+@handle_error
+def load_dataset_for_chat():
+    """Load CV dataset for chat context"""
+    try:
+        csv_path = ROOT / "cv_summary.csv"
+        if not csv_path.exists():
+            return None
+        
+        df = pd.read_csv(csv_path)
+        if df.empty:
+            return None
+        
+        modified_time = datetime.fromtimestamp(csv_path.stat().st_mtime)
+        
+        return {
+            "count": len(df),
+            "file": csv_path.name,
+            "modified": modified_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "data": df
+        }
+    except Exception as e:
+        logger.error(f"Error loading dataset for chat: {e}")
+        return None
+
+
+@handle_error
+def render_chat_statistics():
+    """Render chat statistics"""
+    if not st.session_state.get("show_chat_stats", False):
+        return
+    
+    history = st.session_state.get("conversation_history", [])
+    if not history:
+        st.info("Chưa có cuộc trò chuyện nào.")
+        return
+    
+    with st.expander("📊 Thống kê chi tiết", expanded=True):
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.metric("Tổng tin nhắn", len(history))
+        
+        with col2:
+            user_messages = len([msg for msg in history if msg["role"] == "user"])
+            st.metric("Tin nhắn của bạn", user_messages)
+        
+        with col3:
+            ai_messages = len([msg for msg in history if msg["role"] == "assistant"])
+            st.metric("Phản hồi AI", ai_messages)
+        
+        with col4:
+            if history:
+                first_message = history[0].get("timestamp", "N/A")
+                st.metric("Bắt đầu lúc", first_message[:19] if first_message != "N/A" else "N/A")
+
+
+@handle_error
+def render_chat_history():
+    """Render chat conversation history"""
+    history = st.session_state.get("conversation_history", [])
+    if not history:
+        st.info("💬 Bắt đầu cuộc trò chuyện bằng cách gửi tin nhắn bên dưới!")
+        return
+    
+    for i, message in enumerate(history):
+        role = message.get("role", "user")
+        content = message.get("content", "")
+        timestamp = message.get("timestamp", "")
+        
+        if role == "user":
+            # User message - aligned right
+            st.markdown(
+                f"""
+                <div style="display: flex; justify-content: flex-end; margin: 10px 0;">
+                    <div class="chat-message" style="
+                        background: linear-gradient(135deg, {st.session_state.get('accent_color', '#d4af37')} 0%, {st.session_state.get('secondary_color', '#f4e09c')} 100%);
+                        color: white;
+                        margin-left: 20%;
+                    ">
+                        <strong>👤 Bạn:</strong><br>
+                        {content}
+                        <div style="font-size: 0.8em; opacity: 0.8; margin-top: 5px;">
+                            {timestamp[:19] if timestamp else ''}
+                        </div>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+        else:
+            # AI message - aligned left
+            st.markdown(
+                f"""
+                <div style="display: flex; justify-content: flex-start; margin: 10px 0;">
+                    <div class="chat-message" style="
+                        background: linear-gradient(135deg, {st.session_state.get('background_color', '#fffbf0')} 0%, {st.session_state.get('secondary_color', '#f4e09c')}44 100%);
+                        color: {st.session_state.get('text_color', '#2d1810')};
+                        border: 2px solid {st.session_state.get('secondary_color', '#f4e09c')};
+                        margin-right: 20%;
+                    ">
+                        <strong>🤖 AI:</strong><br>
+                        {content}
+                        <div style="font-size: 0.8em; opacity: 0.7; margin-top: 5px;">
+                            {timestamp[:19] if timestamp else ''}
+                        </div>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+
+@handle_error
+def render_chat_input_form():
+    """Render chat input form"""
+    with st.form("chat_form", clear_on_submit=True):
+        col1, col2 = st.columns([4, 1])
+        
+        with col1:
+            user_input = st.text_area(
+                "💬 Nhập câu hỏi của bạn:",
+                placeholder="Ví dụ: Tóm tắt thông tin các ứng viên có kinh nghiệm AI...",
+                height=100,
+                help="Nhấn Ctrl+Enter để gửi nhanh"
+            )
+        
+        with col2:
+            st.markdown("<br>", unsafe_allow_html=True)  # Spacing
+            submit_button = st.form_submit_button(
+                "📨 Gửi",
+                help="Gửi câu hỏi cho AI",
+                use_container_width=True
+            )
+    
+    if submit_button and user_input.strip():
+        process_chat_message(user_input.strip())
+
+
+@handle_error
+def process_chat_message(user_input: str):
+    """Process chat message and get AI response"""
+    try:
+        # Add user message to history
+        timestamp = datetime.now().isoformat()
+        st.session_state.conversation_history.append({
+            "role": "user",
+            "content": user_input,
+            "timestamp": timestamp
+        })
+        
+        # Get AI response
+        with st.spinner("🤖 AI đang suy nghĩ..."):
+            # Import QA chatbot
+            try:
+                from modules.qa_chatbot import QAChatbot
+                
+                # Get current LLM configuration
+                provider = st.session_state.get("selected_provider", "google")
+                model = st.session_state.get("selected_model", "gemini-2.0-flash")
+                api_key = st.session_state.get(f"{provider}_api_key", "")
+                
+                if not api_key:
+                    st.error("❌ API Key chưa được cấu hình!")
+                    return
+                
+                # Load dataset for context
+                dataset_info = load_dataset_for_chat()
+                dataset_context = ""
+                
+                if dataset_info and dataset_info.get("data") is not None:
+                    df = dataset_info["data"]
+                    # Create context from CV data
+                    dataset_context = f"""
+Thông tin dataset hiện tại:
+- Tổng số CV: {len(df)}
+- Các cột dữ liệu: {', '.join(df.columns.tolist())}
+- Dữ liệu mẫu (5 dòng đầu):
+{df.head().to_string()}
+"""
+                
+                # Initialize chatbot
+                chatbot = QAChatbot(provider=provider, model=model, api_key=api_key)
+                
+                # Prepare conversation context
+                conversation_context = []
+                recent_history = st.session_state.conversation_history[-10:]  # Last 10 messages
+                
+                for msg in recent_history[:-1]:  # Exclude the current message
+                    conversation_context.append({
+                        "role": msg["role"],
+                        "content": msg["content"]
+                    })
+                
+                # Get AI response
+                full_query = f"""
+Bối cảnh dataset CV:
+{dataset_context}
+
+Lịch sử trò chuyện gần đây:
+{str(conversation_context) if conversation_context else "Không có lịch sử"}
+
+Câu hỏi hiện tại: {user_input}
+
+Hãy trả lời một cách chi tiết, chuyên nghiệp và hữu ích. Nếu câu hỏi liên quan đến CV trong dataset, hãy phân tích dựa trên dữ liệu có sẵn.
+"""
+                
+                response = chatbot.ask_question(full_query)
+                
+                if response:
+                    # Add AI response to history
+                    st.session_state.conversation_history.append({
+                        "role": "assistant", 
+                        "content": response,
+                        "timestamp": datetime.now().isoformat()
+                    })
+                    
+                    logger.info(f"Chat processed successfully. History length: {len(st.session_state.conversation_history)}")
+                    st.rerun()
+                else:
+                    st.error("❌ Không thể lấy phản hồi từ AI. Vui lòng thử lại.")
+                    
+            except ImportError as e:
+                st.error(f"❌ Lỗi import QAChatbot: {e}")
+                logger.error(f"QAChatbot import error: {e}")
+            except Exception as e:
+                st.error(f"❌ Lỗi xử lý chat: {str(e)}")
+                logger.error(f"Chat processing error: {e}")
+                logger.error(traceback.format_exc())
+                
+    except Exception as e:
+        st.error(f"❌ Lỗi không mong muốn: {str(e)}")
+
+
+@handle_error
+def export_chat_history():
+    """Export chat history to file"""
+    try:
+        history = st.session_state.get("conversation_history", [])
+        if not history:
+            st.warning("Không có lịch sử chat để xuất.")
+            return
+        
+        # Create export content
+        export_content = "# Lịch sử Chat - Hoàn Cầu AI CV Processor\n\n"
+        export_content += f"Xuất lúc: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+        export_content += f"Tổng số tin nhắn: {len(history)}\n\n"
+        export_content += "---\n\n"
+        
+        for i, message in enumerate(history, 1):
+            role = "👤 Bạn" if message["role"] == "user" else "🤖 AI"
+            timestamp = message.get("timestamp", "")[:19]
+            content = message.get("content", "")
+            
+            export_content += f"## Tin nhắn {i} - {role}\n"
+            export_content += f"**Thời gian:** {timestamp}\n\n"
+            export_content += f"{content}\n\n"
+            export_content += "---\n\n"
+        
+        # Provide download
+        st.download_button(
+            label="💾 Tải xuống lịch sử chat",
+            data=export_content,
+            file_name=f"chat_history_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
+            mime="text/markdown",
+            help="Tải xuống lịch sử chat dưới dạng file Markdown"
+        )
+        
+        st.success("✅ File xuất sẵn sàng để tải xuống!")
+        
+    except Exception as e:
+        st.error(f"❌ Lỗi xuất file: {str(e)}")
+        logger.error(f"Export error: {e}")
+
+
+@handle_error
+def render_chat_help():
+    """Render chat help and usage guide"""
+    with st.expander("❓ Hướng dẫn sử dụng Chat AI", expanded=True):
+        st.markdown("""
+        ### 🎯 Tính năng chính:
+        - **Chat thông minh** với AI về dữ liệu CV
+        - **Lưu lịch sử** cuộc trò chuyện tự động
+        - **Xuất file** lịch sử chat
+        - **Thống kê** chi tiết cuộc trò chuyện
+        - **Giao diện đẹp** với theme tùy chỉnh
+        
+        ### 💡 Cách sử dụng:
+        1. **Xử lý CV trước:** Hãy xử lý CV ở tab "Xử lý CV" để có dữ liệu
+        2. **Đặt câu hỏi:** Nhập câu hỏi vào ô bên dưới
+        3. **Gửi tin nhắn:** Nhấn "Gửi" hoặc Ctrl+Enter
+        4. **Theo dõi lịch sử:** Tất cả cuộc trò chuyện được lưu tự động
+        
+        ### 🔥 Câu hỏi mẫu:
+        - "Tóm tắt thông tin các ứng viên có kinh nghiệm AI"
+        - "Ứng viên nào có kỹ năng Python tốt nhất?"
+        - "Phân tích điểm mạnh của từng ứng viên"
+        - "Gợi ý ứng viên phù hợp cho vị trí Senior Developer"
+        
+        ### ⚡ Mẹo sử dụng:
+        - **Câu hỏi cụ thể** sẽ cho kết quả tốt hơn
+        - **Sử dụng ngữ cảnh** từ cuộc trò chuyện trước
+        - **Xuất lịch sử** để lưu trữ thông tin quan trọng
+        - **Xóa lịch sử** khi muốn bắt đầu cuộc trò chuyện mới
+        
+        ### 🛠️ Cấu hình:
+        - **API Key:** Cấu hình ở sidebar bên trái
+        - **Model:** Chọn model phù hợp (Gemini, GPT, v.v.)
+        - **Theme:** Tùy chỉnh giao diện theo sở thích
+        """)
+
 
 # --- Footer ---
 st.markdown("---")
 st.markdown(
-    f"<center><small>Powered by Hoàn Cầu AI CV Processor | {provider} / {label}</small></center>",
+    f"<center><small>Powered by Hoàn Cầu AI CV Processor | {provider} / {model}</small></center>",
     unsafe_allow_html=True,
 )

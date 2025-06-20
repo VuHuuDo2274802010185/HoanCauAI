@@ -165,3 +165,67 @@ LLM_CONFIG = {
         GOOGLE_API_KEY if LLM_PROVIDER == "google" else OPENROUTER_API_KEY
     ),
 }
+
+# --- Enhanced configuration validation ---
+def validate_api_key(api_key: str, provider: str) -> bool:
+    """Validate API key format for different providers."""
+    if not api_key or not isinstance(api_key, str):
+        return False
+    
+    api_key = api_key.strip()
+    
+    if provider == "google":
+        return api_key.startswith("AIza") and len(api_key) > 10
+    elif provider == "openrouter":
+        return api_key.startswith("sk-or-") and len(api_key) > 20
+    elif provider == "vectorshift":
+        return ("vectorshift" in api_key.lower() or api_key.lower().startswith("vs-")) and len(api_key) > 10
+    
+    return len(api_key) > 10  # Basic length check for unknown providers
+
+
+def validate_email_config(host: str, port: int, user: str, password: str) -> Dict[str, bool]:
+    """Validate email configuration."""
+    return {
+        "host_valid": bool(host and isinstance(host, str) and "." in host),
+        "port_valid": isinstance(port, int) and 1 <= port <= 65535,
+        "user_valid": bool(user and isinstance(user, str) and "@" in user),
+        "password_valid": bool(password and isinstance(password, str) and len(password) > 3)
+    }
+
+
+def get_config_status() -> Dict[str, Any]:
+    """Get comprehensive configuration status."""
+    return {
+        "llm_config": {
+            "provider": LLM_PROVIDER,
+            "model": LLM_MODEL,
+            "google_key_valid": validate_api_key(GOOGLE_API_KEY, "google"),
+            "openrouter_key_valid": validate_api_key(OPENROUTER_API_KEY, "openrouter"),
+            "mcp_key_available": bool(MCP_API_KEY)
+        },
+        "email_config": validate_email_config(EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASS),
+        "paths": {
+            "attachment_dir_exists": ATTACHMENT_DIR.exists(),
+            "output_csv_parent_exists": OUTPUT_CSV.parent.exists(),
+            "chat_log_parent_exists": CHAT_LOG_FILE.parent.exists()
+        }
+    }
+
+
+def ensure_directories():
+    """Ensure all required directories exist."""
+    directories = [ATTACHMENT_DIR, OUTPUT_CSV.parent, CHAT_LOG_FILE.parent]
+    for directory in directories:
+        try:
+            directory.mkdir(parents=True, exist_ok=True)
+            logger.info(f"Directory ensured: {directory}")
+        except Exception as e:
+            logger.error(f"Failed to create directory {directory}: {e}")
+
+
+# --- Auto-ensure directories on module import ---
+ensure_directories()
+
+
+# --- Enhanced model fetching ---

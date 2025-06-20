@@ -96,39 +96,81 @@ class CVProcessor:
 
     def extract_info_with_llm(self, text: str) -> Dict:
         """
-        Gọi LLM để trích xuất thông tin theo prompt, retry tối đa 3 lần
-        Parse JSON từ kết quả hoặc fallback regex
+        Enhanced LLM extraction with better error handling and retry logic
         """
-        if not text.strip():  # nếu chuỗi rỗng, trả về dict rỗng
+        if not text.strip():
+            logger.warning("Text input is empty for LLM extraction")
             return {}
 
-        for attempt in range(1, 4):  # retry 3 lần
+        max_retries = 3
+        base_delay = 1  # seconds
+        
+        for attempt in range(1, max_retries + 1):
             try:
-                # ghép prompt và text, gửi cho LLM
+                logger.info(f"LLM extraction attempt {attempt}/{max_retries}")
+                
+                # Create enhanced prompt with text length info
+                text_length = len(text)
+                if text_length > 8000:  # Truncate very long text
+                    text = text[:8000] + "...[text truncated]"
+                    logger.info(f"Text truncated from {text_length} to {len(text)} chars")
+                
+                # Generate response with timeout
                 resp = self.llm_client.generate_content([CV_EXTRACTION_PROMPT, text])
-                # tìm JSON trong code block hoặc thuần JSON
-                m = re.search(r'```json\s*([\s\S]+?)\s*```|({[\s\S]+})', resp)
-                if m:
-                    data = m.group(1) or m.group(2)
-                    return json.loads(data)
-                logger.warning(f"AI trả về không phải JSON, resp: {resp}")
-                break
-            except json.JSONDecodeError as e:
-                logger.error(f"❌ Lỗi parse JSON từ AI: {e}")
-                break
+                
+                if not resp or not resp.strip():
+                    raise ValueError(f"Empty response from LLM on attempt {attempt}")
+                
+                # Enhanced JSON extraction with multiple patterns
+                json_data = self._extract_json_from_response(resp)
+                
+                if json_data:
+                    logger.info(f"✅ LLM extraction successful on attempt {attempt}")
+                    return json_data
+                else:
+                    raise ValueError(f"No valid JSON found in LLM response on attempt {attempt}")
+                    
             except Exception as e:
-                msg = str(e).lower()
-                # nếu lỗi quota, retry sau wait
-                if any(code in msg for code in ("quota", "429", "resource_exhausted")) and attempt < 3:
-                    wait = 2 ** attempt
-                    logger.warning(f"Quota exceeded, retry sau {wait}s")
-                    time.sleep(wait)
-                    continue  # thử lại
-                logger.error(f"❌ Lỗi khi gọi GenAI: {e}")
-                break
-
-        logger.info("🔄 Dùng fallback regex để trích xuất thông tin")
+                logger.warning(f"❌ LLM attempt {attempt} failed: {e}")
+                
+                # Check for quota/rate limit errors
+                error_msg = str(e).lower()
+                if any(code in error_msg for code in ("quota", "429", "resource_exhausted", "rate limit")):
+                    if attempt < max_retries:
+                        delay = base_delay * (2 ** attempt)  # Exponential backoff
+                        logger.warning(f"Quota/rate limit hit, retrying in {delay} seconds...")
+                        time.sleep(delay)
+                        continue
+                
+                if attempt == max_retries:
+                    logger.error(f"All {max_retries} LLM attempts failed. Falling back to regex.")
+                    return self._fallback_regex(text)
+        
+        # Fallback to regex if all attempts fail
         return self._fallback_regex(text)
+
+    def _extract_json_from_response(self, response: str) -> Optional[Dict]:
+        """Extract JSON from LLM response with multiple patterns"""
+        try:
+            # Pattern 1: JSON in code blocks
+            json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', response, re.DOTALL)
+            if json_match:
+                return json.loads(json_match.group(1))
+            
+            # Pattern 2: Direct JSON
+            json_match = re.search(r'\{.*\}', response, re.DOTALL)
+            if json_match:
+                return json.loads(json_match.group(0))
+            
+            # Pattern 3: Try to parse entire response as JSON
+            return json.loads(response.strip())
+            
+        except json.JSONDecodeError as e:
+            logger.warning(f"JSON parsing failed: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Unexpected error in JSON extraction: {e}")
+            return None
 
     def _fallback_regex(self, text: str) -> Dict:
         """

@@ -9,3 +9,7 @@ log/*
 *.csv
 !cv_summary.csv
 .venv
+FIX_REPORT.md
+health_check_report.json
+health_check.py
+UPGRADE_REPORT.md

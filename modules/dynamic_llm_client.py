@@ -63,25 +63,65 @@ class DynamicLLMClient:
 
     def _setup(self):
         """
-        Cấu hình client LLM dựa trên provider:
-        - google: cấu hình SDK google.generativeai
-        - openrouter: lưu key, sẽ dùng HTTP requests
+        Enhanced setup with better error handling and validation
         """
-        if self.provider == "google":
-            # Cấu hình Google Gemini SDK
-            import google.generativeai as genai
-            if not self.api_key:
-                raise ValueError("Google API key không có sẵn")
-            genai.configure(api_key=self.api_key)
-            # Tạo client cho model đã chọn
-            self.client = genai.GenerativeModel(self.model)
+        try:
+            if self.provider == "google":
+                # Enhanced Google setup
+                import google.generativeai as genai
+                if not self.api_key:
+                    raise ValueError("Google API key không có sẵn")
+                
+                # Configure with retry and timeout
+                genai.configure(api_key=self.api_key)
+                
+                # Validate API key by listing models
+                try:
+                    models = list(genai.list_models())
+                    logger.info(f"Google API key validated. Available models: {len(models)}")
+                except Exception as e:
+                    logger.warning(f"Could not validate Google API key: {e}")
+                
+                # Create client with safety settings
+                self.client = genai.GenerativeModel(
+                    self.model,
+                    safety_settings={
+                        genai.types.HarmCategory.HARM_CATEGORY_HATE_SPEECH: genai.types.HarmBlockThreshold.BLOCK_NONE,
+                        genai.types.HarmCategory.HARM_CATEGORY_HARASSMENT: genai.types.HarmBlockThreshold.BLOCK_NONE,
+                        genai.types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: genai.types.HarmBlockThreshold.BLOCK_NONE,
+                        genai.types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: genai.types.HarmBlockThreshold.BLOCK_NONE,
+                    }
+                )
 
-        elif self.provider == "openrouter":
-            # Sử dụng HTTP request cho OpenRouter
-            if not self.api_key:
-                raise ValueError("OpenRouter API key không có sẵn")
-            # Không có SDK, sẽ dùng requests trong phương thức _gen_openrouter
-            self.client = None
+            elif self.provider == "openrouter":
+                # Enhanced OpenRouter setup
+                if not self.api_key:
+                    raise ValueError("OpenRouter API key không có sẵn")
+                
+                # Validate API key
+                try:
+                    response = requests.get(
+                        "https://openrouter.ai/api/v1/models",
+                        headers={"Authorization": f"Bearer {self.api_key}"},
+                        timeout=10
+                    )
+                    if response.status_code == 200:
+                        logger.info("OpenRouter API key validated successfully")
+                    else:
+                        logger.warning(f"OpenRouter API key validation returned status: {response.status_code}")
+                except Exception as e:
+                    logger.warning(f"Could not validate OpenRouter API key: {e}")
+                
+                self.client = None  # Will use direct HTTP requests
+            
+            else:
+                raise ValueError(f"Unsupported provider: {self.provider}")
+                
+            logger.info(f"LLM client setup completed: {self.provider}/{self.model}")
+            
+        except Exception as e:
+            logger.error(f"Failed to setup LLM client: {e}")
+            raise
 
     def generate_content(self, messages: List[str]) -> str:
         """

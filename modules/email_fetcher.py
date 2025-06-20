@@ -5,6 +5,7 @@ import email                     # thư viện xử lý định dạng email (pa
 from email.header import decode_header  # decode header RFC2047
 import os                        # thao tác hệ thống file và đường dẫn
 import re                        # xử lý biểu thức chính quy
+import time                      # sleep and delay functions
 import logging                   # ghi log
 from datetime import date        # dùng để lọc email theo ngày
 from typing import List, Optional
@@ -43,15 +44,47 @@ class EmailFetcher:
 
     def connect(self) -> None:
         """
-        Kết nối tới IMAP server và đăng nhập. Chọn mailbox 'INBOX'.
+        Enhanced IMAP connection with better error handling and validation
         """
         try:
+            # Validate connection parameters
+            if not self.host or not self.user or not self.password:
+                raise ValueError("Missing required connection parameters (host/user/password)")
+            
+            if not isinstance(self.port, int) or not (1 <= self.port <= 65535):
+                raise ValueError(f"Invalid port number: {self.port}")
+            
+            self.logger.info(f"Connecting to IMAP server: {self.host}:{self.port}")
+            
+            # Establish SSL connection with timeout
             self.mail = imaplib.IMAP4_SSL(self.host, self.port)
-            self.mail.login(self.user, self.password)
-            self.mail.select("INBOX")
-            self.logger.info(f"[OK] Đã kết nối IMAP: {self.user}@{self.host}")
+            
+            # Login with retry mechanism
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    self.mail.login(self.user, self.password)
+                    break
+                except imaplib.IMAP4.error as e:
+                    if attempt == max_retries - 1:
+                        raise
+                    self.logger.warning(f"Login attempt {attempt + 1} failed: {e}, retrying...")
+                    time.sleep(2 ** attempt)  # Exponential backoff
+            
+            # Select INBOX
+            status, messages = self.mail.select("INBOX")
+            if status != 'OK':
+                raise imaplib.IMAP4.error(f"Failed to select INBOX: {messages}")
+            
+            total_messages = int(messages[0]) if messages and messages[0] else 0
+            
+            self.logger.info(f"✅ IMAP connection successful: {self.user}@{self.host} (Total messages: {total_messages})")
+            
+        except imaplib.IMAP4.error as e:
+            self.logger.error(f"IMAP error: {e}")
+            raise ConnectionError(f"IMAP connection failed: {e}")
         except Exception as e:
-            self.logger.error(f"[ERR] Lỗi kết nối IMAP: {e}")
+            self.logger.error(f"Unexpected connection error: {e}")
             raise
 
     def fetch_cv_attachments(
