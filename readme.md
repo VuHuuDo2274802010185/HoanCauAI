@@ -176,6 +176,32 @@ streamlit run simple_app.py
 
 Ứng dụng sẽ hướng dẫn tuần tự nhập API key → fetch CV → xử lý → xem kết quả và ẩn các tab nâng cao.
 
+## 🎨 Themes
+
+Ứng dụng hỗ trợ hai bộ màu giao diện. Sử dụng công tắc **Theme** ở sidebar để chuyển nhanh giữa Light và Dark.
+
+### Office Light
+
+| Biến | Mã màu |
+|---|---|
+| `--cv-text-color` | `#2D3748` |
+| `--cv-bg-color` | `#FFFFFF` |
+| `--cv-accent-color` | `#F4F6F8` |
+| `--btn-gold` | `#2B6CB0` |
+| `--btn-gold-border` | `#2B6CB0` |
+| `--logo-gold` | `#FCD129` |
+
+### Dark Neon Cyberpunk
+
+| Biến | Mã màu |
+|---|---|
+| `--cv-text-color` | `#E6E6E6` |
+| `--cv-bg-color` | `#0D0F12` |
+| `--cv-accent-color` | `#0D0F12` |
+| `--btn-gold` | `#00FFF7` |
+| `--btn-gold-border` | `#FF31FF` |
+| `--logo-gold` | `#FFFB00` |
+
 ## 🗂️ Cấu trúc dự án
 
 ```
