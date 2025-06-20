@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -e
+export LC_ALL=C.UTF-8
 
 YELLOW="\033[1;33m"
 WHITE="\033[1;37m"

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -e
+export LC_ALL=C.UTF-8
 
 YELLOW="\033[1;33m"
 WHITE="\033[1;37m"
@@ -32,13 +33,14 @@ fi
 
 # 3) Loading animation
 spinner() {
-  local chars='/-\\|'
-  for i in {1..20}; do
+  local chars='-\|/'
+  for i in {1..8}; do
     for j in {0..3}; do
       printf "\r${GREEN}Đang khởi động ứng dụng... %s${RESET}" "${chars:j:1}"
-      sleep 0.2
+      sleep 0.1
     done
   done
+  tput sgr0
   echo
 }
 

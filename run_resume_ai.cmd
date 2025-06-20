@@ -2,6 +2,8 @@
 :: 0) Chuyển console sang UTF-8 (hỗ trợ tiếng Việt)
 chcp 65001 >nul
 setlocal enableextensions enabledelayedexpansion
+:: Đảm bảo PowerShell cũng dùng UTF-8 để hiển thị tiếng Việt
+powershell -NoProfile -Command "[Console]::OutputEncoding=[System.Text.Encoding]::UTF8"
 
 :: Hiển thị banner nhiều màu
 color 0E
@@ -33,17 +35,18 @@ if exist "%~dp0.venv\Scripts\activate.bat" (
 
 :: 3) Loading animation trước khi chạy UI
 color 0A
-set "spin=/ - \ |"
-for /L %%n in (1,1,20) do (
+set "spin=- \ | /"
+for /L %%n in (1,1,8) do (
     set /A idx=%%n %% 4
     for %%c in (!spin:~!idx!,1!) do <nul set /p "=Đang khởi động ứng dụng... %%c\r"
-    ping 127.0.0.1 -n 2 > nul
+    ping 127.0.0.1 -n 1 > nul
 )
 echo.
 color 07
 
 :: 4) Khởi động Streamlit UI
 streamlit run "%~dp0main_engine\app.py"
+color 07
 
 powershell -NoProfile -Command "Write-Host 'Ứng dụng đã thoát. Nhấn phím bất kỳ để đóng.' -ForegroundColor Yellow"
 pause
