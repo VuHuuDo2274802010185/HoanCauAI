@@ -2,6 +2,8 @@
 :: 0) Chuyển console sang UTF-8
 chcp 65001 >nul
 setlocal enableextensions enabledelayedexpansion
+:: Đảm bảo PowerShell cũng dùng UTF-8 để hiển thị tiếng Việt
+powershell -NoProfile -Command "[Console]::OutputEncoding=[System.Text.Encoding]::UTF8"
 
 :: Thiết lập màu sắc và tiêu đề cho giao diện thân thiện hơn
 color 0E
@@ -84,3 +86,4 @@ if not exist "%~dp0attachments" (
 
 powershell -NoProfile -Command "Write-Host 'Quá trình cài đặt hoàn tất! Nhấn phím bất kỳ để thoát.' -ForegroundColor Yellow"
 pause
+color 07
