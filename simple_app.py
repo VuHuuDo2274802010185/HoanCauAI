@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import pandas as pd
 import streamlit as st
 from modules.email_fetcher import EmailFetcher
@@ -11,7 +12,22 @@ from modules.config import (
     EMAIL_PORT,
 )
 
-st.set_page_config(page_title="Resume AI Simple Mode")
+ROOT = Path(__file__).parent
+
+def load_css() -> None:
+    css_path = ROOT / "static" / "style.css"
+    if css_path.exists():
+        st.markdown(f"<style>{css_path.read_text()}</style>", unsafe_allow_html=True)
+
+logo_path = ROOT / "static" / "logo.png"
+page_icon = str(logo_path) if logo_path.exists() else None
+
+st.set_page_config(page_title="Resume AI Simple Mode", page_icon=page_icon)
+
+load_css()
+
+if logo_path.exists():
+    st.image(str(logo_path), width=180)
 
 st.title("Resume AI - Simple Mode")
 st.markdown("Làm theo từng bước để tải và xử lý CV một cách dễ dàng.")
