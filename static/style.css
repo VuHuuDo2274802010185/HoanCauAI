@@ -9,6 +9,7 @@ html[data-theme='light'] {
   --btn-gold: #2B6CB0; /* Primary Accent */
   --btn-gold-border: #2B6CB0;
   --logo-gold: #FCD129;
+  --logo-shadow: rgba(252, 209, 41, 0.4);
 }
 
 /* Logo contrast enhancement: specific to logo filename */
@@ -30,6 +31,7 @@ html[data-theme='dark'] {
   --btn-gold: #00FFF7; /* Primary Neon */
   --btn-gold-border: #FF31FF; /* Secondary Neon */
   --logo-gold: #FFFB00; /* Tertiary Neon */
+  --logo-shadow: rgba(255, 251, 0, 0.4);
 }
 
 /* Global background and text */
@@ -41,7 +43,7 @@ body {
 
 .stApp {
   border: 2px solid var(--logo-gold);
-  box-shadow: 0 0 12px rgba(252, 209, 41, 0.4);
+  box-shadow: 0 0 12px var(--logo-shadow);
   border-radius: 8px;
   padding: 8px;
 }
