@@ -37,7 +37,7 @@ provider = st.selectbox(
     "Provider", ["google", "openrouter"], help="Chọn nhà cung cấp LLM"
 )
 api_key = st.text_input("API Key", type="password", help="Nhập khóa API cho provider")
-model = st.text_input("Model", "gemini-2.0-flask", help="Tên model muốn sử dụng")
+model = st.text_input("Model", "gemini-2.0-flash", help="Tên model muốn sử dụng")
 
 # --- Step 2: Fetch CV from email ---
 st.header("Bước 1: Lấy CV từ Email")
