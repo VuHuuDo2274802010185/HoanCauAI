@@ -14,14 +14,16 @@ from modules.config import (
     LLM_MODEL,
 )
 
-ROOT = Path(__file__).parent
+# Base directory of the project (one level up from this script)
+ROOT = Path(__file__).resolve().parent.parent
+STATIC_DIR = ROOT / "static"
 
 def load_css() -> None:
-    css_path = ROOT / "static" / "style.css"
+    css_path = STATIC_DIR / "style.css"
     if css_path.exists():
         st.markdown(f"<style>{css_path.read_text()}</style>", unsafe_allow_html=True)
 
-logo_path = ROOT / "static" / "logo.png"
+logo_path = STATIC_DIR / "logo.png"
 page_icon = str(logo_path) if logo_path.exists() else None
 
 st.set_page_config(page_title="Resume AI Simple Mode", page_icon=page_icon)

@@ -6,8 +6,8 @@ Test script để kiểm tra tab chat hoạt động
 import sys
 from pathlib import Path
 
-# Add root to sys.path
-ROOT = Path(__file__).parent
+# Add repository root to sys.path
+ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 try:

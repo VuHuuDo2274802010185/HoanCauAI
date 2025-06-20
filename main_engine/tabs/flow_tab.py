@@ -7,9 +7,10 @@ def render(root: Path) -> None:
     """Render UI for flow configuration."""
     st.subheader("Xây dựng flow")
     st.markdown("**1. Chọn flow có sẵn hoặc upload file**")
-    flows = [f.name for f in root.glob("*.json") if f.name.endswith("flow_config.json")] or ["flow_config.json"]
+    config_dir = root / "config"
+    flows = [f.name for f in config_dir.glob("*.json") if f.name.endswith("flow_config.json")] or ["flow_config.json"]
     selected = st.selectbox("Chọn flow đã có:", options=flows)
-    flow_file = root / selected
+    flow_file = config_dir / selected
     upload = st.file_uploader("Hoặc upload file flow JSON", type=["json"])
     if upload:
         flow_text = upload.getvalue().decode('utf-8')
@@ -54,7 +55,7 @@ def render(root: Path) -> None:
         if st.button("Lưu flow.json"):
             try:
                 parsed = json.loads(flow_text)
-                flow_path = root / selected
+                flow_path = config_dir / selected
                 flow_path.write_text(json.dumps(parsed, indent=2), encoding='utf-8')
                 st.success(f"Đã lưu vào {flow_path.name}")
             except Exception as e:

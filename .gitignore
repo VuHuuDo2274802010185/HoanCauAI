@@ -7,11 +7,9 @@ attachments/
 log/*
 !log/.gitkeep
 *.csv
-!cv_summary.csv
+!csv/cv_summary.csv
 .venv
 FIX_REPORT.md
 health_check_report.json
 UPGRADE_REPORT.md
-CHAT_TAB_FIX_REPORT.md
-test_chat_tab.py
 SYNC_GUIDE.md
