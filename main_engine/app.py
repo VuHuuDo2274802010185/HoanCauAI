@@ -986,7 +986,7 @@ custom_css = f"""
     
     .stButton > button {{
         background: linear-gradient(135deg, {accent_color} 0%, {secondary_color} 100%);
-        color: white;
+        color: var(--btn-text-color);
         border-radius: {border_radius}px;
         border: none;
         padding: 0.6rem 1.2rem;
