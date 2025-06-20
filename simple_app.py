@@ -26,18 +26,6 @@ st.set_page_config(page_title="Resume AI Simple Mode", page_icon=page_icon)
 
 load_css()
 
-# --- Theme selection ---
-theme = st.selectbox(
-    "Theme",
-    options=["light", "dark"],
-    index=0,
-    key="theme",
-)
-st.markdown(
-    f"<script>document.documentElement.setAttribute('data-theme', '{theme}');</script>",
-    unsafe_allow_html=True,
-)
-
 if logo_path.exists():
     st.image(str(logo_path), width=180)
 
