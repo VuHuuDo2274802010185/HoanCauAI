@@ -17,6 +17,7 @@ def render() -> None:
             data=csv_bytes,
             file_name=OUTPUT_CSV.name,
             mime="text/csv",
+            help="Lưu kết quả phân tích về máy",
         )
     else:
         st.info("Chưa có kết quả. Vui lòng chạy Batch hoặc Single.")

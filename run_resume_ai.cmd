@@ -36,22 +36,38 @@ if exist "%~dp0.venv\Scripts\activate.bat" (
     echo [WARN] Không tìm thấy virtual environment tại .venv, sử dụng Python toàn cục.
 )
 
-:: 3) Xử lý tham số đầu vào
-set MODE=%1
-if /I "%MODE%"=="cli" (
-    echo [MODE] Chạy CLI xử lý CV...
-    python "%~dp0main_engine\main.py" %*
-    goto end
+:menu
+echo ===============================
+echo 1. Mo UI Streamlit
+echo 2. Chay CLI xu ly CV
+echo 3. Chon TOP5 CV bang AI
+echo 0. Thoat
+set /p MODE="Chon che do (0-3): "
+if "%MODE%"=="0" goto end
+if "%MODE%"=="1" set ACTION=UI
+if "%MODE%"=="2" set ACTION=CLI
+if "%MODE%"=="3" set ACTION=SELECT
+if not defined ACTION (
+    echo [WARN] Lua chon khong hop le.
+    goto menu
 )
-if /I "%MODE%"=="select" (
-    echo [MODE] Chọn TOP 5 CV bằng AI...
+set /p CF="Thuc thi che do %ACTION%? (y/n): "
+if /I not "%CF%"=="y" (
+    echo Da huy. Quay lai menu.
+    goto menu
+)
+if "%ACTION%"=="CLI" (
+    python "%~dp0main_engine\main.py"
+    goto menu
+)
+if "%ACTION%"=="SELECT" (
     python "%~dp0main_engine\select_top5.py"
-    goto end
+    goto menu
 )
-
-:: 4) Mặc định: khởi động Streamlit UI
-echo [MODE] Khởi động Streamlit UI...
+:: default UI
 streamlit run "%~dp0main_engine\app.py"
+goto menu
 
 :end
+echo Ket thuc.
 pause

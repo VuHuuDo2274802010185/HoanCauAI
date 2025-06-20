@@ -19,6 +19,7 @@ if __package__ is None:
 import streamlit as st
 from typing import cast
 import requests
+
 # Import cấu hình và modules
 from modules.config import (
     LLM_CONFIG,
@@ -45,6 +46,7 @@ from .tabs import (
     chat_tab,
 )
 
+
 # --- Streamlit logging handler ---
 class StreamlitLogHandler(logging.Handler):
     def emit(self, record: logging.LogRecord) -> None:
@@ -54,9 +56,7 @@ class StreamlitLogHandler(logging.Handler):
         except Exception:
             try:
                 ctx_exists = (
-                    st.runtime.scriptrunner.get_script_run_ctx(
-                        suppress_warning=True
-                    )
+                    st.runtime.scriptrunner.get_script_run_ctx(suppress_warning=True)
                     is not None
                 )
             except Exception:
@@ -70,15 +70,18 @@ class StreamlitLogHandler(logging.Handler):
         logs.append(msg)
         st.session_state["logs"] = logs
 
+
 if "streamlit_log_handler" not in st.session_state:
     _h = StreamlitLogHandler()
     _h.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
     logging.getLogger().addHandler(_h)
     st.session_state["streamlit_log_handler"] = True
 
+
 def update_log(box):
     lines = st.session_state.get("logs", [])
     box.code("\n".join(lines[-100:]), language="text")
+
 
 # --- Cấu hình chung cho trang Streamlit ---
 st.set_page_config(
@@ -87,6 +90,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
 
 # --- Tự nhận diện platform từ API key ---
 def detect_platform(api_key: str) -> str | None:
@@ -120,13 +124,18 @@ def detect_platform(api_key: str) -> str | None:
         pass
     return None
 
+
 # --- Load CSS tuỳ chỉnh ---
 def load_css():
     path = ROOT / "static" / "style.css"
     if path.exists():
-        st.markdown(f"<style>{path.read_text(encoding='utf-8')}</style>", unsafe_allow_html=True)
+        st.markdown(
+            f"<style>{path.read_text(encoding='utf-8')}</style>", unsafe_allow_html=True
+        )
     else:
         st.warning(f"Không tìm thấy CSS tại: {path}")
+
+
 load_css()
 
 # --- Sidebar: logo và cấu hình LLM ---
@@ -141,7 +150,7 @@ provider = st.sidebar.selectbox(
     "Provider",
     options=["google", "openrouter"],
     key="selected_provider",
-    help="Chọn nhà cung cấp LLM"
+    help="Chọn nhà cung cấp LLM",
 )
 
 # Nhập API key theo provider
@@ -150,23 +159,27 @@ if provider == "google":
         "Google API Key",
         type="password",
         value=st.session_state.get("google_api_key", GOOGLE_API_KEY),
-        key="google_api_key"
+        key="google_api_key",
+        help="Khóa API dùng cho Google Gemini",
     )
 else:
     api_key = st.sidebar.text_input(
         "OpenRouter API Key",
         type="password",
         value=st.session_state.get("openrouter_api_key", OPENROUTER_API_KEY),
-        key="openrouter_api_key"
+        key="openrouter_api_key",
+        help="Khóa API cho OpenRouter",
     )
 
-if st.sidebar.button("Lấy models"):
+if st.sidebar.button("Lấy models", help="Lấy danh sách model từ API"):
     if not api_key:
         st.sidebar.warning("Vui lòng nhập API Key trước khi lấy models")
     else:
         st.session_state.available_models = get_models_for_provider(provider, api_key)
 
-models = st.session_state.get("available_models", get_models_for_provider(provider, api_key))
+models = st.session_state.get(
+    "available_models", get_models_for_provider(provider, api_key)
+)
 if not models:
     st.sidebar.error("Không lấy được models, vui lòng kiểm tra API Key.")
     models = [LLM_CONFIG.get("model")]
@@ -180,10 +193,12 @@ if (
 ):
     st.session_state.selected_model = default_model
 
+
 # Chọn model, lưu tự động vào session_state
 def _fmt_option(m: str) -> str:
     p = get_model_price(m)
     return f"{m} ({p})" if p != "unknown" else m
+
 
 model = st.sidebar.selectbox(
     "Model",
@@ -203,17 +218,20 @@ email_user = st.sidebar.text_input(
     "Gmail",
     value=st.session_state.get("email_user", EMAIL_USER),
     key="email_user",
+    help="Địa chỉ Gmail dùng để tự động tải CV",
 )
 email_pass = st.sidebar.text_input(
     "Mật khẩu",
     type="password",
     value=st.session_state.get("email_pass", EMAIL_PASS),
     key="email_pass",
+    help="Mật khẩu hoặc App Password của Gmail",
 )
 unseen_only = st.sidebar.checkbox(
     "Chỉ quét email chưa đọc",
     value=st.session_state.get("unseen_only", EMAIL_UNSEEN_ONLY),
     key="unseen_only",
+    help="Nếu bỏ chọn, hệ thống sẽ quét toàn bộ hộp thư",
 )
 
 # Tự động khởi động auto fetcher khi đã nhập đủ thông tin
@@ -237,9 +255,17 @@ if email_user and email_pass and "auto_fetcher_thread" not in st.session_state:
     st.sidebar.info("Đang tự động lấy CV từ email...")
 
 # --- Main UI: 5 Tabs ---
-tab_fetch, tab_process, tab_single, tab_results, tab_flow, tab_mcp, tab_chat = st.tabs([
-    "Lấy CV từ Email", "Xử lý CV", "Single File", "Kết quả", "Xây dựng flow", "MCP Server", "Hỏi AI"
-])
+tab_fetch, tab_process, tab_single, tab_results, tab_flow, tab_mcp, tab_chat = st.tabs(
+    [
+        "Lấy CV từ Email",
+        "Xử lý CV",
+        "Single File",
+        "Kết quả",
+        "Xây dựng flow",
+        "MCP Server",
+        "Hỏi AI",
+    ]
+)
 
 with tab_fetch:
     fetch_tab.render(email_user, email_pass, unseen_only)
@@ -273,5 +299,5 @@ with log_expander:
 st.markdown("---")
 st.markdown(
     f"<center><small>Powered by Hoàn Cầu AI CV Processor | {provider} / {label}</small></center>",
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
