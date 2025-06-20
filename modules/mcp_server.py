@@ -10,8 +10,9 @@ from fastapi.responses import FileResponse    # trả về file như response
 from pydantic_settings import BaseSettings, SettingsConfigDict      # sử dụng BaseSettings với cấu hình cho Pydantic v2
 
 
-from modules.cv_processor import CVProcessor    # lớp xử lý CV thành DataFrame
-from modules.email_fetcher import EmailFetcher  # lớp fetch email và tải đính kèm
+from .cv_processor import CVProcessor    # lớp xử lý CV thành DataFrame
+from .email_fetcher import EmailFetcher  # lớp fetch email và tải đính kèm
+from .llm_client import LLMClient
 
 
 class Settings(BaseSettings):
@@ -30,6 +31,8 @@ class Settings(BaseSettings):
     email_pass: str        # mật khẩu/app-password email
     attachment_dir: Path   # thư mục lưu tệp đính kèm
     output_csv: Path       # đường dẫn file CSV xuất kết quả
+    email_unseen_only: bool = True  # chỉ quét email chưa đọc nếu True
+    platform_api_key: str | None = None  # API key cho các platform (tùy chọn)
 
 
 # Khởi tạo cấu hình từ biến môi trường
@@ -83,7 +86,7 @@ async def run_full():
     fetcher.connect()
 
     # Xử lý CV từ fetcher
-    processor = CVProcessor(fetcher)
+    processor = CVProcessor(fetcher, llm_client=LLMClient())
     df = processor.process()
 
     # Nếu không có CV mới, trả về số bản ghi đã xử lý = 0
@@ -112,7 +115,7 @@ async def process_single_cv(file: UploadFile = File(...)):
         shutil.copyfileobj(file.file, buffer)
 
     # Trích xuất text và thông tin
-    processor = CVProcessor()
+    processor = CVProcessor(llm_client=LLMClient())
     text = processor.extract_text(str(tmp_path))
 
     # Xóa file tạm (nếu có lỗi, chỉ log warning)

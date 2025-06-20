@@ -28,15 +28,19 @@ def _get_env(varname: str, default: str = "") -> str:
 
 # --- Nhà cung cấp (provider) và model mặc định ---
 LLM_PROVIDER = _get_env("LLM_PROVIDER", "google").lower()
-LLM_MODEL = _get_env("LLM_MODEL", "gemini-1.5-flash-latest")
+LLM_MODEL = _get_env("LLM_MODEL", "gemini-2.0-flask")
 
-# --- Khóa API cho Google và OpenRouter (không bắt buộc) ---
+# --- Khóa API cho Google, OpenRouter và các platform khác (không bắt buộc) ---
 GOOGLE_API_KEY = _get_env("GOOGLE_API_KEY")
 OPENROUTER_API_KEY = _get_env("OPENROUTER_API_KEY")
+MCP_API_KEY = _get_env("MCP_API_KEY")  # API key dùng cho MCP server (tự nhận diện)
 
 # --- Base URL cho OpenRouter API ---
+# Có thể tuỳ chỉnh qua biến môi trường OPENROUTER_BASE_URL
 # Dùng chung cho mọi client và fetcher
-OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+OPENROUTER_BASE_URL = _get_env(
+    "OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"
+)
 
 # --- Cấu hình email (không bắt buộc) ---
 EMAIL_HOST = _get_env("EMAIL_HOST", "imap.gmail.com")
@@ -53,6 +57,16 @@ else:
 EMAIL_USER = _get_env("EMAIL_USER")
 EMAIL_PASS = _get_env("EMAIL_PASS")
 
+# --- Tuỳ chọn quét email: chỉ UNSEEN hay tất cả ---
+def _get_bool(varname: str, default: bool = True) -> bool:
+    val = os.getenv(varname)
+    if val is None:
+        return default
+    cleaned = val.split('#', 1)[0].strip().lower()
+    return cleaned not in ("0", "false", "no", "")
+
+EMAIL_UNSEEN_ONLY = _get_bool("EMAIL_UNSEEN_ONLY", True)
+
 # --- Thư mục lưu file đính kèm và file xuất kết quả ---
 def _clean_path(varname: str, default: str) -> Path:
     """
@@ -65,9 +79,13 @@ def _clean_path(varname: str, default: str) -> Path:
     return Path(cleaned)
 
 ATTACHMENT_DIR = _clean_path("ATTACHMENT_DIR", "attachments")
-OUTPUT_CSV = _clean_path("OUTPUT_CSV", "cv_summary.csv")
+OUTPUT_CSV = _clean_path("OUTPUT_CSV", "csv/cv_summary.csv")
+# File lưu log hội thoại chat
+CHAT_LOG_FILE = _clean_path("CHAT_LOG_FILE", "log/chat_log.json")
 # tạo thư mục nếu chưa tồn tại
 ATTACHMENT_DIR.mkdir(parents=True, exist_ok=True)
+OUTPUT_CSV.parent.mkdir(parents=True, exist_ok=True)
+CHAT_LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
 
 # --- Danh sách models dự phòng ---
 GOOGLE_FALLBACK_MODELS: List[str] = [
@@ -76,12 +94,35 @@ GOOGLE_FALLBACK_MODELS: List[str] = [
     "gemini-1.5-pro", "gemini-1.5-pro-latest", "gemini-pro", "gemini-pro-vision",
     # Newer and experimental variants
     "gemini-2.0-alpha", "gemini-2.0-vision", "gemini-2.0-vision-extended",
+    "gemini-2.0-flask",
     "gemini-2.5-pro", "gemini-2.5-pro-latest"
 ]
 OPENROUTER_FALLBACK_MODELS: List[str] = [
     "anthropic/claude-3.5-sonnet", "anthropic/claude-3-haiku",
     "openai/gpt-4o", "openai/gpt-4o-mini", "openai/gpt-3.5-turbo",
 ]
+
+# --- Bảng giá tham khảo cho từng model ---
+MODEL_PRICES: Dict[str, str] = {
+    # Google Gemini
+    "gemini-1.5-flash": "free",
+    "gemini-1.5-flash-latest": "free",
+    "gemini-1.5-pro": "1$/token",
+    "gemini-1.5-pro-latest": "1$/token",
+    "gemini-pro": "1$/token",
+    "gemini-pro-vision": "1$/token",
+    "gemini-2.0-flask": "unknown",
+    # OpenRouter fallback models (giá tham khảo, có thể thay đổi)
+    "anthropic/claude-3.5-sonnet": "variable",
+    "anthropic/claude-3-haiku": "variable",
+    "openai/gpt-4o": "variable",
+    "openai/gpt-4o-mini": "variable",
+    "openai/gpt-3.5-turbo": "variable",
+}
+
+def get_model_price(model: str) -> str:
+    """Trả về giá (chuỗi) của model hoặc 'unknown' nếu không có."""
+    return MODEL_PRICES.get(model, "unknown")
 
 from .model_fetcher import ModelFetcher
 

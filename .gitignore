@@ -4,5 +4,8 @@ __pycache__/
 .env
 *.log
 attachments/
-cv_summary.csv
+log/*
+!log/.gitkeep
+*.csv
+!cv_summary.csv
 .venv

@@ -35,6 +35,8 @@ HoanCau AI Resume Processor là hệ thống tự động trích xuất thông t
 - Xử lý một file CV đơn lẻ.
 - Chạy lệnh CLI, web UI hoặc FastAPI server.
 - Hỏi AI (chat) dựa trên dữ liệu đã xử lý.
+- Lưu log cuộc trò chuyện của tính năng Hỏi AI.
+- Không gây cảnh báo Streamlit khi chạy CLI: `DynamicLLMClient` tự kiểm tra session context.
 
 ## 🚀 Bắt đầu nhanh
 
@@ -57,24 +59,37 @@ HoanCau AI Resume Processor là hệ thống tự động trích xuất thông t
 
 3. **Tạo file `.env`**
 
-   Tạo file `.env` tại gốc dự án với nội dung:
-   ```env
-   # LLM
-   LLM_PROVIDER=google
-   LLM_MODEL=gemini-1.5-flash-latest
-   GOOGLE_API_KEY=<YOUR_GOOGLE_KEY>
-   OPENROUTER_API_KEY=<YOUR_OPENROUTER_KEY>
-
-   # Email IMAP
-   EMAIL_HOST=imap.gmail.com
-   EMAIL_PORT=993
-   EMAIL_USER=<YOUR_EMAIL>
-   EMAIL_PASS=<YOUR_PASSWORD>
-
-   # Đường dẫn lưu trữ
-   ATTACHMENT_DIR=attachments
-   OUTPUT_CSV=cv_summary.csv
+   Sao chép file mẫu `.env.example` thành `.env` rồi điền các khoá API của bạn:
+   ```bash
+   cp .env.example .env
    ```
+   Sau đó mở `.env` và thay thế các giá trị placeholder (như `your_google_api_key`)
+   bằng thông tin thực tế. Nếu sử dụng OpenRouter qua proxy, có thể sửa
+   `OPENROUTER_BASE_URL` để trỏ tới endpoint mong muốn.
+
+### 💻 Cài đặt nhanh trên Windows
+
+1. Truy cập trang GitHub repo và bấm **Code** → **Download ZIP** (hoặc dùng
+   `git clone <repo_url>`).
+2. Giải nén (nếu tải ZIP) và mở `cmd` trong thư mục dự án.
+3. Chạy `setup.cmd` để tự động tạo `.env`, tạo virtual env và cài đặt
+   dependencies.
+4. Mở file `.env` vừa tạo và điền các biến như `GOOGLE_API_KEY`, thông tin
+   `EMAIL_*`.
+5. Cuối cùng chạy `run_resume_ai.cmd` để khởi động (không tham số sẽ mở UI,
+   thêm `cli` để chạy qua dòng lệnh).
+
+### 🛡️ SmartScreen trên Windows
+
+Khi chạy `setup.cmd` hoặc `run_resume_ai.cmd` lần đầu, SmartScreen có thể chặn file với thông báo "Windows protected your PC". Để bỏ chặn:
+
+1. Chuột phải vào file → **Properties** → tích **Unblock** → Apply.
+2. Hoặc chạy PowerShell:
+   ```powershell
+   Unblock-File .\setup.cmd
+   Unblock-File .\run_resume_ai.cmd
+   ```
+   Sau đó chạy script lại.
 
 ## ⚙️ Sử dụng CLI Agent
 
@@ -85,10 +100,12 @@ Các lệnh chính:
 python3 cli_agent.py --help
 
 # Tự động fetch CV từ email (watch loop)
-python3 cli_agent.py watch --interval 600
+python3 cli_agent.py watch --interval 600     # chỉ quét UNSEEN
+python3 cli_agent.py watch --all             # quét toàn bộ email
 
 # Chạy full process: fetch + xử lý batch
-python3 cli_agent.py full-process
+python3 cli_agent.py full-process            # chỉ quét UNSEEN
+python3 cli_agent.py full-process --all      # quét toàn bộ
 
 # Xử lý một file CV đơn lẻ
 python3 cli_agent.py single path/to/cv.pdf
@@ -99,6 +116,9 @@ python3 cli_agent.py serve --host 0.0.0.0 --port 8000
 # Hỏi AI dựa trên kết quả CSV
 python3 cli_agent.py chat "Câu hỏi của bạn"
 ```
+Lệnh `chat` tự động sử dụng khóa API tương ứng với `LLM_PROVIDER`
+được khai báo trong file `.env` (`GOOGLE_API_KEY` hoặc `OPENROUTER_API_KEY`).
+Mỗi lần hỏi đáp sẽ được lưu vào file log tại `log/chat_log.json` (có thể thay đổi qua biến `CHAT_LOG_FILE`).
 
 ## 🌐 Giao diện web (Streamlit)
 
@@ -109,6 +129,8 @@ Truy cập `http://localhost:8501` để:
 - Nhập API key và email.
 - Theo dõi tự động fetch.
 - Xử lý batch, xử lý đơn, xem CSV và chat với AI.
+- Trong tab **MCP Server**, nhập API key (Google/OpenRouter/VectorShift) và nhấn
+  "Khởi động" để server tự nhận diện platform.
 
 ## 🗂️ Cấu trúc dự án
 

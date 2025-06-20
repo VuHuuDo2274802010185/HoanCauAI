@@ -12,7 +12,7 @@ import json
 import re
 import pandas as pd
 from modules.dynamic_llm_client import DynamicLLMClient
-from modules.config import OUTPUT_CSV, LLM_CONFIG
+from modules.config import OUTPUT_CSV, LLM_CONFIG, get_model_price
 
 # Khởi tạo LLM client
 llm = DynamicLLMClient()
@@ -45,7 +45,9 @@ def select_top5_sources(df: pd.DataFrame) -> list:
     In ra model/provider, báo trạng thái AI hay fallback.
     """
     # In thông tin LLM
-    print(f"[INFO] Sử dụng LLM: {LLM_CONFIG['provider']} / {LLM_CONFIG['model']}")
+    price = get_model_price(LLM_CONFIG['model'])
+    label = f"{LLM_CONFIG['model']} ({price})" if price != 'unknown' else LLM_CONFIG['model']
+    print(f"[INFO] Sử dụng LLM: {LLM_CONFIG['provider']} / {label}")
 
     # Gọi AI
     prompt = (
@@ -74,7 +76,7 @@ def select_top5_sources(df: pd.DataFrame) -> list:
 
 def main():
     """Entry-point: đọc CSV và in TOP 5."""
-    path = OUTPUT_CSV if os.path.isfile(OUTPUT_CSV) else "cv_summary.csv"
+    path = OUTPUT_CSV if os.path.isfile(OUTPUT_CSV) else "csv/cv_summary.csv"
     df = read_cv_summary(path)
     top5 = select_top5_sources(df)
     print("\n=== TOP 5 Hồ sơ ===")

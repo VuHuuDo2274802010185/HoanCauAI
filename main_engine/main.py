@@ -46,8 +46,7 @@ def main(batch: bool, watch: bool, interval: int, file):
             return
         fetcher = EmailFetcher(EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASS)
         fetcher.connect()
-        processor = CVProcessor(fetcher)
-        processor.llm_client = llm_client    # gán client
+        processor = CVProcessor(fetcher, llm_client=llm_client)
         df = processor.process()
         if not df.empty:
             processor.save_to_csv(df, OUTPUT_CSV)
@@ -59,8 +58,7 @@ def main(batch: bool, watch: bool, interval: int, file):
         if not file:
             click.echo("Vui lòng cung cấp đường dẫn file khi dùng --single")
             return
-        processor = CVProcessor()
-        processor.llm_client = llm_client
+        processor = CVProcessor(llm_client=llm_client)
         text = processor.extract_text(file)
         info = processor.extract_info_with_llm(text)
         click.echo(info)

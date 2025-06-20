@@ -6,8 +6,10 @@ import json  # parse và dump JSON
 import time  # xử lý thời gian và sleep retry
 import logging  # ghi log
 from typing import List, Dict, Optional  # khai báo kiểu
+from pathlib import Path
 
 import pandas as pd  # xử lý DataFrame
+pd.set_option("display.max_colwidth", None)  # hiển thị đầy đủ nội dung các cột
 import docx  # đọc file .docx
 
 # --- Thiết lập logger cho module ---
@@ -18,8 +20,9 @@ fmt = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")  # định 
 stream_h = logging.StreamHandler()  
 stream_h.setFormatter(fmt)
 logger.addHandler(stream_h)
-# handler xuất log ra file cv_processor.log
-file_h = logging.FileHandler("cv_processor.log", encoding="utf-8")
+# handler xuất log ra file trong thư mục log
+Path("log").mkdir(parents=True, exist_ok=True)
+file_h = logging.FileHandler("log/cv_processor.log", encoding="utf-8")
 file_h.setFormatter(fmt)
 logger.addHandler(file_h)
 
@@ -39,7 +42,7 @@ except ImportError:
         except ImportError:
             _PDF_EX = None  # không có thư viện PDF nào
 
-from .dynamic_llm_client import DynamicLLMClient  # client gọi LLM động
+from .llm_client import LLMClient  # client LLM mặc định
 from .config import ATTACHMENT_DIR, OUTPUT_CSV  # cấu hình thư mục và file xuất
 from .prompts import CV_EXTRACTION_PROMPT  # prompt LLM để trích xuất CV
 
@@ -47,10 +50,10 @@ class CVProcessor:
     """
     Lớp xử lý file CV: đọc text, gọi LLM hoặc regex fallback, trả về DataFrame
     """
-    def __init__(self, fetcher: Optional[object] = None):
-        """Khởi tạo: cấp fetcher (đọc email), khởi tạo LLM client"""
+    def __init__(self, fetcher: Optional[object] = None, llm_client: Optional[LLMClient] = None):
+        """Khởi tạo: cấp fetcher (đọc email) và LLM client"""
         self.fetcher = fetcher  # đối tượng có method fetch_cv_attachments()
-        self.llm_client = DynamicLLMClient()  # khởi tạo client gọi LLM
+        self.llm_client = llm_client or LLMClient()  # client LLM mặc định
 
     def _extract_pdf(self, path: str) -> str:
         """
@@ -129,15 +132,18 @@ class CVProcessor:
 
     def _fallback_regex(self, text: str) -> Dict:
         """
-        Dùng regex đơn giản để trích xuất các trường: tên, email, điện thoại, học vấn, kinh nghiệm
+        Dùng regex đơn giản để trích xuất các trường: tên, tuổi, email, điện thoại, học vấn, kinh nghiệm, địa chỉ, kỹ năng
         Trả về dict với các key tương ứng
         """
         patterns = {
             "ten": r"(?:(?:Họ tên|Tên)[:\-\s]+)([^\n]+)",
+            "tuoi": r"(?:(?:Tuổi|Age)[:\-\s]+)(\d{1,3})",
             "email": r"([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)",
             "dien_thoai": r"(\+?\d[\d\-\s]{7,}\d)",
             "hoc_van": r"(?:(?:Học vấn|Education)[:\-\s]+)([^\n]+)",
             "kinh_nghiem": r"(?:(?:Kinh nghiệm|Experience)[:\-\s]+)([^\n]+)",
+            "dia_chi": r"(?:(?:Địa chỉ|Address)[:\-\s]+)([^\n]+)",
+            "ky_nang": r"(?:(?:Kỹ năng|Skills?)[:\-\s]+)([^\n]+)",
         }
         info: Dict[str, str] = {}
         for k, p in patterns.items():
@@ -170,13 +176,26 @@ class CVProcessor:
             rows.append({
                 "Nguồn": os.path.basename(path),
                 "Họ tên": info.get("ten", ""),
+                "Tuổi": info.get("tuoi", ""),
                 "Email": info.get("email", ""),
                 "Điện thoại": info.get("dien_thoai", ""),
+                "Địa chỉ": info.get("dia_chi", ""),
                 "Học vấn": info.get("hoc_van", ""),
                 "Kinh nghiệm": info.get("kinh_nghiem", ""),
+                "Kỹ năng": info.get("ky_nang", ""),
             })
 
-        df = pd.DataFrame(rows)  # tạo DataFrame từ list dict
+        df = pd.DataFrame(rows, columns=[
+            "Nguồn",
+            "Họ tên",
+            "Tuổi",
+            "Email",
+            "Điện thoại",
+            "Địa chỉ",
+            "Học vấn",
+            "Kinh nghiệm",
+            "Kỹ năng",
+        ])  # tạo DataFrame từ list dict với thứ tự cột cố định
         return df  # trả về kết quả
 
     def save_to_csv(self, df: pd.DataFrame, output: str = OUTPUT_CSV):

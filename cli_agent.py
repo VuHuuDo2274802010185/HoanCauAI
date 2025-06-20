@@ -3,10 +3,12 @@ import threading
 import click
 import pandas as pd
 import uvicorn
+from modules.config import LLM_CONFIG
 
 from modules.auto_fetcher import watch_loop
 from modules.email_fetcher import EmailFetcher
 from modules.cv_processor import CVProcessor
+from modules.llm_client import LLMClient
 from modules.qa_chatbot import answer_question
 from modules.mcp_server import settings
 
@@ -21,21 +23,23 @@ def cli():
 @click.option('--port', default=lambda: settings.email_port, type=int, help='IMAP port')
 @click.option('--user', default=lambda: settings.email_user, help='Email user')
 @click.option('--password', default=lambda: settings.email_pass, help='Email password')
-def watch(interval, host, port, user, password):
+@click.option('--unseen/--all', 'unseen_only', default=settings.email_unseen_only, show_default=True, help='Chỉ quét email chưa đọc')
+def watch(interval, host, port, user, password, unseen_only):
     """Tự động fetch CV từ email liên tục"""
     click.echo(f"Bắt đầu auto fetch với interval={interval}s...")
-    watch_loop(interval, host=host, port=port, user=user, password=password)
+    watch_loop(interval, host=host, port=port, user=user, password=password, unseen_only=unseen_only)
 
 @cli.command()
-def full_process():
+@click.option('--unseen/--all', 'unseen_only', default=settings.email_unseen_only, show_default=True, help='Chỉ quét email chưa đọc')
+def full_process(unseen_only):
     """Chạy đầy đủ quy trình fetch và xử lý CV"""
     click.echo("Bắt đầu full process...")
     # Fetch email
     fetcher = EmailFetcher(settings.email_host, settings.email_port, settings.email_user, settings.email_pass)
     fetcher.connect()
-    fetcher.fetch_cv_attachments()
+    fetcher.fetch_cv_attachments(unseen_only=unseen_only)
     # Process CVs
-    processor = CVProcessor(fetcher)
+    processor = CVProcessor(fetcher, llm_client=LLMClient())
     df = processor.process()
     if df.empty:
         click.echo("Không có CV mới để xử lý.")
@@ -48,7 +52,7 @@ def full_process():
 def single(file):
     """Xử lý một file CV đơn lẻ"""
     click.echo(f"Xử lý file: {file}")
-    processor = CVProcessor()
+    processor = CVProcessor(llm_client=LLMClient())
     text = processor.extract_text(file)
     info = processor.extract_info_with_llm(text)
     click.echo(info)
@@ -72,7 +76,7 @@ def chat(question):
     # Chọn provider và model từ env hoặc default
     provider = os.getenv('LLM_PROVIDER', 'google')
     model = os.getenv('LLM_MODEL', '')
-    api_key = os.getenv('LLM_API_KEY', '')
+    api_key = LLM_CONFIG.get('api_key', '')
     answer = answer_question(question, df, provider, model, api_key)
     click.echo(answer)
 
