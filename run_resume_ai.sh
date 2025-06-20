@@ -2,8 +2,11 @@
 set -e
 export LC_ALL=C.UTF-8
 
+# Determine script directory so relative paths work from anywhere
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR"
+
 YELLOW="\033[1;33m"
-WHITE="\033[1;37m"
 GREEN="\033[0;92m"
 RESET="\033[0m"
 
