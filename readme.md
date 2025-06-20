@@ -131,24 +131,24 @@ Các lệnh chính:
 
 ```bash
 # Xem trợ giúp
-python3 cli_agent.py --help
+python3 scripts/cli_agent.py --help
 
 # Tự động fetch CV từ email (watch loop)
-python3 cli_agent.py watch --interval 600     # chỉ quét UNSEEN
-python3 cli_agent.py watch --all             # quét toàn bộ email
+python3 scripts/cli_agent.py watch --interval 600     # chỉ quét UNSEEN
+python3 scripts/cli_agent.py watch --all             # quét toàn bộ email
 
 # Chạy full process: fetch + xử lý batch
-python3 cli_agent.py full-process            # chỉ quét UNSEEN
-python3 cli_agent.py full-process --all      # quét toàn bộ
+python3 scripts/cli_agent.py full-process            # chỉ quét UNSEEN
+python3 scripts/cli_agent.py full-process --all      # quét toàn bộ
 
 # Xử lý một file CV đơn lẻ
-python3 cli_agent.py single path/to/cv.pdf
+python3 scripts/cli_agent.py single path/to/cv.pdf
 
 # Chạy FastAPI MCP server
-python3 cli_agent.py serve --host 0.0.0.0 --port 8000
+python3 scripts/cli_agent.py serve --host 0.0.0.0 --port 8000
 
 # Hỏi AI dựa trên kết quả CSV
-python3 cli_agent.py chat "Câu hỏi của bạn"
+python3 scripts/cli_agent.py chat "Câu hỏi của bạn"
 ```
 Lệnh `chat` tự động sử dụng khóa API tương ứng với `LLM_PROVIDER`
 được khai báo trong file `.env` (`GOOGLE_API_KEY` hoặc `OPENROUTER_API_KEY`).
@@ -171,7 +171,7 @@ Truy cập `http://localhost:8501` để:
 Nếu chỉ cần các bước cơ bản, chạy:
 
 ```bash
-streamlit run simple_app.py
+streamlit run scripts/simple_app.py
 ```
 
 Ứng dụng sẽ hướng dẫn tuần tự nhập API key → fetch CV → xử lý → xem kết quả và ẩn các tab nâng cao.
@@ -180,10 +180,16 @@ streamlit run simple_app.py
 
 ```
 HoanCauAI/
-├── cli_agent.py           # CLI agent chính
+├── scripts/               # CLI và các tiện ích
+│   ├── cli_agent.py
+│   ├── simple_app.py
+│   └── health_check.py
 ├── main_engine/           # Streamlit UI và các scripts cũ
 │   └── app.py
 ├── modules/               # Core modules (fetcher, processor, chatbot, server)
+├── config/                # File cấu hình JSON
+├── csv/                   # Kết quả CSV
+├── docs/                  # Tài liệu bổ sung
 ├── attachments/           # Lưu CV tải về
 ├── .env.example           # Mẫu cấu hình môi trường
 ├── requirements.txt       # Dependencies

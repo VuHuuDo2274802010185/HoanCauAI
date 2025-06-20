@@ -31,7 +31,7 @@ pip install -q -r requirements.txt
 
 # Run health check
 echo "🏥 Running health check..."
-python3 health_check.py
+python3 scripts/health_check.py
 health_status=$?
 
 if [ $health_status -eq 0 ]; then
@@ -62,9 +62,9 @@ echo "2. Run the application with: python3 -m streamlit run main_engine/app.py"
 echo "3. Open your browser to: http://localhost:8501"
 echo ""
 echo "🔧 Available commands:"
-echo "- Health check: python3 health_check.py"
-echo "- CLI mode: python3 cli_agent.py --help"
-echo "- Simple mode: python3 -m streamlit run simple_app.py"
+echo "- Health check: python3 scripts/health_check.py"
+echo "- CLI mode: python3 scripts/cli_agent.py --help"
+echo "- Simple mode: python3 -m streamlit run scripts/simple_app.py"
 echo ""
 
 # Ask if user wants to start the app

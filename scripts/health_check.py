@@ -1,7 +1,9 @@
 import os
 import sys
 import importlib
+from pathlib import Path
 
+BASE_DIR = Path(__file__).resolve().parent.parent
 errors = []
 
 # Check Python version
@@ -16,11 +18,11 @@ except ImportError:
 
 # Check essential directories
 for d in ["attachments", "csv", "log", "static"]:
-    if not os.path.isdir(d):
+    if not (BASE_DIR / d).is_dir():
         errors.append(f"Missing directory: {d}")
 
 # Check for environment file
-if not os.path.isfile('.env'):
+if not (BASE_DIR / '.env').is_file():
     errors.append(".env file not found")
 
 if errors:
