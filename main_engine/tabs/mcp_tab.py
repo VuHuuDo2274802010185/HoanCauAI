@@ -20,10 +20,14 @@ def render(detect_platform) -> None:
         unsafe_allow_html=True,
     )
 
+    # Ensure mcp_api_key is set before widget instantiation
+    if "mcp_api_key" not in st.session_state:
+        st.session_state.mcp_api_key = MCP_API_KEY
+
     mcp_key = st.text_input(
         "API Key cho platform",
         type="password",
-        value=st.session_state.get("mcp_api_key", MCP_API_KEY),
+        value=st.session_state.mcp_api_key,
         key="mcp_api_key",
     )
 
