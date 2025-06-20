@@ -735,6 +735,13 @@ def initialize_app():
 # Initialize the application
 initialize_app()
 
+# --- Apply theme from Streamlit config ---
+theme = st.get_option("theme.base") or "light"
+st.markdown(
+    f"<script>document.documentElement.setAttribute('data-theme', '{theme}');</script>",
+    unsafe_allow_html=True,
+)
+
 # --- Sidebar: logo và cấu hình LLM ---
 @handle_error
 def render_sidebar():
