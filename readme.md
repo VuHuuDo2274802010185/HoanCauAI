@@ -87,7 +87,7 @@ HoanCau AI Resume Processor là hệ thống tự động trích xuất thông t
    `LLM_PROVIDER`, `LLM_MODEL`, một trong các khóa API (`GOOGLE_API_KEY` hoặc
    `OPENROUTER_API_KEY`), `EMAIL_USER` và `EMAIL_PASS`. File `.env` đã nằm trong
    `.gitignore` nên **không commit** lên Git. Nếu gặp lỗi cấu hình, hãy so sánh
-   với file mẫu `.env.example`.
+   với file mẫu [`.env.example`](./.env.example) để biết các biến cần thiết.
    Bạn có thể tạo sẵn các thư mục `attachments`, `output` và `log` (hoặc để
    script tự tạo) để lưu file tải về và log.
 
@@ -165,6 +165,16 @@ Truy cập `http://localhost:8501` để:
 - Xử lý batch, xử lý đơn, xem CSV và chat với AI.
 - Trong tab **MCP Server**, nhập API key (Google/OpenRouter/VectorShift) và nhấn
   "Khởi động" để server tự nhận diện platform.
+
+### 🚲 Simple Mode
+
+Nếu chỉ cần các bước cơ bản, chạy:
+
+```bash
+streamlit run simple_app.py
+```
+
+Ứng dụng sẽ hướng dẫn tuần tự nhập API key → fetch CV → xử lý → xem kết quả và ẩn các tab nâng cao.
 
 ## 🗂️ Cấu trúc dự án
 

@@ -12,9 +12,13 @@ def render(provider: str, model: str, api_key: str, root: Path) -> None:
     """Render UI for processing a single CV file."""
     st.subheader("Xử lý một CV đơn lẻ")
     price = get_model_price(model)
-    label = f"{model} ({price})" if price != 'unknown' else model
+    label = f"{model} ({price})" if price != "unknown" else model
     st.markdown(f"**LLM:** `{provider}` / `{label}`")
-    uploaded = st.file_uploader("Chọn file CV (.pdf, .docx)", type=["pdf", "docx"])
+    uploaded = st.file_uploader(
+        "Chọn file CV (.pdf, .docx)",
+        type=["pdf", "docx"],
+        help="Tải lên một file CV để phân tích ngay",
+    )
     if uploaded:
         tmp_file = root / f"tmp_{uploaded.name}"
         tmp_file.write_bytes(uploaded.getbuffer())
