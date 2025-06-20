@@ -5,7 +5,7 @@ setlocal enableextensions enabledelayedexpansion
 color 0A
 cls
 echo ======================================================
-echo                 RESUME AI - SETUP SCRIPT
+echo                 RESUME AI - CÀI ĐẶT
 echo ======================================================
 :: ======================================================
 :: Resume AI - Setup Script
@@ -56,16 +56,16 @@ if not exist "%~dp0.env" (
 
 :: 3) Tạo virtual environment nếu chưa có
 if not exist "%~dp0.venv\Scripts\activate.bat" (
-    echo 📦 Tạo virtual environment...
+echo 📦 Đang tạo môi trường ảo...
     python -m venv "%~dp0.venv"
-    echo Đã tạo virtual environment.
+echo Đã tạo môi trường ảo.
 ) else (
-    echo Virtual environment đã tồn tại.
+    echo Môi trường ảo đã tồn tại.
 )
 
 :: 4) Kích hoạt virtual environment
 call "%~dp0.venv\Scripts\activate.bat"
-echo Đã kích hoạt virtual environment.
+echo Đã kích hoạt môi trường ảo.
 
 :: 5) Cài đặt dependencies
 echo Đang cài đặt dependencies...
@@ -82,5 +82,5 @@ if not exist "%~dp0attachments" (
     echo Thư mục attachments đã tồn tại.
 )
 
-echo Setup hoàn tất! Nhấn bất kỳ phím nào để thoát.
+echo Quá trình cài đặt hoàn tất! Nhấn phím bất kỳ để thoát.
 pause
