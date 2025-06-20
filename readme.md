@@ -100,8 +100,7 @@ HoanCau AI Resume Processor là hệ thống tự động trích xuất thông t
    dependencies.
 4. Mở file `.env` vừa tạo và điền các biến như `GOOGLE_API_KEY`, thông tin
    `EMAIL_*`.
-5. Cuối cùng chạy `run_resume_ai.cmd` để khởi động (không tham số sẽ mở UI,
-   thêm `cli` để chạy qua dòng lệnh).
+5. Cuối cùng chạy `run_resume_ai.cmd` để mở ngay giao diện Streamlit.
 
 ### 📦 Tự động setup trên macOS/Linux
 
@@ -112,6 +111,7 @@ Trong thư mục dự án, chạy:
 ```
 
 Script sẽ tạo `.env`, virtualenv và cài dependencies tương tự `setup.cmd`.
+Sau khi hoàn tất, chạy tiếp `./run_resume_ai.sh` để mở giao diện Streamlit.
 
 ### 🛡️ SmartScreen trên Windows
 

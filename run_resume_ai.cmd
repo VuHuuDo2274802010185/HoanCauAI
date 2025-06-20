@@ -1,19 +1,14 @@
 @echo off
 setlocal enableextensions enabledelayedexpansion
 
-:: Hiển thị banner màu để giao diện thân thiện hơn
+:: Hiển thị banner màu cho giao diện dễ nhìn
 color 0A
 cls
 echo ======================================================
-echo                  RESUME AI - RUN SCRIPT
+echo                  RESUME AI - KHỞI ĐỘNG
 echo ======================================================
 :: ======================================================
-:: Resume AI - Entry Script
-:: Mục đích: Kích hoạt venv, chọn chế độ CLI/SelectTop5/UI và chạy tương ứng
-:: Sử dụng: run_resume_ai.bat [cli|select]
-::   - cli: chạy batch/single qua CLI (main_engine/main.py)
-::   - select: chọn TOP5 qua AI (main_engine/select_top5.py)
-::   - (mặc định) khởi động Streamlit UI (main_engine/app.py)
+:: Resume AI - Entry Script (auto launch Streamlit UI)
 :: ======================================================
 
 :: 0) Chuyển console sang UTF-8 (hỗ trợ tiếng Việt)
@@ -31,43 +26,22 @@ echo [OK] Đã có Python.
 :: 2) Kích hoạt virtual environment nếu có
 if exist "%~dp0.venv\Scripts\activate.bat" (
     call "%~dp0.venv\Scripts\activate.bat"
-    echo [OK] Virtual environment đã được kích hoạt.
+    echo [OK] Môi trường ảo đã được kích hoạt.
 ) else (
-    echo [WARN] Không tìm thấy virtual environment tại .venv, sử dụng Python toàn cục.
+    echo [CẢNH BÁO] Không tìm thấy môi trường ảo tại .venv, sẽ dùng Python toàn cục.
 )
 
-:menu
-echo ===============================
-echo 1. Mo UI Streamlit
-echo 2. Chay CLI xu ly CV
-echo 3. Chon TOP5 CV bang AI
-echo 0. Thoat
-set /p MODE="Chon che do (0-3): "
-if "%MODE%"=="0" goto end
-if "%MODE%"=="1" set ACTION=UI
-if "%MODE%"=="2" set ACTION=CLI
-if "%MODE%"=="3" set ACTION=SELECT
-if not defined ACTION (
-    echo [WARN] Lua chon khong hop le.
-    goto menu
+:: 3) Loading animation trước khi chạy UI
+set "spin=/ - \ |"
+for /L %%n in (1,1,20) do (
+    set /A idx=%%n %% 4
+    for %%c in (!spin:~!idx!,1!) do <nul set /p "=Đang khởi động ứng dụng... %%c\r"
+    ping 127.0.0.1 -n 2 > nul
 )
-set /p CF="Thuc thi che do %ACTION%? (y/n): "
-if /I not "%CF%"=="y" (
-    echo Da huy. Quay lai menu.
-    goto menu
-)
-if "%ACTION%"=="CLI" (
-    python "%~dp0main_engine\main.py"
-    goto menu
-)
-if "%ACTION%"=="SELECT" (
-    python "%~dp0main_engine\select_top5.py"
-    goto menu
-)
-:: default UI
+echo.
+
+:: 4) Khởi động Streamlit UI
 streamlit run "%~dp0main_engine\app.py"
-goto menu
 
-:end
-echo Ket thuc.
+echo Ứng dụng đã thoát. Nhấn phím bất kỳ để đóng.
 pause
