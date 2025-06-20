@@ -1,8 +1,6 @@
 @echo off
 setlocal enableextensions enabledelayedexpansion
 
-:: Hiển thị banner màu để giao diện thân thiện hơn
-color 0A
 cls
 echo ======================================================
 echo                  RESUME AI - RUN SCRIPT

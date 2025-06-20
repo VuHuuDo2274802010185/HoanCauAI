@@ -1,8 +1,6 @@
 @echo off
 setlocal enableextensions enabledelayedexpansion
 
-:: Thiết lập màu sắc và tiêu đề cho giao diện thân thiện hơn
-color 0A
 cls
 echo ======================================================
 echo                 RESUME AI - SETUP SCRIPT
