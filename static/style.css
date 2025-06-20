@@ -1,12 +1,20 @@
 /* static/style.css */
 
 /* Simple theme variables */
-:root {
-  --cv-text-color: #2D3748;
-  --cv-bg-color: #FFFFFF;
-  --cv-accent-color: #F4F6F8;
-  --btn-gold: #2B6CB0;
-  --btn-gold-border: #2B6CB0;
+:root[data-theme="light"] {
+  --cv-text-color: #2d1810;
+  --cv-bg-color: #fffbf0;
+  --cv-accent-color: #f4e09c;
+  --btn-gold: #d4af37;
+  --btn-gold-border: #d4af37;
+}
+
+:root[data-theme="dark"] {
+  --cv-text-color: #ffffff;
+  --cv-bg-color: #332a16;
+  --cv-accent-color: #9b7e3c;
+  --btn-gold: #d4af37;
+  --btn-gold-border: #d4af37;
 }
 
 img[src*="logo.png"] {
