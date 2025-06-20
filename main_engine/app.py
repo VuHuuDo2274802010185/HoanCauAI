@@ -1040,13 +1040,19 @@ custom_css = f"""
     
     .stTabs [data-baseweb="tab-list"] {{
         gap: 8px;
+        width: 100%;
+        display: flex;
     }}
-    
+
     .stTabs [data-baseweb="tab"] {{
         background: linear-gradient(135deg, {secondary_color}44 0%, {background_color} 100%);
         border-radius: {border_radius}px;
         color: {text_color};
         border: 2px solid {secondary_color}66;
+        flex: 1;
+        text-align: center;
+        padding: 0.75rem 0;
+        font-size: 1.1rem;
     }}
     
     .stTabs [aria-selected="true"] {{
