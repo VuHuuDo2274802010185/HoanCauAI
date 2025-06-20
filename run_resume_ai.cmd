@@ -1,12 +1,13 @@
 @echo off
 setlocal enableextensions enabledelayedexpansion
 
-:: Hiển thị banner màu cho giao diện dễ nhìn
-color 0A
+:: Hiển thị banner nhiều màu
+color 0E
 cls
-echo ======================================================
-echo                  RESUME AI - KHỞI ĐỘNG
-echo ======================================================
+powershell -NoProfile -Command "Write-Host '=====================================================' -ForegroundColor Cyan"
+powershell -NoProfile -Command "$t='RESUME AI - KHỞI ĐỘNG'; $c=@('Red','Yellow','Green','Cyan','Magenta','Blue','White'); for($i=0;$i -lt $t.Length;$i++){Write-Host -NoNewline $t[$i] -ForegroundColor $c[$i % $c.Count]} ; Write-Host ''"
+powershell -NoProfile -Command "Write-Host '=====================================================' -ForegroundColor Cyan"
+color 07
 :: ======================================================
 :: Resume AI - Entry Script (auto launch Streamlit UI)
 :: ======================================================
@@ -32,6 +33,7 @@ if exist "%~dp0.venv\Scripts\activate.bat" (
 )
 
 :: 3) Loading animation trước khi chạy UI
+color 0A
 set "spin=/ - \ |"
 for /L %%n in (1,1,20) do (
     set /A idx=%%n %% 4
@@ -39,9 +41,10 @@ for /L %%n in (1,1,20) do (
     ping 127.0.0.1 -n 2 > nul
 )
 echo.
+color 07
 
 :: 4) Khởi động Streamlit UI
 streamlit run "%~dp0main_engine\app.py"
 
-echo Ứng dụng đã thoát. Nhấn phím bất kỳ để đóng.
+powershell -NoProfile -Command "Write-Host 'Ứng dụng đã thoát. Nhấn phím bất kỳ để đóng.' -ForegroundColor Yellow"
 pause

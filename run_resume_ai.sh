@@ -1,12 +1,18 @@
 #!/usr/bin/env bash
 set -e
 
-GREEN="\033[0;32m"
+YELLOW="\033[1;33m"
+WHITE="\033[1;37m"
+GREEN="\033[0;92m"
 RESET="\033[0m"
 
-echo -e "${GREEN}======================================================"
-echo -e "                RESUME AI - KHỞI ĐỘNG               "
-echo -e "======================================================${RESET}"
+echo -e "${GREEN}======================================================${RESET}"
+if command -v lolcat >/dev/null 2>&1; then
+  echo "                RESUME AI - KHỞI ĐỘNG               " | lolcat
+else
+  echo -e "${YELLOW}                RESUME AI - KHỞI ĐỘNG               ${RESET}"
+fi
+echo -e "${GREEN}======================================================${RESET}"
 
 # 1) Check Python
 if ! command -v python3 >/dev/null 2>&1; then
@@ -29,7 +35,7 @@ spinner() {
   local chars='/-\\|'
   for i in {1..20}; do
     for j in {0..3}; do
-      printf "\rĐang khởi động ứng dụng... %s" "${chars:j:1}"
+      printf "\r${GREEN}Đang khởi động ứng dụng... %s${RESET}" "${chars:j:1}"
       sleep 0.2
     done
   done
@@ -41,4 +47,4 @@ spinner
 # 4) Launch Streamlit UI
 streamlit run main_engine/app.py
 
-echo "Ứng dụng đã thoát. Nhấn Ctrl+C để đóng terminal." 
+echo -e "${YELLOW}Ứng dụng đã thoát. Nhấn Ctrl+C để đóng terminal.${RESET}"
