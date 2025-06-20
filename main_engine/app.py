@@ -951,8 +951,8 @@ text_color = st.session_state.get("text_color", "#000000")
 accent_color = st.session_state.get("accent_color", "#d4af37")
 secondary_color = st.session_state.get("secondary_color", "#f4e09c")
 font_options = [
-    "Poppins", "Roboto", "Open Sans", "Lato", "Montserrat",
-    "Inter", "Arial", "Verdana", "Times New Roman", "Georgia"
+    "Be Vietnam Pro", "Poppins", "Roboto", "Open Sans", "Lato",
+    "Montserrat", "Inter", "Arial", "Verdana", "Times New Roman", "Georgia"
 ]
 font_family = font_options[st.session_state.get("font_family_index", 0)]
 font_size = st.session_state.get("font_size", 14)
@@ -963,7 +963,7 @@ layout_compact = st.session_state.get("layout_compact", False)
 padding = "0.5rem" if layout_compact else "1rem"
 custom_css = f"""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@300;400;500;600;700&family=Lato:wght@300;400;700&family=Montserrat:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@300;400;500;600;700&family=Lato:wght@300;400;700&family=Montserrat:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
     
     .main .block-container {{
         padding-top: {padding};
