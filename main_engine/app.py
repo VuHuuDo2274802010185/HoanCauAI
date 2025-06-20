@@ -742,38 +742,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# --- Apply theme from Streamlit config ---
-def apply_theme():
-    base = (st.get_option("theme.base") or "light").lower()
-    if base == "dark":
-        css = """
-        :root {
-            --cv-text-color: #E6E6E6;
-            --cv-bg-color: #0D0F12;
-            --cv-accent-color: #0D0F12;
-            --btn-gold: #00FFF7;
-            --btn-gold-border: #FF31FF;
-            --logo-gold: #FFFB00;
-            --logo-shadow: rgba(255, 251, 0, 0.4);
-        }
-        """
-    else:
-        css = """
-        :root {
-            --cv-text-color: #2D3748;
-            --cv-bg-color: #FFFFFF;
-            --cv-accent-color: #F4F6F8;
-            --btn-gold: #2B6CB0;
-            --btn-gold-border: #2B6CB0;
-            --logo-gold: #FCD129;
-            --logo-shadow: rgba(252, 209, 41, 0.4);
-        }
-        """
-    st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
-
-
-apply_theme()
-
 # --- Sidebar: logo và cấu hình LLM ---
 @handle_error
 def render_sidebar():
