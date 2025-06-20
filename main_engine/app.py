@@ -719,6 +719,17 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# Adjust style variables based on chosen Streamlit theme
+if theme == "dark":
+    st.session_state["text_color"] = "#ffffff"
+    st.session_state["background_color"] = "#332a16"
+    st.session_state["secondary_color"] = "#9b7e3c"
+else:
+    st.session_state["text_color"] = "#2d1810"
+    st.session_state["background_color"] = "#fffbf0"
+    st.session_state["secondary_color"] = "#f4e09c"
+st.session_state["accent_color"] = "#d4af37"
+
 # --- Sidebar: logo và cấu hình LLM ---
 @handle_error
 def render_sidebar():
@@ -930,124 +941,19 @@ def manage_auto_fetcher(email_user: str, email_pass: str, unseen_only: bool):
 # Render email configuration
 email_user, email_pass, unseen_only = render_email_config()
 
-# --- Sidebar: Tùy chỉnh giao diện ---
-st.sidebar.header("🎨 Tùy chỉnh giao diện")
-
-# Theme presets with beautiful color combinations
-theme_presets = {
-    "Vàng Kim (Mặc định)": {"bg": "#fffbf0", "text": "#2d1810", "accent": "#d4af37", "secondary": "#f4e09c"},
-    "Xanh Biển Sang Trọng": {"bg": "#f0f8ff", "text": "#1e3a5f", "accent": "#2c5aa0", "secondary": "#87ceeb"},
-    "Tím Hoàng Gia": {"bg": "#faf5ff", "text": "#3c1361", "accent": "#7c3aed", "secondary": "#c4b5fd"},
-    "Xanh Lá Tự Nhiên": {"bg": "#f0fff4", "text": "#065f46", "accent": "#059669", "secondary": "#86efac"},
-    "Đỏ Burgundy": {"bg": "#fef2f2", "text": "#7f1d1d", "accent": "#dc2626", "secondary": "#fca5a5"},
-    "Cam Sunset": {"bg": "#fff7ed", "text": "#9a3412", "accent": "#ea580c", "secondary": "#fdba74"},
-    "Hồng Sakura": {"bg": "#fdf2f8", "text": "#831843", "accent": "#ec4899", "secondary": "#f9a8d4"},
-    "Xám Platinum": {"bg": "#f9fafb", "text": "#374151", "accent": "#6b7280", "secondary": "#d1d5db"},
-    "Tối Elegant": {"bg": "#1f2937", "text": "#f9fafb", "accent": "#fbbf24", "secondary": "#4b5563"},
-    "Gradient Twilight": {"bg": "#0f172a", "text": "#e2e8f0", "accent": "#8b5cf6", "secondary": "#06b6d4"},
-}
-
-selected_theme = st.sidebar.selectbox(
-    "🎨 Chọn theme có sẵn:",
-    options=list(theme_presets.keys()),
-    index=0,
-    help="Chọn một theme có sẵn hoặc tùy chỉnh bên dưới"
-)
-
-# Apply theme if not default
-theme = theme_presets[selected_theme]
-st.session_state["background_color"] = theme["bg"]
-st.session_state["text_color"] = theme["text"]
-st.session_state["accent_color"] = theme["accent"]
-st.session_state["secondary_color"] = theme["secondary"]
-
-st.sidebar.markdown("---")
-st.sidebar.markdown("**🎨 Tùy chỉnh chi tiết:**")
-
-# Color customization with better defaults
-background_color = st.sidebar.color_picker(
-    "� Màu nền chính",
-    value=st.session_state.get("background_color", "#fffbf0"),
-    help="Chọn màu nền cho ứng dụng"
-)
-
-text_color = st.sidebar.color_picker(
-    "📝 Màu chữ",
-    value=st.session_state.get("text_color", "#2d1810"),
-    help="Chọn màu cho văn bản"
-)
-
-accent_color = st.sidebar.color_picker(
-    "⭐ Màu nhấn chính",
-    value=st.session_state.get("accent_color", "#d4af37"),
-    help="Chọn màu nhấn cho các thành phần UI quan trọng"
-)
-
-secondary_color = st.sidebar.color_picker(
-    "🌟 Màu phụ",
-    value=st.session_state.get("secondary_color", "#f4e09c"),
-    help="Chọn màu phụ cho các thành phần UI"
-)
-
-# Font customization with more elegant options
+# Load style preferences from session state
+background_color = st.session_state.get("background_color", "#fffbf0")
+text_color = st.session_state.get("text_color", "#2d1810")
+accent_color = st.session_state.get("accent_color", "#d4af37")
+secondary_color = st.session_state.get("secondary_color", "#f4e09c")
 font_options = [
     "Poppins", "Roboto", "Open Sans", "Lato", "Montserrat",
     "Inter", "Arial", "Verdana", "Times New Roman", "Georgia"
 ]
-font_family_index = st.session_state.get("font_family_index", 0)
-if font_family_index >= len(font_options):
-    font_family_index = 0
-
-font_family = st.sidebar.selectbox(
-    "🔤 Phông chữ",
-    options=font_options,
-    index=font_family_index,
-    help="Chọn kiểu phông chữ"
-)
-
-font_size = st.sidebar.slider(
-    "📏 Cỡ chữ",
-    min_value=12, max_value=20,
-    value=st.session_state.get("font_size", 14),
-    help="Điều chỉnh kích thước chữ"
-)
-
-# Advanced styling options
-border_radius = st.sidebar.slider(
-    "🔘 Bo góc",
-    min_value=0, max_value=20,
-    value=st.session_state.get("border_radius", 8),
-    help="Độ bo góc của các thành phần"
-)
-
-# Layout options
-layout_compact = st.sidebar.checkbox(
-    "📐 Giao diện gọn",
-    value=st.session_state.get("layout_compact", False),
-    help="Giảm khoảng cách giữa các thành phần"
-)
-
-# Reset button
-if st.sidebar.button("🔄 Khôi phục theme vàng kim", help="Đặt lại về theme vàng kim mặc định"):
-    st.session_state["background_color"] = "#fffbf0"
-    st.session_state["text_color"] = "#2d1810"
-    st.session_state["accent_color"] = "#d4af37"
-    st.session_state["secondary_color"] = "#f4e09c"
-    st.session_state["font_family_index"] = 0
-    st.session_state["font_size"] = 14
-    st.session_state["border_radius"] = 8
-    st.session_state["layout_compact"] = False
-    st.rerun()
-
-# Save preferences
-st.session_state["background_color"] = background_color
-st.session_state["text_color"] = text_color
-st.session_state["accent_color"] = accent_color
-st.session_state["secondary_color"] = secondary_color
-st.session_state["font_family_index"] = font_options.index(font_family)
-st.session_state["font_size"] = font_size
-st.session_state["border_radius"] = border_radius
-st.session_state["layout_compact"] = layout_compact
+font_family = font_options[st.session_state.get("font_family_index", 0)]
+font_size = st.session_state.get("font_size", 14)
+border_radius = st.session_state.get("border_radius", 8)
+layout_compact = st.session_state.get("layout_compact", False)
 
 # Apply custom styling with beautiful gradients and shadows
 padding = "0.5rem" if layout_compact else "1rem"
