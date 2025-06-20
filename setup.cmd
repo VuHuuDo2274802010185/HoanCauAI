@@ -1,4 +1,6 @@
 @echo off
+:: 0) Chuyển console sang UTF-8
+chcp 65001 >nul
 setlocal enableextensions enabledelayedexpansion
 
 :: Thiết lập màu sắc và tiêu đề cho giao diện thân thiện hơn
@@ -16,9 +18,6 @@ echo ======================================================
 ::   4) Cài đặt dependencies
 ::   5) Tạo thư mục attachments
 :: ======================================================
-
-:: 0) Chuyển console sang UTF-8
-chcp 65001 >nul
 
 :: 1) Kiểm tra Python
 python --version >nul 2>&1

@@ -1,4 +1,6 @@
 @echo off
+:: 0) Chuyển console sang UTF-8 (hỗ trợ tiếng Việt)
+chcp 65001 >nul
 setlocal enableextensions enabledelayedexpansion
 
 :: Hiển thị banner màu cho giao diện dễ nhìn
@@ -10,9 +12,6 @@ echo ======================================================
 :: ======================================================
 :: Resume AI - Entry Script (auto launch Streamlit UI)
 :: ======================================================
-
-:: 0) Chuyển console sang UTF-8 (hỗ trợ tiếng Việt)
-chcp 65001 >nul
 
 :: 1) Kiểm tra Python
 python --version >nul 2>&1
