@@ -1,8 +1,8 @@
 @echo off
-:: 0) Chuyển console sang UTF-8 (hỗ trợ tiếng Việt)
+:: 0) Switch console to UTF-8
 chcp 65001 >nul
 setlocal enableextensions enabledelayedexpansion
-:: Đảm bảo PowerShell cũng dùng UTF-8 để hiển thị tiếng Việt
+:: Ensure PowerShell also uses UTF-8 for Vietnamese text
 powershell -NoProfile -Command "[Console]::OutputEncoding=[System.Text.Encoding]::UTF8"
 
 :: Hiển thị banner nhiều màu
@@ -19,18 +19,18 @@ color 07
 :: 1) Kiểm tra Python
 python --version >nul 2>&1
 if errorlevel 1 (
-    echo [ERROR] Python không được cài đặt hoặc không tìm thấy trong PATH.
+    powershell -NoProfile -Command "Write-Host '[ERROR] Python không được cài đặt hoặc không tìm thấy trong PATH.' -ForegroundColor Red"
     pause
     exit /b 1
 )
-echo [OK] Đã có Python.
+powershell -NoProfile -Command "Write-Host '[OK] Đã có Python.' -ForegroundColor Green"
 
 :: 2) Kích hoạt virtual environment nếu có
 if exist "%~dp0.venv\Scripts\activate.bat" (
     call "%~dp0.venv\Scripts\activate.bat"
-    echo [OK] Môi trường ảo đã được kích hoạt.
+    powershell -NoProfile -Command "Write-Host '[OK] Môi trường ảo đã được kích hoạt.' -ForegroundColor Green"
 ) else (
-    echo [CẢNH BÁO] Không tìm thấy môi trường ảo tại .venv, sẽ dùng Python toàn cục.
+    powershell -NoProfile -Command "Write-Host '[CẢNH BÁO] Không tìm thấy môi trường ảo tại .venv, sẽ dùng Python toàn cục.' -ForegroundColor Yellow"
 )
 
 :: 3) Loading animation trước khi chạy UI
