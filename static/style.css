@@ -1,4 +1,5 @@
 /* static/style.css */
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap');
 
 /* Simple theme variables */
 :root[data-theme="light"] {
@@ -26,6 +27,7 @@ body {
   background-color: var(--cv-bg-color) !important;
   color: var(--cv-text-color) !important;
   font-size: 1.05rem;
+  font-family: 'Be Vietnam Pro', sans-serif;
 }
 
 /* Button styling for BaseWeb buttons */
