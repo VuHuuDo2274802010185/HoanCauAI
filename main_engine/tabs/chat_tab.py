@@ -4,7 +4,7 @@ import pandas as pd
 import streamlit as st
 from typing import cast
 
-from modules.qa_chatbot import answer_question
+from modules.qa_chatbot import QAChatbot
 from modules.config import OUTPUT_CSV
 
 
@@ -29,16 +29,15 @@ def render(provider: str, model: str, api_key: str) -> None:
             st.warning("Chưa có dữ liệu CSV để hỏi.")
         else:
             df = pd.read_csv(OUTPUT_CSV, encoding="utf-8-sig")
+            chatbot = QAChatbot(
+                provider=cast(str, provider),
+                model=cast(str, model),
+                api_key=cast(str, api_key),
+            )
             with st.spinner("Đang hỏi AI..."):
                 try:
                     logging.info("Đang gửi câu hỏi tới AI")
-                    answer = answer_question(
-                        question,
-                        df,
-                        cast(str, provider),
-                        cast(str, model),
-                        cast(str, api_key)
-                    )
+                    answer = chatbot.ask_question(question, df)
                     st.markdown(answer)
                 except Exception as e:
                     logging.error(f"Lỗi hỏi AI: {e}")

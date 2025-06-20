@@ -8,6 +8,31 @@ from typing import Optional, Dict, Any
 from .dynamic_llm_client import DynamicLLMClient
 from .config import CHAT_LOG_FILE
 
+
+class QAChatbot:
+    """Simple wrapper around :func:`answer_question`."""
+
+    def __init__(self, provider: str, model: str, api_key: str) -> None:
+        self.provider = provider
+        self.model = model
+        self.api_key = api_key
+
+    def ask_question(
+        self,
+        question: str,
+        df: pd.DataFrame,
+        context: Optional[Dict[str, Any]] = None,
+    ) -> str:
+        """Delegate answering to :func:`answer_question`."""
+        return answer_question(
+            question,
+            df,
+            self.provider,
+            self.model,
+            self.api_key,
+            context=context,
+        )
+
 # Enhanced logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
