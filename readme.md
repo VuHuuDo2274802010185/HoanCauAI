@@ -111,7 +111,7 @@ Trong thư mục dự án, chạy:
 ```
 
 Script sẽ tạo `.env`, virtualenv và cài dependencies tương tự `setup.cmd`.
-Sau khi hoàn tất, chạy tiếp `./run_resume_ai.sh` để mở giao diện Streamlit.
+Sau khi hoàn tất, chạy tiếp `./start.sh` để khởi chạy nhanh giao diện Streamlit.
 
 ### 🛡️ SmartScreen trên Windows
 
@@ -201,6 +201,20 @@ HoanCauAI/
 1. Fork repo và tạo branch mới.
 2. Viết code và test (pytest).
 3. Commit, push và mở Pull Request.
+
+## 🧪 Chạy test
+
+Sau khi cài đặt các phụ thuộc, chạy toàn bộ test bằng:
+
+```bash
+pytest
+```
+
+Có thể kiểm tra nhanh môi trường với:
+
+```bash
+python3 scripts/health_check.py
+```
 
 ## 📜 License
 
