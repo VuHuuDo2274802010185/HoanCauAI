@@ -10,9 +10,9 @@
 }
 
 :root[data-theme="dark"] {
-  --cv-text-color: #ffff33;
-  --cv-bg-color: #332a16;
-  --cv-accent-color: #9b7e3c;
+  --cv-text-color: #f0f0f0;
+  --cv-bg-color: #1e1e1e;
+  --cv-accent-color: #2c2c2c;
   --btn-gold: #d4af37;
   --btn-gold-border: #d4af37;
 }
