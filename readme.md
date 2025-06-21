@@ -192,10 +192,15 @@ HoanCauAI/
 ├── csv/                   # Kết quả CSV
 ├── docs/                  # Tài liệu bổ sung
 ├── attachments/           # Lưu CV tải về
+├── static/                # Tệp CSS và tài nguyên giao diện
+│   ├── style.css
+│   └── custom.css
 ├── .env.example           # Mẫu cấu hình môi trường
 ├── requirements.txt       # Dependencies
 └── README.md              # Hướng dẫn sử dụng
 ```
+
+Tệp `static/custom.css` chứa các biến được định dạng từ ứng dụng để điều chỉnh giao diện. Có thể chỉnh sửa file này để thay đổi màu sắc hoặc font chữ.
 
 ## 🤝 Đóng góp
 

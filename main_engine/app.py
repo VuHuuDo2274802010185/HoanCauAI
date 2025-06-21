@@ -275,20 +275,34 @@ def detect_platform(api_key: str) -> Optional[str]:
 
 # --- Enhanced CSS loading ---
 @handle_error
-def load_css():
-    """Load CSS with enhanced error handling"""
+def load_css(style_vars: dict | None = None):
+    """Load CSS files with optional formatting"""
     css_path = ROOT / "static" / "style.css"
-    
+    custom_path = ROOT / "static" / "custom.css"
+
     if css_path.exists():
         try:
-            css_content = css_path.read_text(encoding='utf-8')
+            css_content = css_path.read_text(encoding="utf-8")
             st.markdown(f"<style>{css_content}</style>", unsafe_allow_html=True)
-            logger.info("Custom CSS loaded successfully")
+            logger.info("Base CSS loaded successfully")
         except Exception as e:
             logger.error(f"Failed to load CSS: {e}")
             st.warning(f"Không thể tải CSS: {e}")
     else:
         logger.info(f"CSS file not found at: {css_path}")
+
+    if custom_path.exists():
+        try:
+            css_content = custom_path.read_text(encoding="utf-8")
+            if style_vars:
+                css_content = css_content.format(**style_vars)
+            st.markdown(f"<style>{css_content}</style>", unsafe_allow_html=True)
+            logger.info("Custom CSS loaded successfully")
+        except Exception as e:
+            logger.error(f"Failed to load custom CSS: {e}")
+            st.warning(f"Không thể tải custom CSS: {e}")
+    else:
+        logger.info(f"Custom CSS file not found at: {custom_path}")
 
 
 # --- Enhanced model management ---
@@ -957,151 +971,19 @@ layout_compact = st.session_state.get("layout_compact", False)
 
 # Apply custom styling with beautiful gradients and shadows
 padding = "0.5rem" if layout_compact else "1rem"
-custom_css = f"""
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@300;400;500;600;700&family=Lato:wght@300;400;700&family=Montserrat:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
-    
-    .main .block-container {{
-        padding-top: {padding};
-        padding-bottom: {padding};
-        background: linear-gradient(135deg, {background_color} 0%, {secondary_color}22 100%);
-        min-height: 100vh;
-    }}
-    
-    .stApp {{
-        background: linear-gradient(135deg, {background_color} 0%, {secondary_color}22 100%);
-        color: {text_color};
-        font-family: '{font_family}', sans-serif;
-        font-size: {font_size}px;
-    }}
-    
-    .stSidebar {{
-        background: linear-gradient(180deg, {background_color} 0%, {secondary_color}33 100%);
-        border-right: 2px solid {accent_color}22;
-    }}
-    
-    .stButton > button {{
-        background: linear-gradient(135deg, {accent_color} 0%, {secondary_color} 100%);
-        color: var(--btn-text-color);
-        border-radius: {border_radius}px;
-        border: none;
-        padding: 0.6rem 1.2rem;
-        font-weight: 500;
-        font-family: '{font_family}', sans-serif;
-        box-shadow: 0 4px 15px {accent_color}33;
-        transition: all 0.3s ease;
-    }}
-    
-    .stButton > button:hover {{
-        background: linear-gradient(135deg, {accent_color}dd 0%, {secondary_color}dd 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px {accent_color}44;
-    }}
-    
-    .stSelectbox > div > div {{
-        background-color: {background_color};
-        color: {text_color};
-        border: 2px solid {secondary_color};
-        border-radius: {border_radius}px;
-    }}
-    
-    .stTextInput > div > div > input {{
-        background-color: {background_color};
-        color: {text_color};
-        border: 2px solid {secondary_color};
-        border-radius: {border_radius}px;
-        font-family: '{font_family}', sans-serif;
-    }}
-    
-    .stTextInput > div > div > input:focus {{
-        border-color: {accent_color};
-        box-shadow: 0 0 0 2px {accent_color}33;
-    }}
-    
-    .stTextArea > div > div > textarea {{
-        background-color: {background_color};
-        color: {text_color};
-        border: 2px solid {secondary_color};
-        border-radius: {border_radius}px;
-        font-family: '{font_family}', sans-serif;
-    }}
-    
-    .stTextArea > div > div > textarea:focus {{
-        border-color: {accent_color};
-        box-shadow: 0 0 0 2px {accent_color}33;
-    }}
-    
-    h1, h2, h3, h4, h5, h6 {{
-        color: {accent_color};
-        font-family: '{font_family}', sans-serif;
-        font-weight: 600;
-        text-shadow: 1px 1px 2px {accent_color}22;
-    }}
-    
-    .stTabs [data-baseweb="tab-list"] {{
-        gap: 8px;
-        width: 100%;
-        display: flex;
-    }}
+style_vars = {
+    "padding": padding,
+    "background_color": background_color,
+    "text_color": text_color,
+    "accent_color": accent_color,
+    "secondary_color": secondary_color,
+    "font_family": font_family,
+    "font_size": font_size,
+    "border_radius": border_radius,
+    "chat_radius": border_radius + 10,
+}
 
-    .stTabs [data-baseweb="tab"] {{
-        background: linear-gradient(135deg, {secondary_color}44 0%, {background_color} 100%);
-        border-radius: {border_radius}px;
-        color: {text_color};
-        border: 2px solid {secondary_color}66;
-        flex: 1;
-        text-align: center;
-        padding: 0.75rem 0;
-        font-size: 1.1rem;
-    }}
-    
-    .stTabs [aria-selected="true"] {{
-        background: linear-gradient(135deg, {accent_color} 0%, {secondary_color} 100%);
-        color: white;
-        border-color: {accent_color};
-    }}
-    
-    .chat-message {{
-        margin: 10px 0;
-        padding: 12px 18px;
-        border-radius: {border_radius + 10}px;
-        max-width: 70%;
-        word-wrap: break-word;
-        font-family: '{font_family}', sans-serif;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }}
-    
-    /* Custom scrollbar */
-    ::-webkit-scrollbar {{
-        width: 8px;
-    }}
-    
-    ::-webkit-scrollbar-track {{
-        background: {secondary_color}33;
-        border-radius: 4px;
-    }}
-    
-    ::-webkit-scrollbar-thumb {{
-        background: {accent_color};
-        border-radius: 4px;
-    }}
-    
-    ::-webkit-scrollbar-thumb:hover {{
-        background: {accent_color}dd;
-    }}
-    
-    /* Form styling */
-    .stForm {{
-        background: linear-gradient(135deg, {background_color}aa 0%, {secondary_color}22 100%);
-        border: 2px solid {secondary_color}66;
-        border-radius: {border_radius}px;
-        padding: 1rem;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    }}
-</style>
-"""
-
-st.markdown(custom_css, unsafe_allow_html=True)
+load_css(style_vars)
 
 # --- Main UI: 3 Tabs ---
 tab_fetch, tab_process, tab_single, tab_results, tab_chat = st.tabs(
