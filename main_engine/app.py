@@ -889,9 +889,16 @@ def manage_auto_fetcher(email_user: str, email_pass: str, unseen_only: bool):
     # Check if auto fetcher is already running
     if safe_session_state_get("auto_fetcher_thread"):
         st.sidebar.success("✅ Auto fetcher đang chạy")
-        
+
         if st.sidebar.button("🛑 Dừng auto fetcher"):
+            stop_event = safe_session_state_get("auto_fetcher_event")
+            thread = safe_session_state_get("auto_fetcher_thread")
+            if stop_event:
+                stop_event.set()
+            if thread:
+                thread.join(timeout=5)
             safe_session_state_set("auto_fetcher_thread", None)
+            safe_session_state_set("auto_fetcher_event", None)
             st.sidebar.info("Auto fetcher đã được dừng")
             st.rerun()
         return
@@ -899,7 +906,9 @@ def manage_auto_fetcher(email_user: str, email_pass: str, unseen_only: bool):
     # Start auto fetcher
     try:
         import threading
-        
+
+        stop_event = threading.Event()
+
         def auto_fetch_worker():
             try:
                 logger.info("Starting auto fetcher thread")
@@ -910,6 +919,7 @@ def manage_auto_fetcher(email_user: str, email_pass: str, unseen_only: bool):
                     user=email_user,
                     password=email_pass,
                     unseen_only=unseen_only,
+                    stop_event=stop_event,
                 )
             except Exception as e:
                 logger.error(f"Auto fetcher error: {e}")
@@ -918,6 +928,7 @@ def manage_auto_fetcher(email_user: str, email_pass: str, unseen_only: bool):
         thread = threading.Thread(target=auto_fetch_worker, daemon=True)
         thread.start()
         safe_session_state_set("auto_fetcher_thread", thread)
+        safe_session_state_set("auto_fetcher_event", stop_event)
         
         logger.info("Auto fetcher started successfully")
         st.sidebar.info("🔄 Đang tự động lấy CV từ email...")

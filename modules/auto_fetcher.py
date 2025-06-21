@@ -7,6 +7,7 @@ import argparse
 import imaplib
 
 from .config import EMAIL_UNSEEN_ONLY
+from threading import Event
 
 from .email_fetcher import EmailFetcher
 
@@ -18,6 +19,7 @@ def watch_loop(
     user: str | None = None,
     password: str | None = None,
     unseen_only: bool = EMAIL_UNSEEN_ONLY,
+    stop_event: Event | None = None,
 ) -> None:
     """Kết nối IMAP và gọi fetch_cv_attachments() liên tục."""
     fetcher = EmailFetcher(host, port, user, password)
@@ -25,7 +27,7 @@ def watch_loop(
     logging.info(f"Bắt đầu auto fetch, interval={interval}s")
 
     try:
-        while True:
+        while not (stop_event and stop_event.is_set()):
             try:
                 fetcher.fetch_cv_attachments(unseen_only=unseen_only)
             except imaplib.IMAP4.abort:
@@ -36,7 +38,11 @@ def watch_loop(
                     logging.error(f"Không thể kết nối lại: {e}")
             except Exception as e:  # bắt mọi lỗi để không dừng vòng lặp
                 logging.error(f"Lỗi fetch: {e}")
-            time.sleep(interval)
+            if stop_event:
+                if stop_event.wait(interval):
+                    break
+            else:
+                time.sleep(interval)
     except KeyboardInterrupt:
         logging.info("Đã dừng auto fetch")
     finally:
