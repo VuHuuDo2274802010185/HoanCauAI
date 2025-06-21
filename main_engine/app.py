@@ -451,7 +451,7 @@ def render_chat_history():
                 f"""
                 <div style="display: flex; justify-content: flex-end; margin: 10px 0;">
                     <div class="chat-message" style="
-                        background: linear-gradient(135deg, {accent_color} 0%, var(--cv-accent-color) 100%);
+                        background: linear-gradient(135deg, {st.session_state.get('accent_color', '#d4af37')} 0%, {st.session_state.get('secondary_color', '#f4e09c')} 100%);
                         color: white;
                         margin-left: 20%;
                     ">
@@ -471,9 +471,9 @@ def render_chat_history():
                 f"""
                 <div style="display: flex; justify-content: flex-start; margin: 10px 0;">
                     <div class="chat-message" style="
-                        background: linear-gradient(135deg, var(--cv-bg-color) 0%, var(--cv-accent-color)44 100%);
-                        color: var(--cv-text-color);
-                        border: 2px solid var(--cv-accent-color);
+                        background: linear-gradient(135deg, {st.session_state.get('background_color', '#fffbf0')} 0%, {st.session_state.get('secondary_color', '#f4e09c')}44 100%);
+                        color: {st.session_state.get('text_color', '#000000')};
+                        border: 2px solid {st.session_state.get('secondary_color', '#f4e09c')};
                         margin-right: 20%;
                     ">
                         <strong>🤖 AI:</strong><br>
@@ -699,7 +699,15 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Accent color is used for various UI highlights
+# Adjust style variables based on chosen Streamlit theme
+if theme == "dark":
+    st.session_state["text_color"] = "#000000"
+    st.session_state["background_color"] = "#ffff00"  # neon yellow
+    st.session_state["secondary_color"] = "#cccc00"
+else:
+    st.session_state["text_color"] = "#000000"
+    st.session_state["background_color"] = "#fffbf0"
+    st.session_state["secondary_color"] = "#f4e09c"
 st.session_state["accent_color"] = "#d4af37"
 
 # --- Sidebar: logo và cấu hình LLM ---
@@ -914,7 +922,10 @@ def manage_auto_fetcher(email_user: str, email_pass: str, unseen_only: bool):
 email_user, email_pass, unseen_only = render_email_config()
 
 # Load style preferences from session state
+background_color = st.session_state.get("background_color", "#fffbf0")
+text_color = st.session_state.get("text_color", "#000000")
 accent_color = st.session_state.get("accent_color", "#d4af37")
+secondary_color = st.session_state.get("secondary_color", "#f4e09c")
 font_options = [
     "Be Vietnam Pro", "Poppins", "Roboto", "Open Sans", "Lato",
     "Montserrat", "Inter", "Arial", "Verdana", "Times New Roman", "Georgia"
@@ -933,24 +944,24 @@ custom_css = f"""
     .main .block-container {{
         padding-top: {padding};
         padding-bottom: {padding};
-        background: linear-gradient(135deg, var(--cv-bg-color) 0%, var(--cv-accent-color)22 100%);
+        background: linear-gradient(135deg, {background_color} 0%, {secondary_color}22 100%);
         min-height: 100vh;
     }}
     
     .stApp {{
-        background: linear-gradient(135deg, var(--cv-bg-color) 0%, var(--cv-accent-color)22 100%);
-        color: var(--cv-text-color);
+        background: linear-gradient(135deg, {background_color} 0%, {secondary_color}22 100%);
+        color: {text_color};
         font-family: '{font_family}', sans-serif;
         font-size: {font_size}px;
     }}
     
     .stSidebar {{
-        background: linear-gradient(180deg, var(--cv-bg-color) 0%, var(--cv-accent-color)33 100%);
+        background: linear-gradient(180deg, {background_color} 0%, {secondary_color}33 100%);
         border-right: 2px solid {accent_color}22;
     }}
     
     .stButton > button {{
-        background: linear-gradient(135deg, {accent_color} 0%, var(--cv-accent-color) 100%);
+        background: linear-gradient(135deg, {accent_color} 0%, {secondary_color} 100%);
         color: var(--btn-text-color);
         border-radius: {border_radius}px;
         border: none;
@@ -962,22 +973,22 @@ custom_css = f"""
     }}
     
     .stButton > button:hover {{
-        background: linear-gradient(135deg, {accent_color}dd 0%, var(--cv-accent-color)dd 100%);
+        background: linear-gradient(135deg, {accent_color}dd 0%, {secondary_color}dd 100%);
         transform: translateY(-2px);
         box-shadow: 0 8px 25px {accent_color}44;
     }}
     
     .stSelectbox > div > div {{
-        background-color: var(--cv-bg-color);
-        color: var(--cv-text-color);
-        border: 2px solid var(--cv-accent-color);
+        background-color: {background_color};
+        color: {text_color};
+        border: 2px solid {secondary_color};
         border-radius: {border_radius}px;
     }}
     
     .stTextInput > div > div > input {{
-        background-color: var(--cv-bg-color);
-        color: var(--cv-text-color);
-        border: 2px solid var(--cv-accent-color);
+        background-color: {background_color};
+        color: {text_color};
+        border: 2px solid {secondary_color};
         border-radius: {border_radius}px;
         font-family: '{font_family}', sans-serif;
     }}
@@ -988,9 +999,9 @@ custom_css = f"""
     }}
     
     .stTextArea > div > div > textarea {{
-        background-color: var(--cv-bg-color);
-        color: var(--cv-text-color);
-        border: 2px solid var(--cv-accent-color);
+        background-color: {background_color};
+        color: {text_color};
+        border: 2px solid {secondary_color};
         border-radius: {border_radius}px;
         font-family: '{font_family}', sans-serif;
     }}
@@ -1014,10 +1025,10 @@ custom_css = f"""
     }}
 
     .stTabs [data-baseweb="tab"] {{
-        background: linear-gradient(135deg, var(--cv-accent-color)44 0%, var(--cv-bg-color) 100%);
+        background: linear-gradient(135deg, {secondary_color}44 0%, {background_color} 100%);
         border-radius: {border_radius}px;
-        color: var(--cv-text-color);
-        border: 2px solid var(--cv-accent-color)66;
+        color: {text_color};
+        border: 2px solid {secondary_color}66;
         flex: 1;
         text-align: center;
         padding: 0.75rem 0;
@@ -1025,7 +1036,7 @@ custom_css = f"""
     }}
     
     .stTabs [aria-selected="true"] {{
-        background: linear-gradient(135deg, {accent_color} 0%, var(--cv-accent-color) 100%);
+        background: linear-gradient(135deg, {accent_color} 0%, {secondary_color} 100%);
         color: white;
         border-color: {accent_color};
     }}
@@ -1046,7 +1057,7 @@ custom_css = f"""
     }}
     
     ::-webkit-scrollbar-track {{
-        background: var(--cv-accent-color)33;
+        background: {secondary_color}33;
         border-radius: 4px;
     }}
     
@@ -1061,8 +1072,8 @@ custom_css = f"""
     
     /* Form styling */
     .stForm {{
-        background: linear-gradient(135deg, var(--cv-bg-color)aa 0%, var(--cv-accent-color)22 100%);
-        border: 2px solid var(--cv-accent-color)66;
+        background: linear-gradient(135deg, {background_color}aa 0%, {secondary_color}22 100%);
+        border: 2px solid {secondary_color}66;
         border-radius: {border_radius}px;
         padding: 1rem;
         box-shadow: 0 4px 20px rgba(0,0,0,0.1);
