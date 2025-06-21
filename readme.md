@@ -177,6 +177,17 @@ streamlit run scripts/simple_app.py
 
 Ứng dụng sẽ hướng dẫn tuần tự nhập API key → fetch CV → xử lý → xem kết quả và ẩn các tab nâng cao.
 
+### 🌙 Dark Mode
+
+Để kích hoạt giao diện nền tối cho Streamlit, hãy tạo file `.streamlit/config.toml` với nội dung:
+
+```toml
+[theme]
+base = "dark"
+```
+
+Sau khi chạy ứng dụng, bạn có thể tùy chỉnh thêm các màu sắc trong `static/style.css` nếu muốn.
+
 ## 🗂️ Cấu trúc dự án
 
 ```
