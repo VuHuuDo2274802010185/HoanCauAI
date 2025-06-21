@@ -695,7 +695,18 @@ initialize_app()
 # --- Apply theme from Streamlit config ---
 theme = st.get_option("theme.base") or "light"
 st.markdown(
-    f"<script>document.documentElement.setAttribute('data-theme', '{theme}');</script>",
+    f"""
+    <script>
+      const root = document.documentElement;
+      function setTheme() {{
+        const theme = window.__theme?.base || "{theme}";
+        root.setAttribute('data-theme', theme);
+      }}
+      setTheme();
+      // cập nhật khi người dùng đổi theme trên Streamlit
+      window.addEventListener('themeChanged', setTheme);
+    </script>
+    """,
     unsafe_allow_html=True,
 )
 
