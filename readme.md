@@ -153,6 +153,7 @@ python3 scripts/cli_agent.py chat "Câu hỏi của bạn"
 Lệnh `chat` tự động sử dụng khóa API tương ứng với `LLM_PROVIDER`
 được khai báo trong file `.env` (`GOOGLE_API_KEY` hoặc `OPENROUTER_API_KEY`).
 Mỗi lần hỏi đáp sẽ được lưu vào file log tại `log/chat_log.json` (có thể thay đổi qua biến `CHAT_LOG_FILE`).
+Giới hạn số log hiển thị trong giao diện Streamlit có thể chỉnh bằng biến `LOG_HISTORY_LIMIT` (mặc định 500).
 
 ## 🌐 Giao diện web (Streamlit)
 
