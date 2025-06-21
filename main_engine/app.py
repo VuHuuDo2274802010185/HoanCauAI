@@ -54,6 +54,7 @@ try:
         EMAIL_USER,
         EMAIL_PASS,
         EMAIL_UNSEEN_ONLY,
+        LOG_HISTORY_LIMIT,
     )
     from modules.auto_fetcher import watch_loop
     
@@ -150,8 +151,8 @@ class StreamlitLogHandler(logging.Handler):
             logs = safe_session_state_get("logs", [])
             
             # Limit log size to prevent memory issues
-            if len(logs) > 500:
-                logs = logs[-400:]  # Keep last 400 entries
+            if len(logs) > LOG_HISTORY_LIMIT:
+                logs = logs[-LOG_HISTORY_LIMIT:]
                 
             logs.append({
                 "timestamp": datetime.now().strftime("%H:%M:%S"),
