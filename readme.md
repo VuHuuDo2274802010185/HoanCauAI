@@ -210,6 +210,10 @@ Sau khi cài đặt các phụ thuộc, chạy toàn bộ test bằng:
 pytest
 ```
 
+Các test tự tạo module giả mạo cho `pandas` và `requests` nếu bạn chưa cài hai
+thư viện này. Điều này giúp chạy test nhanh mà không cần cài đầy đủ phụ
+thuộc.
+
 Có thể kiểm tra nhanh môi trường với:
 
 ```bash

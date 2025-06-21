@@ -18,7 +18,7 @@ class DummyGenAI:
 
 
 @pytest.fixture
-def email_fetcher_module(monkeypatch, tmp_path):
+def email_fetcher_module(mock_requests, monkeypatch, tmp_path):
     fake = DummyGenAI()
     sys.modules['google'] = types.SimpleNamespace(generativeai=fake)
     sys.modules['google.generativeai'] = fake
