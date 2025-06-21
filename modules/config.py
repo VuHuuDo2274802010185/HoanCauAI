@@ -82,19 +82,6 @@ ATTACHMENT_DIR = _clean_path("ATTACHMENT_DIR", "attachments")
 OUTPUT_CSV = _clean_path("OUTPUT_CSV", "csv/cv_summary.csv")
 # File lưu log hội thoại chat
 CHAT_LOG_FILE = _clean_path("CHAT_LOG_FILE", "log/chat_log.json")
-# Giới hạn số lượng log lưu trong Session state
-def _get_int(varname: str, default: int) -> int:
-    raw = os.getenv(varname)
-    if raw is None:
-        return default
-    cleaned = raw.split('#', 1)[0].strip()
-    try:
-        return int(cleaned)
-    except ValueError:
-        logger.warning(f"Invalid integer for {varname}: {cleaned}, using {default}")
-        return default
-
-LOG_HISTORY_LIMIT: int = _get_int("LOG_HISTORY_LIMIT", 500)
 # tạo thư mục nếu chưa tồn tại
 ATTACHMENT_DIR.mkdir(parents=True, exist_ok=True)
 OUTPUT_CSV.parent.mkdir(parents=True, exist_ok=True)

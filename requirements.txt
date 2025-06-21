@@ -21,4 +21,3 @@ click                         # CLI utilities (dùng cho scripts click)
 pydantic>=2.0.0               # validation, BaseSettings (FastAPI)
 pydantic-settings>=2.0.0
 pytest>=7.0.0                 # testing framework
-darkdetect>=0.7.1             # detect system light/dark mode
