@@ -1,37 +1,45 @@
 import sys
 import os
 import types
+import importlib
 import pytest
 
-# Stub external dependencies before importing cv_processor
+
 class DummyStreamlit:
     session_state = {}
+
 
 class DummyGenAI:
     def configure(self, **kw):
         pass
+
     class GenerativeModel:
         def __init__(self, model):
             self.model = model
+
         def generate_content(self, prompt):
             return types.SimpleNamespace(text="")
+
     def list_models(self):
         return []
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-sys.modules.setdefault('streamlit', DummyStreamlit())
-sys.modules.setdefault('google', types.SimpleNamespace(generativeai=DummyGenAI()))
-sys.modules.setdefault('google.generativeai', DummyGenAI())
 
-import modules.cv_processor as cvp
+@pytest.fixture
+def cv_processor_class(mock_pandas, mock_requests, monkeypatch):
+    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+    sys.modules.setdefault("streamlit", DummyStreamlit())
+    sys.modules.setdefault("google", types.SimpleNamespace(generativeai=DummyGenAI()))
+    sys.modules.setdefault("google.generativeai", DummyGenAI())
 
-# Replace DynamicLLMClient with dummy to avoid API requirements
-class DummyLLMClient:
-    def generate_content(self, messages):
-        return ''
+    cvp = importlib.import_module("modules.cv_processor")
 
-cvp.DynamicLLMClient = DummyLLMClient
-CVProcessor = cvp.CVProcessor
+    class DummyLLMClient:
+        def generate_content(self, messages):
+            return ""
+
+    if hasattr(cvp, "DynamicLLMClient"):
+        monkeypatch.setattr(cvp, "DynamicLLMClient", DummyLLMClient)
+    return cvp.CVProcessor
 
 
 @pytest.mark.parametrize('text,expected', [
@@ -63,6 +71,6 @@ CVProcessor = cvp.CVProcessor
         }
     )
 ])
-def test_fallback_regex(text, expected):
-    info = CVProcessor()._fallback_regex(text)
+def test_fallback_regex(cv_processor_class, text, expected):
+    info = cv_processor_class()._fallback_regex(text)
     assert info == expected
