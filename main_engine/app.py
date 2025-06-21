@@ -134,28 +134,7 @@ def validate_configuration() -> Dict[str, bool]:
     return config_status
 
 
-# --- Initialize session state with defaults ---
-def initialize_session_state():
-    """Initialize session state with safe defaults"""
-    defaults = {
-        "conversation_history": [],
-        "background_color": "#fffbf0",
-        "text_color": "#000000",
-        "accent_color": "#d4af37",
-        "secondary_color": "#f4e09c",
-        "font_family_index": 0,
-        "font_size": 14,
-        "border_radius": 8,
-        "layout_compact": False,
-        "app_initialized": False,
-        "last_error": None,
-        "error_count": 0,
-        "logs": []
-    }
-    
-    for key, value in defaults.items():
-        if key not in st.session_state:
-            safe_session_state_set(key, value)
+
 
 
 # --- Enhanced Streamlit logging handler ---
@@ -700,9 +679,6 @@ def initialize_app():
     if not all(config_status.values()):
         st.warning("Một số cấu hình có thể chưa đầy đủ. Ứng dụng vẫn sẽ hoạt động nhưng có thể thiếu một số tính năng.")
         logger.warning(f"Configuration issues detected: {config_status}")
-    
-    # Initialize session state
-    initialize_session_state()
     
     # Configure page
     configure_streamlit_page()
