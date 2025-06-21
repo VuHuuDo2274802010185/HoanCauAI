@@ -3,21 +3,21 @@
 
 /* Simple theme variables */
 :root[data-theme="light"] {
-  --cv-text-color: #000000;
+  --cv-text-color: #2d1810;
   --cv-bg-color: #fffbf0;
   --cv-accent-color: #f4e09c;
   --btn-gold: #d4af37;
   --btn-gold-border: #d4af37;
-  --btn-text-color: #000000;
+  --btn-text-color: #2d1810;
 }
 
 :root[data-theme="dark"] {
-  --cv-text-color: #f0f0f0;
-  --cv-bg-color: #1e1e1e;
-  --cv-accent-color: #2c2c2c;
-  --btn-gold: #d4af37;
-  --btn-gold-border: #d4af37;
-  --btn-text-color: #ffffff;
+  --cv-text-color: #ffff33;
+  --cv-bg-color: #000000;
+  --cv-accent-color: #1e1e1e;
+  --btn-gold: #ffff33;
+  --btn-gold-border: #ffff33;
+  --btn-text-color: #000000;
 }
 
 img[src*="logo.png"] {

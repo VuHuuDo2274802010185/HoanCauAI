@@ -708,14 +708,15 @@ if theme:
 
 # Adjust style variables based on chosen Streamlit theme
 if theme == "dark":
-    st.session_state["text_color"] = "#f0f0f0"
-    st.session_state["background_color"] = "#1e1e1e"
-    st.session_state["secondary_color"] = "#2c2c2c"
+    st.session_state["text_color"] = "#ffff33"
+    st.session_state["background_color"] = "#000000"
+    st.session_state["secondary_color"] = "#1e1e1e"
+    st.session_state["accent_color"] = "#ffff33"
 else:
-    st.session_state["text_color"] = "#000000"
+    st.session_state["text_color"] = "#2d1810"
     st.session_state["background_color"] = "#fffbf0"
     st.session_state["secondary_color"] = "#f4e09c"
-st.session_state["accent_color"] = "#d4af37"
+    st.session_state["accent_color"] = "#d4af37"
 
 # --- Sidebar: logo và cấu hình LLM ---
 @handle_error
