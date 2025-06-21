@@ -71,7 +71,8 @@ HoanCau AI Resume Processor là hệ thống tự động trích xuất thông t
    source .venv/bin/activate      # Linux/Mac
    # .venv\Scripts\activate     # Windows
    pip install --upgrade pip
-   pip install -r requirements.txt
+   # Cài đặt project ở chế độ editable
+   pip install -e .
    ```
    Hoặc đơn giản chạy `./setup.sh` (macOS/Linux) hoặc `setup.cmd` (Windows)
    để tự động thực hiện các bước trên.
