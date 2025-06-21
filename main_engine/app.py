@@ -725,7 +725,7 @@ st.markdown(
 
 # Adjust style variables based on chosen Streamlit theme
 if theme == "dark":
-    st.session_state["text_color"] = "#000000"
+    st.session_state["text_color"] = "#ffff00"
     st.session_state["background_color"] = "#ffff00"  # neon yellow
     st.session_state["secondary_color"] = "#cccc00"
 else:

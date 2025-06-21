@@ -12,12 +12,12 @@
 }
 
 :root[data-theme="dark"] {
-  --cv-text-color: #f0f0f0;
+  --cv-text-color: #ffff00;
   --cv-bg-color: #1e1e1e;
   --cv-accent-color: #2c2c2c;
   --btn-gold: #d4af37;
   --btn-gold-border: #d4af37;
-  --btn-text-color: #ffff33;
+  --btn-text-color: #ffff00;
 }
 
 img[src*="logo.png"] {
