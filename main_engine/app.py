@@ -353,8 +353,8 @@ def render_enhanced_chat_tab():
     # Chat input form
     render_chat_input_form()
     
-    # Action buttons
-    col1, col2, col3, col4 = st.columns(4)
+    # Action buttons arranged closely
+    col1, col2, col3, col4, _ = st.columns([0.3, 0.3, 0.3, 0.3, 3])
     
     with col1:
         if st.button("🗑️ Xóa lịch sử", help="Xóa toàn bộ lịch sử chat"):
