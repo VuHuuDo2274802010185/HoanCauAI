@@ -22,3 +22,4 @@ click                         # CLI utilities (dùng cho scripts click)
 pydantic>=2.0.0               # validation, BaseSettings (FastAPI)
 pydantic-settings>=2.0.0
 pytest>=7.0.0                 # testing framework
+pyinstaller>=5.13.0           # create Windows executable files
