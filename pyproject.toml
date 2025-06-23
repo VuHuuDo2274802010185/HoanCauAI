@@ -33,5 +33,5 @@ dependencies = [
 cli-agent = "scripts.cli_agent:cli"
 
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["modules*", "main_engine*"]
+where = ["src"]
+include = ["*"]

@@ -26,7 +26,9 @@ class DummyGenAI:
 
 @pytest.fixture
 def cv_processor_class(mock_pandas, mock_requests, monkeypatch):
-    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+    ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    sys.path.insert(0, ROOT)
+    sys.path.insert(0, os.path.join(ROOT, "src"))
     sys.modules.setdefault("streamlit", DummyStreamlit())
     sys.modules.setdefault("google", types.SimpleNamespace(generativeai=DummyGenAI()))
     sys.modules.setdefault("google.generativeai", DummyGenAI())

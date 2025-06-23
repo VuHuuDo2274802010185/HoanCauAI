@@ -4,7 +4,7 @@ import os
 import sys
 # Đưa thư mục gốc vào sys.path để import modules
 HERE = os.path.dirname(__file__)
-ROOT = os.path.abspath(os.path.join(HERE, ".."))
+ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 

@@ -4,6 +4,10 @@ import importlib
 import re
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / 'src'))
+
 
 def _dummy_streamlit(theme="dark"):
     class DummyCM:
@@ -61,6 +65,8 @@ def _install_app(monkeypatch):
         get_models_for_provider=lambda *a, **k: [],
         get_model_price=lambda m: "unknown",
         OUTPUT_CSV="out.csv",
+        LOG_DIR=Path("log"),
+        LOG_FILE=Path("log/app.log"),
         GOOGLE_API_KEY="",
         OPENROUTER_API_KEY="",
         EMAIL_HOST="",

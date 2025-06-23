@@ -9,7 +9,7 @@ from typing import Optional, Dict, Any
 
 # Đưa thư mục gốc (chứa `modules/`) vào sys.path để import modules
 HERE = Path(__file__).parent
-ROOT = HERE.parent
+ROOT = HERE.parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 

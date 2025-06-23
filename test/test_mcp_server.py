@@ -6,7 +6,9 @@ import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, ROOT)
+sys.path.insert(0, os.path.join(ROOT, 'src'))
 
 # minimal env so Settings can initialize
 os.environ.setdefault("EMAIL_HOST", "host")

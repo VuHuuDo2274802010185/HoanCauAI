@@ -4,8 +4,10 @@ import types
 import importlib
 import pytest
 
-# Ensure repo root in path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# Ensure repo root and src in path
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, ROOT)
+sys.path.insert(0, os.path.join(ROOT, 'src'))
 
 # Provide dummy streamlit before importing the module
 sys.modules['streamlit'] = types.SimpleNamespace(session_state={})

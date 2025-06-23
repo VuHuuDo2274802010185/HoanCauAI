@@ -2,6 +2,13 @@
 
 HoanCau AI Resume Processor là hệ thống tự động trích xuất thông tin quan trọng từ hồ sơ (.pdf, .docx), hỗ trợ chạy qua CLI, giao diện web (Streamlit) và API (FastAPI).
 
+## ⚡ Quick Start cho người mới
+
+1. Tải mã nguồn về máy
+2. **Windows:** chạy `start.cmd`
+3. **macOS/Linux:** chạy `./start.sh`
+4. Làm theo hướng dẫn hiển thị trên màn hình
+
 ## 📋 Yêu cầu hệ thống
 
 - Python 3.10 hoặc cao hơn (https://www.python.org/downloads/)
@@ -158,7 +165,7 @@ Mỗi lần hỏi đáp sẽ được lưu vào file log tại `log/chat_log.jso
 ## 🌐 Giao diện web (Streamlit)
 
 ```bash
-streamlit run main_engine/app.py
+streamlit run src/main_engine/app.py
 ```
 Truy cập `http://localhost:8501` để:
 - Nhập API key và email.
@@ -196,9 +203,10 @@ HoanCauAI/
 │   ├── cli_agent.py
 │   ├── simple_app.py
 │   └── health_check.py
-├── main_engine/           # Streamlit UI và các scripts cũ
-│   └── app.py
-├── modules/               # Core modules (fetcher, processor, chatbot, server)
+├── src/
+│   ├── main_engine/       # Streamlit UI và các scripts cũ
+│   │   └── app.py
+│   └── modules/           # Core modules (fetcher, processor, chatbot, server)
 ├── config/                # File cấu hình JSON
 ├── csv/                   # Kết quả CSV
 ├── docs/                  # Tài liệu bổ sung
