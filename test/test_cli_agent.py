@@ -5,8 +5,10 @@ import importlib
 from click.testing import CliRunner
 import pytest
 
-# ensure repo root on path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# ensure repo root and src on path
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, ROOT)
+sys.path.insert(0, os.path.join(ROOT, 'src'))
 
 class DummyDF(list):
     def __init__(self, data=None):

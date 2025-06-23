@@ -4,10 +4,12 @@ __pycache__/
 .env
 *.log
 attachments/
+!attachments/.gitkeep
 log/*
 !log/.gitkeep
 *.csv
 !csv/cv_summary.csv
+!csv/.gitkeep
 .venv
 FIX_REPORT.md
 health_check_report.json

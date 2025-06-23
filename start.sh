@@ -5,7 +5,7 @@ echo "🚀 Hoàn Cầu AI CV Processor - Quick Start"
 echo "=========================================="
 
 # Check if we're in the right directory
-if [ ! -f "main_engine/app.py" ]; then
+if [ ! -f "src/main_engine/app.py" ]; then
     echo "❌ Error: Please run this script from the project root directory"
     exit 1
 fi
@@ -58,7 +58,7 @@ echo "🎉 Setup completed!"
 echo ""
 echo "📋 Next steps:"
 echo "1. Edit .env file with your API keys if you haven't already"
-echo "2. Run the application with: python3 -m streamlit run main_engine/app.py"
+echo "2. Run the application with: python3 -m streamlit run src/main_engine/app.py"
 echo "3. Open your browser to: http://localhost:8501"
 echo ""
 echo "🔧 Available commands:"
@@ -75,7 +75,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo "📱 Access the app at: http://localhost:8501"
     echo "🛑 Press Ctrl+C to stop the server"
     echo ""
-    python3 -m streamlit run main_engine/app.py --server.port 8501 --server.address 0.0.0.0
+    python3 -m streamlit run src/main_engine/app.py --server.port 8501 --server.address 0.0.0.0
 else
-    echo "👋 Setup complete! Run 'python3 -m streamlit run main_engine/app.py' when you're ready."
+    echo "👋 Setup complete! Run 'python3 -m streamlit run src/main_engine/app.py' when you're ready."
 fi
