@@ -19,6 +19,7 @@ echo ======================================================
 chcp 65001 >nul
 
 :: 1) Kiểm tra Python
+set "PYTHON_CMD=python"
 python --version >nul 2>&1
 if errorlevel 1 (
     echo Python không được cài đặt hoặc không tìm thấy trong PATH. Đang thử cài đặt Python...
@@ -37,6 +38,7 @@ if errorlevel 1 (
         exit /b 1
     )
     echo Hoàn tất cài đặt Python.
+    set "PYTHON_CMD=py -3.11"
 )
 echo Đã có Python.
 
@@ -55,7 +57,7 @@ if not exist "%~dp0.env" (
 :: 3) Tạo virtual environment nếu chưa có
 if not exist "%~dp0.venv\Scripts\activate.bat" (
     echo 📦 Tạo virtual environment...
-    python -m venv "%~dp0.venv"
+    %PYTHON_CMD% -m venv "%~dp0.venv"
     echo Đã tạo virtual environment.
 ) else (
     echo Virtual environment đã tồn tại.
@@ -67,7 +69,7 @@ echo Đã kích hoạt virtual environment.
 
 :: 5) Cài đặt dependencies
 echo Đang cài đặt dependencies...
-pip install --upgrade uv
+%PYTHON_CMD% -m pip install --upgrade uv
 uv pip install --upgrade pip
 uv pip install -r "%~dp0requirements.txt"
 echo Hoàn tất cài đặt dependencies.
