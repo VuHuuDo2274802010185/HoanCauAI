@@ -1,8 +1,9 @@
 import os
+
 import pandas as pd
 import streamlit as st
 
-from modules.config import OUTPUT_CSV
+from modules.config import ATTACHMENT_DIR, OUTPUT_CSV
 
 
 def render() -> None:
@@ -10,7 +11,18 @@ def render() -> None:
     st.subheader("Xem và tải kết quả")
     if os.path.exists(OUTPUT_CSV):
         df = pd.read_csv(OUTPUT_CSV, encoding="utf-8-sig")
-        st.dataframe(df, use_container_width=True)
+
+        def make_link(fname: str) -> str:
+            path = (ATTACHMENT_DIR / fname).resolve()
+            return f'<a href="file://{path}" target="_blank">{fname}</a>'
+
+        if "Nguồn" in df.columns:
+            df["Nguồn"] = df["Nguồn"].apply(make_link)
+
+        st.markdown(
+            df.to_html(escape=False, index=False),
+            unsafe_allow_html=True,
+        )
         csv_bytes = df.to_csv(index=False, encoding="utf-8-sig").encode()
         st.download_button(
             label="Tải xuống CSV",
