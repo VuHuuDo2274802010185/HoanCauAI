@@ -1,6 +1,5 @@
 # modules/mcp_server.py
 
-import os                        # xử lý tương tác với hệ thống file
 import shutil                    # sao chép luồng dữ liệu nhị phân
 import logging                   # ghi log hoạt động ứng dụng
 from pathlib import Path         # thao tác đường dẫn hướng đối tượng

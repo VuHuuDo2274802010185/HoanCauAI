@@ -13,7 +13,7 @@ ROOT = HERE.parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from modules.config import LOG_DIR, LOG_FILE
+from modules.config import LOG_FILE
 
 # Khi chạy bằng `streamlit run`, __package__ sẽ là None dẫn tới lỗi khi
 # dùng relative imports. Thiết lập thủ công để các import như

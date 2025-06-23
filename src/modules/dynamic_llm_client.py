@@ -1,6 +1,5 @@
 # modules/dynamic_llm_client.py
 
-import os  # thư viện xử lý biến môi trường và hệ thống file
 import requests  # thư viện HTTP để tương tác với API OpenRouter
 import streamlit as st  # lấy thông tin session_state trong Streamlit
 import logging  # ghi log xử lý

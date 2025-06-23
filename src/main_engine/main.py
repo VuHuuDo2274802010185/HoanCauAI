@@ -12,7 +12,7 @@ import click
 import logging
 from modules.email_fetcher import EmailFetcher
 from modules.cv_processor import CVProcessor
-from modules.config import EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASS, OUTPUT_CSV, LLM_CONFIG
+from modules.config import EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASS, OUTPUT_CSV
 from modules.dynamic_llm_client import DynamicLLMClient
 from modules.auto_fetcher import watch_loop
 
