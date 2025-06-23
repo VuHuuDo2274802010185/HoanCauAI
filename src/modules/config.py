@@ -5,6 +5,7 @@ from pathlib import Path  # thư viện để thao tác đường dẫn hệ th�
 from typing import Dict, Any, List  # khai báo kiểu cho biến và hàm
 from dotenv import load_dotenv  # thư viện để load file .env
 import logging  # thư viện quản lý log
+import shutil  # thao tác tệp và thư mục
 
 # --- Tải biến môi trường từ file .env ở thư mục gốc ---
 load_dotenv()  # đọc và gán các biến trong .env vào môi trường hệ thống
@@ -243,9 +244,32 @@ def ensure_directories():
         except Exception as e:
             logger.error(f"Failed to create directory {directory}: {e}")
 
+def cleanup_legacy_log_dirs() -> None:
+    """Move logs from old directories (.log, logs) into LOG_DIR."""
+    alt_dirs = [BASE_DIR / ".log", BASE_DIR / "logs"]
+    for alt_dir in alt_dirs:
+        if alt_dir == LOG_DIR:
+            continue
+        if alt_dir.exists() and alt_dir.is_dir():
+            for item in alt_dir.iterdir():
+                dest = LOG_DIR / item.name
+                try:
+                    if dest.exists():
+                        dest = LOG_DIR / f"{alt_dir.name}_{item.name}"
+                    shutil.move(str(item), dest)
+                    logger.info(f"Moved {item} to {dest}")
+                except Exception as e:
+                    logger.warning(f"Could not move {item} from {alt_dir}: {e}")
+            try:
+                alt_dir.rmdir()
+                logger.info(f"Removed legacy log dir {alt_dir}")
+            except Exception:
+                pass
+
 
 # --- Auto-ensure directories on module import ---
 ensure_directories()
+cleanup_legacy_log_dirs()
 
 
 # --- Enhanced model fetching ---
