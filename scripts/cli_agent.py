@@ -1,8 +1,18 @@
 import os
+import sys
 import threading
 import click
 import pandas as pd
 import uvicorn
+
+# Ensure the project `src` directory is on sys.path so that local modules can
+# be imported when running this script directly.
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+SRC_DIR = os.path.join(ROOT, "src")
+for path in (ROOT, SRC_DIR):
+    if path not in sys.path:
+        sys.path.insert(0, path)
+
 from modules.config import LLM_CONFIG
 
 from modules.auto_fetcher import watch_loop

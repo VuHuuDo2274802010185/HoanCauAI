@@ -5,8 +5,12 @@ import sys
 # Đưa thư mục gốc vào sys.path để import modules
 HERE = os.path.dirname(__file__)
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
-if ROOT not in sys.path:
-    sys.path.insert(0, ROOT)
+# Ensure the `src` directory is on the import path so that `modules` can be
+# imported when this script is executed directly.
+SRC_DIR = os.path.join(ROOT, "src")
+for path in (ROOT, SRC_DIR):
+    if path not in sys.path:
+        sys.path.insert(0, path)
 
 import click
 import logging

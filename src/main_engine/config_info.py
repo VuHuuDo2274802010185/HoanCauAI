@@ -5,8 +5,12 @@ import sys
 # Đưa thư mục gốc (chứa `modules/`) vào sys.path
 HERE = os.path.dirname(__file__)
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
-if ROOT not in sys.path:
-    sys.path.insert(0, ROOT)
+# Add both project root and `src` directory so that `modules` package is
+# importable when running this module directly.
+SRC_DIR = os.path.join(ROOT, "src")
+for path in (ROOT, SRC_DIR):
+    if path not in sys.path:
+        sys.path.insert(0, path)
 
 import click                               # CLI framework
 from modules.config import LLM_CONFIG, get_model_price       # cấu hình LLM

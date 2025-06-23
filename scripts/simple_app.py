@@ -1,7 +1,17 @@
 import os
+import sys
 from pathlib import Path
 import pandas as pd
 import streamlit as st
+
+# Ensure the project's `src` directory is on sys.path so that the local
+# `modules` package can be imported when running this script directly.
+ROOT = Path(__file__).resolve().parent.parent
+SRC_DIR = ROOT / "src"
+for path in (ROOT, SRC_DIR):
+    path_str = str(path)
+    if path_str not in sys.path:
+        sys.path.insert(0, path_str)
 from modules.email_fetcher import EmailFetcher
 from modules.cv_processor import CVProcessor
 from modules.dynamic_llm_client import DynamicLLMClient
@@ -15,7 +25,6 @@ from modules.config import (
 )
 
 # Base directory of the project (one level up from this script)
-ROOT = Path(__file__).resolve().parent.parent
 STATIC_DIR = ROOT / "static"
 
 def load_css() -> None:
