@@ -121,6 +121,26 @@ Trong thư mục dự án, chạy:
 Script sẽ tạo `.env`, virtualenv và cài dependencies tương tự `setup.cmd`.
 Sau khi hoàn tất, chạy tiếp `./start.sh` để khởi chạy nhanh giao diện Streamlit.
 
+### 📦 Cài đặt package tùy chọn
+
+Bạn có thể cài đặt project như một package Python để sử dụng câu lệnh `cli-agent`
+ở bất kỳ đâu. Điều này tiện lợi cho việc gọi CLI mà không cần chỉ định đường dẫn
+`scripts/cli_agent.py`.
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e .
+```
+
+Sau khi cài đặt, chạy thử:
+
+```bash
+cli-agent --help
+```
+
+Các lệnh tương tự phần bên dưới nhưng ngắn gọn hơn.
+
 ### 🛡️ SmartScreen trên Windows
 
 Khi chạy `setup.cmd` hoặc `run_resume_ai.cmd` lần đầu, SmartScreen có thể chặn file với thông báo "Windows protected your PC". Để bỏ chặn:
@@ -139,24 +159,26 @@ Các lệnh chính:
 
 ```bash
 # Xem trợ giúp
+cli-agent --help             # đã cài package
+# hoặc
 python3 scripts/cli_agent.py --help
 
 # Tự động fetch CV từ email (watch loop)
-python3 scripts/cli_agent.py watch --interval 600     # chỉ quét UNSEEN
-python3 scripts/cli_agent.py watch --all             # quét toàn bộ email
+cli-agent watch --interval 600     # chỉ quét UNSEEN
+cli-agent watch --all             # quét toàn bộ email
 
 # Chạy full process: fetch + xử lý batch
-python3 scripts/cli_agent.py full-process            # chỉ quét UNSEEN
-python3 scripts/cli_agent.py full-process --all      # quét toàn bộ
+cli-agent full-process            # chỉ quét UNSEEN
+cli-agent full-process --all      # quét toàn bộ
 
 # Xử lý một file CV đơn lẻ
-python3 scripts/cli_agent.py single path/to/cv.pdf
+cli-agent single path/to/cv.pdf
 
 # Chạy FastAPI MCP server
-python3 scripts/cli_agent.py serve --host 0.0.0.0 --port 8000
+cli-agent serve --host 0.0.0.0 --port 8000
 
 # Hỏi AI dựa trên kết quả CSV
-python3 scripts/cli_agent.py chat "Câu hỏi của bạn"
+cli-agent chat "Câu hỏi của bạn"
 ```
 Lệnh `chat` tự động sử dụng khóa API tương ứng với `LLM_PROVIDER`
 được khai báo trong file `.env` (`GOOGLE_API_KEY` hoặc `OPENROUTER_API_KEY`).
