@@ -94,6 +94,16 @@ def _classify_question(question: str) -> str:
         return "general"
 
 
+def _is_time_question(question: str) -> bool:
+    """Detect if the user is asking about current time or date."""
+    question_lower = question.lower()
+    patterns = [
+        r"bây giờ", r"mấy giờ", r"thời gian hiện tại", r"current time",
+        r"current date", r"ngày bao nhiêu", r"hôm nay" 
+    ]
+    return any(re.search(p, question_lower) for p in patterns)
+
+
 def _create_enhanced_prompt(question: str, df: pd.DataFrame, context: Optional[Dict[str, Any]] = None) -> list:
     """Create enhanced prompt with better context and instructions."""
     
@@ -149,6 +159,13 @@ def answer_question(question: str, df: pd.DataFrame, provider: str, model: str, 
     
     question = question.strip()
     logger.info(f"Processing question: {question[:100]}... (Total records: {len(df)})")
+
+    # Return system time immediately if asked
+    if _is_time_question(question):
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        answer = f"Bây giờ là {now}"
+        _log_chat(question, answer)
+        return answer
     
     try:
         # Create enhanced prompt
