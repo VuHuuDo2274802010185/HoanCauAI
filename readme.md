@@ -152,6 +152,7 @@ Khi chạy `setup_window.cmd` hoặc `start_window.cmd` lần đầu, SmartScree
    Unblock-File .\start_window.cmd
    ```
    Sau đó chạy script lại.
+3. Sau khi bỏ chặn (hoặc khi được hỏi), nhấn **More info → Run anyway** để chạy script.
 
 ## ⚙️ Sử dụng CLI Agent
 
