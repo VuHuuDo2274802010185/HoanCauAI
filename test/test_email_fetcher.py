@@ -6,7 +6,9 @@ from pathlib import Path
 
 import importlib
 import pytest
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, ROOT)
+sys.path.insert(0, os.path.join(ROOT, 'src'))
 
 
 class DummyGenAI:
@@ -18,7 +20,7 @@ class DummyGenAI:
 
 
 @pytest.fixture
-def email_fetcher_module(monkeypatch, tmp_path):
+def email_fetcher_module(mock_requests, monkeypatch, tmp_path):
     fake = DummyGenAI()
     sys.modules['google'] = types.SimpleNamespace(generativeai=fake)
     sys.modules['google.generativeai'] = fake

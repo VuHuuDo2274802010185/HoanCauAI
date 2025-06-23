@@ -41,6 +41,8 @@ venv.bak/
 logs/
 app.log
 cv_processor.log
+attachments/
+!attachments/.gitkeep
 log/*
 !log/.gitkeep
 
@@ -59,7 +61,9 @@ python-dist/
 attachments/
 *.csv
 !cv_summary.csv
-!cv_analysis.csv
+!csv/cv_summary.csv
+!csv/.gitkeep
+!csv/cv_analysis.csv
 
 # Process IDs
 .pids
@@ -81,13 +85,13 @@ Desktop.ini
 .idea/
 .vscode/
 
+# Virtual environment
+.venv
+
 # Reports (auto-generated)
 FIX_REPORT.md
 health_check_report.json
-health_check.py
 UPGRADE_REPORT.md
-CHAT_TAB_FIX_REPORT.md
-test_chat_tab.py
 SYNC_GUIDE.md
 
 # Streamlit
