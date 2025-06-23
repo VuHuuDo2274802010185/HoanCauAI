@@ -10,8 +10,14 @@ from typing import Optional, Dict, Any
 # Đưa thư mục gốc (chứa `modules/`) vào sys.path để import modules
 HERE = Path(__file__).parent
 ROOT = HERE.parent.parent
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+# Add both the project root and the `src` directory so that imports of the
+# `modules` package succeed when this application is run directly via
+# `streamlit` or regular `python` commands.
+SRC_DIR = ROOT / "src"
+for path in (ROOT, SRC_DIR):
+    path_str = str(path)
+    if path_str not in sys.path:
+        sys.path.insert(0, path_str)
 
 from modules.config import LOG_FILE
 
