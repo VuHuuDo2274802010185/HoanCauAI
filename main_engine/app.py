@@ -13,9 +13,7 @@ ROOT = HERE.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-# Ensure log directory exists
-LOG_DIR = ROOT / "log"
-LOG_DIR.mkdir(parents=True, exist_ok=True)
+from modules.config import LOG_DIR, LOG_FILE
 
 # Khi chạy bằng `streamlit run`, __package__ sẽ là None dẫn tới lỗi khi
 # dùng relative imports. Thiết lập thủ công để các import như
@@ -35,7 +33,7 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler(LOG_DIR / "app.log", encoding='utf-8')
+        logging.FileHandler(LOG_FILE, encoding='utf-8')
     ]
 )
 logger = logging.getLogger(__name__)

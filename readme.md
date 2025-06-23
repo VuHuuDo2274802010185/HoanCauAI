@@ -153,7 +153,7 @@ python3 scripts/cli_agent.py chat "Câu hỏi của bạn"
 ```
 Lệnh `chat` tự động sử dụng khóa API tương ứng với `LLM_PROVIDER`
 được khai báo trong file `.env` (`GOOGLE_API_KEY` hoặc `OPENROUTER_API_KEY`).
-Mỗi lần hỏi đáp sẽ được lưu vào file log tại `log/chat_log.json` (có thể thay đổi qua biến `CHAT_LOG_FILE`).
+Mỗi lần hỏi đáp sẽ được lưu vào file log tại `log/chat_log.json` (có thể thay đổi qua biến `CHAT_LOG_FILE` hoặc thư mục `LOG_DIR`).
 
 ## 🌐 Giao diện web (Streamlit)
 

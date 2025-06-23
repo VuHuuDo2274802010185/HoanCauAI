@@ -21,8 +21,9 @@ stream_h = logging.StreamHandler()
 stream_h.setFormatter(fmt)
 logger.addHandler(stream_h)
 # handler xuất log ra file trong thư mục log
-Path("log").mkdir(parents=True, exist_ok=True)
-file_h = logging.FileHandler("log/cv_processor.log", encoding="utf-8")
+from .config import LOG_DIR
+LOG_DIR.mkdir(parents=True, exist_ok=True)
+file_h = logging.FileHandler(LOG_DIR / "cv_processor.log", encoding="utf-8")
 file_h.setFormatter(fmt)
 logger.addHandler(file_h)
 
