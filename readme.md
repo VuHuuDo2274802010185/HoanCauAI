@@ -66,16 +66,16 @@ HoanCau AI Resume Processor là hệ thống tự động trích xuất thông t
 
 2. **Tạo môi trường ảo & cài dependencies**
 
-   ```bash
-   python3 -m venv .venv
-   source .venv/bin/activate      # Linux/Mac
-   # .venv\Scripts\activate     # Windows
-   pip install --upgrade pip
-   # Cài đặt project ở chế độ editable
-   pip install -e .
-   ```
-   Hoặc đơn giản chạy `./setup.sh` (macOS/Linux) hoặc `setup.cmd` (Windows)
-   để tự động thực hiện các bước trên.
+```bash
+python3 -m venv .venv
+source .venv/bin/activate      # Linux/Mac
+# .venv\Scripts\activate     # Windows
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+Hoặc đơn giản chạy `./setup.sh` (macOS/Linux) hoặc `setup.cmd` (Windows)
+để tự động tạo môi trường, cài dependencies, sao chép `.env.example` và
+tạo các thư mục cần thiết.
 
 3. **Tạo file `.env`**
 
@@ -89,8 +89,8 @@ HoanCau AI Resume Processor là hệ thống tự động trích xuất thông t
    `OPENROUTER_API_KEY`), `EMAIL_USER` và `EMAIL_PASS`. File `.env` đã nằm trong
    `.gitignore` nên **không commit** lên Git. Nếu gặp lỗi cấu hình, hãy so sánh
    với file mẫu [`.env.example`](./.env.example) để biết các biến cần thiết.
-   Bạn có thể tạo sẵn các thư mục `attachments`, `output` và `log` (hoặc để
-   script tự tạo) để lưu file tải về và log.
+    Bạn có thể tạo sẵn các thư mục `attachments`, `csv`, `log` và `static` (hoặc để
+    script tự tạo) để lưu file tải về và log.
 
 ### 💻 Cài đặt nhanh trên Windows
 
