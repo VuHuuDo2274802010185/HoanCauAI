@@ -6,7 +6,6 @@ import json  # parse và dump JSON
 import time  # xử lý thời gian và sleep retry
 import logging  # ghi log
 from typing import List, Dict, Optional  # khai báo kiểu
-from pathlib import Path
 
 import pandas as pd  # xử lý DataFrame
 pd.set_option("display.max_colwidth", None)  # hiển thị đầy đủ nội dung các cột
@@ -34,11 +33,11 @@ try:
     _PDF_EX = "pdfminer"  # ưu tiên pdfminer nếu cài đặt
 except ImportError:
     try:
-        import PyPDF2
+        import PyPDF2  # noqa: F401
         _PDF_EX = "pypdf2"  # fallback sang PyPDF2
     except ImportError:
         try:
-            import fitz  # PyMuPDF
+            import fitz  # noqa: F401  # PyMuPDF
             _PDF_EX = "pymupdf"  # fallback sang PyMuPDF
         except ImportError:
             _PDF_EX = None  # không có thư viện PDF nào

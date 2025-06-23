@@ -1,7 +1,6 @@
 import logging
 from pathlib import Path
 import streamlit as st
-import pandas as pd
 
 from modules.cv_processor import CVProcessor
 from modules.config import get_model_price

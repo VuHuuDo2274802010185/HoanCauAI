@@ -1,7 +1,5 @@
 # modules/llm_client.py
 
-import os                          # thư viện xử lý biến môi trường và hệ thống file
-import json                        # thư viện xử lý JSON (parse và dump)
 import logging                     # thư viện ghi log
 import requests                    # thư viện HTTP để gửi yêu cầu tới API OpenRouter
 from typing import List           # khai báo kiểu List cho Python 3.8+

@@ -164,7 +164,7 @@ def get_models_for_provider(provider: str, api_key: str) -> List[str]:
         if available:
             logger.info(f"Đã lấy {len(available)} models từ OpenRouter API")
             return available
-        logger.warning(f"Sử dụng fallback models cho OpenRouter")
+        logger.warning("Sử dụng fallback models cho OpenRouter")
         return OPENROUTER_FALLBACK_MODELS
 
 # --- Cấu hình LLM mặc định ---

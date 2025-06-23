@@ -102,8 +102,6 @@ def _create_enhanced_prompt(question: str, df: pd.DataFrame, context: Optional[D
     columns = list(df.columns)
     
     # Sample data for context
-    sample_size = min(5, len(df))
-    sample_data = df.head(sample_size).to_dict('records')
     
     # Create enhanced system prompt
     system_prompt = f"""Bạn là Trợ lý AI chuyên nghiệp phân tích dữ liệu CV và tuyển dụng.
