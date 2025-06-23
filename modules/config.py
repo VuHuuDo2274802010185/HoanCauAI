@@ -17,6 +17,9 @@ formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
+# Project root directory (parent của thư mục modules)
+BASE_DIR = Path(__file__).resolve().parents[1]
+
 
 def _get_env(varname: str, default: str = "") -> str:
     """Đọc biến môi trường, bỏ comment và dấu nháy, trả về chuỗi."""
@@ -76,16 +79,25 @@ def _clean_path(varname: str, default: str) -> Path:
     cleaned = raw.split('#', 1)[0].strip()
     if cleaned.startswith(('"', "'")) and cleaned.endswith(('"', "'")):
         cleaned = cleaned[1:-1]
-    return Path(cleaned)
+    path = Path(cleaned)
+    if not path.is_absolute():
+        path = BASE_DIR / path
+    return path
+
+# Thư mục lưu log chung
+LOG_DIR = _clean_path("LOG_DIR", "log")
+LOG_FILE = _clean_path("LOG_FILE", str(LOG_DIR / "app.log"))
 
 ATTACHMENT_DIR = _clean_path("ATTACHMENT_DIR", "attachments")
 OUTPUT_CSV = _clean_path("OUTPUT_CSV", "csv/cv_summary.csv")
 # File lưu log hội thoại chat
-CHAT_LOG_FILE = _clean_path("CHAT_LOG_FILE", "log/chat_log.json")
+CHAT_LOG_FILE = _clean_path("CHAT_LOG_FILE", str(LOG_DIR / "chat_log.json"))
 # tạo thư mục nếu chưa tồn tại
 ATTACHMENT_DIR.mkdir(parents=True, exist_ok=True)
 OUTPUT_CSV.parent.mkdir(parents=True, exist_ok=True)
+LOG_DIR.mkdir(parents=True, exist_ok=True)
 CHAT_LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
 
 # --- Danh sách models dự phòng ---
 GOOGLE_FALLBACK_MODELS: List[str] = [
@@ -208,14 +220,22 @@ def get_config_status() -> Dict[str, Any]:
         "paths": {
             "attachment_dir_exists": ATTACHMENT_DIR.exists(),
             "output_csv_parent_exists": OUTPUT_CSV.parent.exists(),
-            "chat_log_parent_exists": CHAT_LOG_FILE.parent.exists()
+            "chat_log_parent_exists": CHAT_LOG_FILE.parent.exists(),
+            "log_dir_exists": LOG_DIR.exists(),
+            "log_file_parent_exists": LOG_FILE.parent.exists()
         }
     }
 
 
 def ensure_directories():
     """Ensure all required directories exist."""
-    directories = [ATTACHMENT_DIR, OUTPUT_CSV.parent, CHAT_LOG_FILE.parent]
+    directories = [
+        ATTACHMENT_DIR,
+        OUTPUT_CSV.parent,
+        LOG_DIR,
+        CHAT_LOG_FILE.parent,
+        LOG_FILE.parent,
+    ]
     for directory in directories:
         try:
             directory.mkdir(parents=True, exist_ok=True)
