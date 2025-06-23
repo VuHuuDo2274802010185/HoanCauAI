@@ -17,6 +17,7 @@ streamlit>=1.22.0             # framework UI web
 fastapi>=0.95.0               # framework backend API
 uvicorn[standard]>=0.22.0     # ASGI server, kèm uvloop và các extras
 python-multipart>=0.0.5       # xử lý multipart/form-data (file upload FastAPI)
+aiofiles>=23.0.0              # async file operations for FastAPI
 click                         # CLI utilities (dùng cho scripts click)
 pydantic>=2.0.0               # validation, BaseSettings (FastAPI)
 pydantic-settings>=2.0.0

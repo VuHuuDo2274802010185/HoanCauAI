@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HoanCau AI Resume Processor</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .desktop-app {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .desktop-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            -webkit-app-region: drag;
+        }
+
+        .desktop-header h1 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .desktop-header .header-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            -webkit-app-region: no-drag;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-dot.online {
+            background: #4CAF50;
+            box-shadow: 0 0 6px rgba(76, 175, 80, 0.6);
+        }
+
+        .status-dot.offline {
+            background: #f44336;
+            box-shadow: 0 0 6px rgba(244, 67, 54, 0.6);
+        }
+
+        .desktop-content {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 0;
+            overflow-y: auto;
+        }
+
+        .welcome-section {
+            text-align: center;
+            padding: 60px 40px;
+        }
+
+        .welcome-section h2 {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .welcome-section p {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .action-button {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 200px;
+        }
+
+        .action-button.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .action-button.secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .action-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 40px;
+            background: white;
+            margin: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .stat-number {
+            font-size: 36px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            padding: 40px;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+        }
+
+        .feature-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .feature-title {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .feature-description {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .status-bar {
+            background: #f8f9fa;
+            padding: 10px 25px;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .loading-overlay.show {
+            display: flex;
+        }
+
+        .loading-content {
+            text-align: center;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #widgetContainer {
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="desktop-app">
+        <!-- Header -->
+        <div class="desktop-header">
+            <h1>🎯 HoanCau AI Resume Processor</h1>
+            <div class="header-info">
+                <div class="status-indicator">
+                    <div class="status-dot offline" id="statusDot"></div>
+                    <span id="statusText">Đang kết nối...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="desktop-content">
+            <div class="main-content">
+                <!-- Welcome Section -->
+                <div class="welcome-section">
+                    <h2>Chào mừng đến với HoanCau AI</h2>
+                    <p>Hệ thống AI xử lý và phân tích CV/Resume thông minh, giúp bạn đánh giá ứng viên một cách nhanh chóng và chính xác.</p>
+                    
+                    <div class="action-buttons">
+                        <button class="action-button primary" onclick="openStreamlitApp()">
+                            🚀 Mở Streamlit App
+                        </button>
+                        <button class="action-button secondary" onclick="showWidget()">
+                            📱 Sử dụng Widget
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="quick-stats">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalProcessed">0</div>
+                        <div class="stat-label">CV Đã Xử Lý</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="avgScore">0</div>
+                        <div class="stat-label">Điểm Trung Bình</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="responseTime">0ms</div>
+                        <div class="stat-label">Thời Gian Phản Hồi</div>
+                    </div>
+                </div>
+
+                <!-- Features Grid -->
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🤖</div>
+                        <div class="feature-title">AI Thông Minh</div>
+                        <div class="feature-description">
+                            Sử dụng công nghệ AI tiên tiến từ Google Gemini và OpenRouter để phân tích CV với độ chính xác cao.
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">⚡</div>
+                        <div class="feature-title">Xử Lý Nhanh</div>
+                        <div class="feature-description">
+                            Phân tích hàng loạt CV trong thời gian ngắn, hỗ trợ định dạng PDF và DOCX.
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <div class="feature-title">Báo Cáo Chi Tiết</div>
+                        <div class="feature-description">
+                            Tạo báo cáo phân tích chi tiết với điểm số, đánh giá và đề xuất cải thiện.
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">💬</div>
+                        <div class="feature-title">Chat AI</div>
+                        <div class="feature-description">
+                            Tương tác với AI để đặt câu hỏi về kết quả phân tích và nhận tư vấn chuyên nghiệp.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Widget Container (Hidden by default) -->
+                <div id="widgetContainer" style="display: none;">
+                    <iframe id="widgetFrame" 
+                            src="widget.html" 
+                            width="100%" 
+                            height="800" 
+                            frameborder="0"
+                            style="border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+                    </iframe>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <span>HoanCau AI Desktop v1.0.0</span>
+            <span id="backendStatus">Backend: Đang kiểm tra...</span>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="loading-content">
+                <div class="spinner"></div>
+                <p>Đang khởi động ứng dụng...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class DesktopApp {
+            constructor() {
+                this.backendOnline = false;
+                this.init();
+            }
+
+            async init() {
+                console.log('Initializing Desktop App...');
+                
+                // Check if we're in Electron
+                if (window.electronAPI) {
+                    await this.checkBackendStatus();
+                    setInterval(() => this.checkBackendStatus(), 10000); // Check every 10 seconds
+                } else {
+                    console.log('Running in browser mode');
+                    this.updateStatus(true); // Assume online in browser
+                }
+
+                this.hideLoading();
+            }
+
+            async checkBackendStatus() {
+                try {
+                    const result = await window.electronAPI.checkBackend();
+                    this.updateStatus(result.status === 'online', result.data);
+                } catch (error) {
+                    console.error('Failed to check backend status:', error);
+                    this.updateStatus(false);
+                }
+            }
+
+            updateStatus(online, data = null) {
+                this.backendOnline = online;
+                
+                const statusDot = document.getElementById('statusDot');
+                const statusText = document.getElementById('statusText');
+                const backendStatus = document.getElementById('backendStatus');
+                
+                if (online) {
+                    statusDot.className = 'status-dot online';
+                    statusText.textContent = 'Kết nối';
+                    backendStatus.textContent = 'Backend: Trực tuyến';
+                    
+                    if (data) {
+                        // Update stats if available
+                        this.updateStats(data);
+                    }
+                } else {
+                    statusDot.className = 'status-dot offline';
+                    statusText.textContent = 'Mất kết nối';
+                    backendStatus.textContent = 'Backend: Ngoại tuyến';
+                }
+            }
+
+            updateStats(data) {
+                // Update statistics from backend data
+                if (data.services) {
+                    const responseTimeEl = document.getElementById('responseTime');
+                    responseTimeEl.textContent = '< 100ms'; // Placeholder
+                }
+            }
+
+            showLoading() {
+                document.getElementById('loadingOverlay').classList.add('show');
+            }
+
+            hideLoading() {
+                document.getElementById('loadingOverlay').classList.remove('show');
+            }
+        }
+
+        // Global functions
+        function openStreamlitApp() {
+            if (window.electronAPI) {
+                // In Electron, open external browser
+                window.electronAPI.apiRequest('/health').then(result => {
+                    if (result.success) {
+                        // Open Streamlit URL
+                        window.open('http://localhost:8501', '_blank');
+                    } else {
+                        alert('Backend chưa sẵn sàng. Vui lòng thử lại sau.');
+                    }
+                });
+            } else {
+                // In browser, navigate directly
+                window.open('http://localhost:8501', '_blank');
+            }
+        }
+
+        function showWidget() {
+            const container = document.getElementById('widgetContainer');
+            const welcomeSection = document.querySelector('.welcome-section');
+            const featuresGrid = document.querySelector('.features-grid');
+            const quickStats = document.querySelector('.quick-stats');
+            
+            if (container.style.display === 'none') {
+                container.style.display = 'block';
+                welcomeSection.style.display = 'none';
+                featuresGrid.style.display = 'none';
+                quickStats.style.display = 'none';
+            } else {
+                container.style.display = 'none';
+                welcomeSection.style.display = 'block';
+                featuresGrid.style.display = 'grid';
+                quickStats.style.display = 'grid';
+            }
+        }
+
+        // Initialize app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            window.desktopApp = new DesktopApp();
+        });
+    </script>
+</body>
+</html>

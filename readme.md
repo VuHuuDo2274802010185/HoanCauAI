@@ -1,52 +1,114 @@
 # HoanCau AI Resume Processor
 
-HoanCau AI Resume Processor là hệ thống tự động trích xuất thông tin quan trọng từ hồ sơ (.pdf, .docx), hỗ trợ chạy qua CLI, giao diện web (Streamlit) và API (FastAPI).
+HoanCau AI Resume Processor là hệ thống AI tự động trích xuất và phân tích thông tin từ CV/Resume (.pdf, .docx), hỗ trợ:
+- 🌐 **Web Application** (Streamlit)
+- 📡 **API Server** (FastAPI) 
+- 🎯 **Embeddable Widget** (nhúng vào website)
+- 💻 **Desktop Application** (Electron)
 
-## 📋 Yêu cầu hệ thống
+## 📁 Cấu trúc dự án
 
-- Python 3.10 hoặc cao hơn (https://www.python.org/downloads/)
-- Pip (đi kèm Python) hoặc pip3
-- Virtual environment tool (`venv` hoặc `virtualenv`)
-- Git (để clone repository) https://git-scm.com/downloads
-- Tài khoản email IMAP (Gmail, Outlook, v.v.) với quyền truy cập IMAP hiện bật
-- Trình duyệt web hiện đại (Chrome, Firefox) để sử dụng giao diện Streamlit
+```
+HoanCauAI/
+├── 📱 main_engine/          # Ứng dụng Streamlit chính
+│   ├── app.py              # Main Streamlit app
+│   └── tabs/               # UI tabs (chat, process, results...)
+├── 🔧 modules/             # Core Python modules
+│   ├── cv_processor.py     # CV processing logic
+│   ├── llm_client.py       # AI client integrations
+│   └── qa_chatbot.py       # Chat functionality
+├── 📡 api/                 # FastAPI server for embedding
+│   ├── api_server.py       # API endpoints
+│   └── README.md           # API documentation
+├── 🎯 widget/              # Embeddable widget
+│   ├── widget.html         # Widget UI
+│   ├── widget.js           # Widget logic
+│   ├── embed.html          # Integration guide
+│   └── README.md           # Widget documentation
+├── 💻 desktop/             # Electron desktop app
+│   ├── package.json        # Node.js configuration
+│   ├── src/                # Electron source files
+│   ├── assets/             # App resources
+│   └── README.md           # Desktop app guide
+├── 🚀 scripts/             # Automation scripts
+│   ├── run-all.sh          # Start all services
+│   ├── start-api.sh        # Start API only
+│   ├── build-electron.sh   # Build desktop app
+│   └── README.md           # Scripts documentation
+├── 📚 docs/                # Documentation
+│   ├── DEPLOYMENT_GUIDE.md # Deployment guide
+│   └── README.md           # Docs overview
+└── 📄 static/              # Static assets (CSS, images)
+```
 
-## 🚦 Beginner Setup
+## � Quick Start
 
-1. **Cài Python và Git**
-   - Tải Python từ [python.org](https://www.python.org/downloads/) rồi cài đặt
-     như hướng dẫn (Windows nhớ tick "Add python to PATH").
-   - Tải Git tại [git-scm.com](https://git-scm.com/downloads) và cài đặt mặc định.
-2. **Mở Terminal / Command Prompt**
-   - **Windows**: nhấn `Win + R` → gõ `cmd` → Enter.
-   - **macOS**: mở **Terminal** từ Spotlight hoặc Applications.
-   - **Linux**: mở ứng dụng **Terminal**.
-3. **Kiểm tra phiên bản**
-   ```bash
-   python --version   # hoặc python3 --version
-   git --version
-   ```
-   Nếu cả hai lệnh đều in phiên bản, bạn đã sẵn sàng tiếp tục.
+### 1. Chạy tất cả services (Khuyến nghị)
+```bash
+# Clone repository
+git clone <repository-url>
+cd HoanCauAI
 
-## ✉️ Troubleshooting Email Fetch
+# Chạy tất cả services
+chmod +x scripts/*.sh
+./scripts/run-all.sh
+```
 
-- Đảm bảo IMAP đã được bật trong cài đặt email (Gmail: Settings → Forwarding and POP/IMAP → Enable IMAP).
-- Với Gmail, tạo **App Password** thay vì mật khẩu chính: https://support.google.com/mail/answer/185833
-- Kiểm tra file `.env` đúng thông tin:
-  ```bash
-  cat .env | grep EMAIL
-  ```
-- Chạy lệnh thử tay:
-  ```bash
-  python3 -c "from modules.email_fetcher import EmailFetcher; f=EmailFetcher(); f.connect(); print(f.fetch_cv_attachments())"
-  ```
-  Kết quả trả về danh sách đường dẫn file (nếu trống, nghĩa là không tìm thấy attachment trong inbox).
-- Nếu vẫn không có email, kiểm tra folder IMAP mặc định là `INBOX`, hoặc đổi:
-  ```python
-  f.mail.select('INBOX.Sent Mail')  # hoặc tên folder khác
-  ```
+### 2. Chỉ chạy API server (để nhúng widget)
+```bash
+./scripts/start-api.sh
+```
 
-## 🌟 Tính năng
+### 3. Chỉ chạy Streamlit app
+```bash
+cd main_engine
+streamlit run app.py
+```
+
+### 4. Build desktop app
+```bash
+./scripts/build-electron.sh
+```
+
+## 🌍 Truy cập ứng dụng
+
+Sau khi chạy `./scripts/run-all.sh`:
+
+- 🌐 **API Server**: http://localhost:8000
+- 📖 **API Docs**: http://localhost:8000/docs
+- 🎯 **Widget Demo**: http://localhost:8000/widget
+- 📊 **Streamlit App**: http://localhost:8501
+- 💻 **Desktop App**: Electron window
+
+## 🎯 Tính năng chính
+
+### 🌐 Web Application
+- Upload và phân tích CV/Resume
+- Giao diện thân thiện với Streamlit
+- Xử lý batch files
+- Xuất kết quả CSV/Excel
+- Chat AI tương tác
+
+### 📡 API Server
+- RESTful APIs cho phân tích CV
+- CORS support cho embedding
+- Swagger documentation
+- Health monitoring
+- Rate limiting ready
+
+### 🎯 Embeddable Widget
+- Nhúng vào bất kỳ website nào
+- 3 cách tích hợp (iframe, JS, API)
+- Responsive design
+- Customizable theme
+- Real-time chat
+
+### 💻 Desktop App
+- Cross-platform (Windows/macOS/Linux)
+- Native file handling
+- Offline capabilities
+- System integration
+- Auto-updates ready
 
 - Tự động quét email IMAP, tải file đính kèm và xử lý batch.
 - Xử lý một file CV đơn lẻ.
