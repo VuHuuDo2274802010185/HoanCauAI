@@ -21,6 +21,9 @@ for path in (ROOT, SRC_DIR):
 
 from modules.config import LOG_FILE
 
+# Ensure log directory exists even if configuration hasn't created it yet
+LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+
 # Khi chạy bằng `streamlit run`, __package__ sẽ là None dẫn tới lỗi khi
 # dùng relative imports. Thiết lập thủ công để các import như
 # `from .tabs import fetch_tab` hoạt động.
