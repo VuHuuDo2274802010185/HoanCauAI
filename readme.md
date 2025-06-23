@@ -1,122 +1,59 @@
 # HoanCau AI Resume Processor
 
-HoanCau AI Resume Processor là hệ thống AI tự động trích xuất và phân tích thông tin từ CV/Resume (.pdf, .docx), hỗ trợ:
-- 🌐 **Web Application** (Streamlit)
-- 📡 **API Server** (FastAPI) 
-- 🎯 **Embeddable Widget** (nhúng vào website)
-- 💻 **Desktop Application** (Electron)
+HoanCau AI Resume Processor là hệ thống tự động trích xuất thông tin quan trọng từ hồ sơ (.pdf, .docx), hỗ trợ chạy qua CLI, giao diện web (Streamlit) và API (FastAPI).
 
-## ⚡ Quick Start cho người dùng Windows
+## ⚡ Quick Start cho người mới
 
-1. Vào trang GitHub của dự án và bấm **Code** → **Download ZIP** rồi giải nén.
-2. Nhấp đúp `setup_window.cmd` để cài Python (nếu cần) và chuẩn bị môi trường.
-3. Mở file `.env` vừa tạo bằng Notepad và điền API key cùng thông tin email.
-4. Nhấp đúp `start_window.cmd` để mở giao diện web tại `http://localhost:8501`.
+1. Tải mã nguồn về máy
+2. **Windows:** chạy `start.cmd`
+3. **macOS/Linux:** chạy `./start.sh`
+4. Làm theo hướng dẫn hiển thị trên màn hình
 
-## � Cấu trúc dự án
+## 📋 Yêu cầu hệ thống
 
-```
-HoanCauAI/
-├── 📱 src/main_engine/      # Ứng dụng Streamlit chính
-│   ├── app.py              # Main Streamlit app
-│   └── tabs/               # UI tabs (chat, process, results...)
-├── 🔧 src/modules/         # Core Python modules
-│   ├── cv_processor.py     # CV processing logic
-│   ├── llm_client.py       # AI client integrations
-│   └── qa_chatbot.py       # Chat functionality
-├── 📡 api/                 # FastAPI server for embedding
-│   ├── api_server.py       # API endpoints
-│   └── README.md           # API documentation
-├── 🎯 widget/              # Embeddable widget
-│   ├── widget.html         # Widget UI
-│   ├── widget.js           # Widget logic
-│   ├── embed.html          # Integration guide
-│   └── README.md           # Widget documentation
-├── 💻 desktop/             # Electron desktop app
-│   ├── package.json        # Node.js configuration
-│   ├── src/                # Electron source files
-│   ├── assets/             # App resources
-│   └── README.md           # Desktop app guide
-├── 🚀 scripts/             # Automation scripts & CLI
-│   ├── cli_agent.py        # CLI agent
-│   ├── run-all.sh          # Start all services
-│   ├── start-api.sh        # Start API only
-│   ├── build-electron.sh   # Build desktop app
-│   └── README.md           # Scripts documentation
-├── 📚 docs/                # Documentation
-│   ├── DEPLOYMENT_GUIDE.md # Deployment guide
-│   └── README.md           # Docs overview
-└── 📄 static/              # Static assets (CSS, images)
-```
+- Python 3.10 hoặc cao hơn (https://www.python.org/downloads/)
+- Pip (đi kèm Python) hoặc pip3
+- Virtual environment tool (`venv` hoặc `virtualenv`)
+- Git (để clone repository) https://git-scm.com/downloads
+- Tài khoản email IMAP (Gmail, Outlook, v.v.) với quyền truy cập IMAP hiện bật
+- Trình duyệt web hiện đại (Chrome, Firefox) để sử dụng giao diện Streamlit
 
-## � Quick Start
+## 🚦 Beginner Setup
 
-### 1. Chạy tất cả services (Khuyến nghị)
-```bash
-# Clone repository
-git clone <repository-url>
-cd HoanCauAI
+1. **Cài Python và Git**
+   - Tải Python từ [python.org](https://www.python.org/downloads/) rồi cài đặt
+     như hướng dẫn (Windows nhớ tick "Add python to PATH").
+   - Tải Git tại [git-scm.com](https://git-scm.com/downloads) và cài đặt mặc định.
+2. **Mở Terminal / Command Prompt**
+   - **Windows**: nhấn `Win + R` → gõ `cmd` → Enter.
+   - **macOS**: mở **Terminal** từ Spotlight hoặc Applications.
+   - **Linux**: mở ứng dụng **Terminal**.
+3. **Kiểm tra phiên bản**
+   ```bash
+   python --version   # hoặc python3 --version
+   git --version
+   ```
+   Nếu cả hai lệnh đều in phiên bản, bạn đã sẵn sàng tiếp tục.
 
-# Chạy tất cả services
-chmod +x scripts/*.sh
-./scripts/run-all.sh
-```
+## ✉️ Troubleshooting Email Fetch
 
-### 2. Chỉ chạy API server (để nhúng widget)
-```bash
-./scripts/start-api.sh
-```
+- Đảm bảo IMAP đã được bật trong cài đặt email (Gmail: Settings → Forwarding and POP/IMAP → Enable IMAP).
+- Với Gmail, tạo **App Password** thay vì mật khẩu chính: https://support.google.com/mail/answer/185833
+- Kiểm tra file `.env` đúng thông tin:
+  ```bash
+  cat .env | grep EMAIL
+  ```
+- Chạy lệnh thử tay:
+  ```bash
+  python3 -c "from modules.email_fetcher import EmailFetcher; f=EmailFetcher(); f.connect(); print(f.fetch_cv_attachments())"
+  ```
+  Kết quả trả về danh sách đường dẫn file (nếu trống, nghĩa là không tìm thấy attachment trong inbox).
+- Nếu vẫn không có email, kiểm tra folder IMAP mặc định là `INBOX`, hoặc đổi:
+  ```python
+  f.mail.select('INBOX.Sent Mail')  # hoặc tên folder khác
+  ```
 
-### 3. Chỉ chạy Streamlit app
-```bash
-cd src/main_engine
-streamlit run app.py
-```
-
-### 4. Build desktop app
-```bash
-./scripts/build-electron.sh
-```
-
-## 🌍 Truy cập ứng dụng
-
-Sau khi chạy `./scripts/run-all.sh`:
-
-- 🌐 **API Server**: http://localhost:8000
-- 📖 **API Docs**: http://localhost:8000/docs
-- 🎯 **Widget Demo**: http://localhost:8000/widget
-- 📊 **Streamlit App**: http://localhost:8501
-- 💻 **Desktop App**: Electron window
-
-## 🎯 Tính năng chính
-
-### 🌐 Web Application
-- Upload và phân tích CV/Resume
-- Giao diện thân thiện với Streamlit
-- Xử lý batch files
-- Xuất kết quả CSV/Excel
-- Chat AI tương tác
-
-### 📡 API Server
-- RESTful APIs cho phân tích CV
-- CORS support cho embedding
-- Swagger documentation
-- Health monitoring
-- Rate limiting ready
-
-### 🎯 Embeddable Widget
-- Nhúng vào bất kỳ website nào
-- 3 cách tích hợp (iframe, JS, API)
-- Responsive design
-- Customizable theme
-- Real-time chat
-
-### 💻 Desktop App
-- Cross-platform (Windows/macOS/Linux)
-- Native file handling
-- Offline capabilities
-- System integration
-- Auto-updates ready
+## 🌟 Tính năng
 
 - Tự động quét email IMAP, tải file đính kèm và xử lý batch.
 - Xử lý một file CV đơn lẻ.
@@ -143,7 +80,7 @@ source .venv/bin/activate      # Linux/Mac
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
-Hoặc đơn giản chạy `./setup_linux.sh` (macOS/Linux) hoặc `setup_window.cmd` (Windows)
+Hoặc đơn giản chạy `./setup.sh` (macOS/Linux) hoặc `setup.cmd` (Windows)
 để tự động tạo môi trường, cài dependencies, sao chép `.env.example` và
 tạo các thư mục cần thiết.
 
@@ -167,22 +104,22 @@ tạo các thư mục cần thiết.
 1. Truy cập trang GitHub repo và bấm **Code** → **Download ZIP** (hoặc dùng
    `git clone <repo_url>`).
 2. Giải nén (nếu tải ZIP) và mở `cmd` trong thư mục dự án.
-3. Chạy `setup_window.cmd` để tự động tạo `.env`, tạo virtual env và cài đặt
+3. Chạy `setup.cmd` để tự động tạo `.env`, tạo virtual env và cài đặt
    dependencies.
 4. Mở file `.env` vừa tạo và điền các biến như `GOOGLE_API_KEY`, thông tin
    `EMAIL_*`.
-5. Cuối cùng chạy `start_window.cmd` để mở ngay giao diện Streamlit.
+5. Cuối cùng chạy `run_resume_ai.cmd` để mở ngay giao diện Streamlit.
 
 ### 📦 Tự động setup trên macOS/Linux
 
 Trong thư mục dự án, chạy:
 
 ```bash
-./setup_linux.sh
+./setup.sh
 ```
 
-Script sẽ tạo `.env`, virtualenv và cài dependencies tương tự `setup_window.cmd`.
-Sau khi hoàn tất, chạy tiếp `./start_linux.sh` để khởi chạy nhanh giao diện Streamlit.
+Script sẽ tạo `.env`, virtualenv và cài dependencies tương tự `setup.cmd`.
+Sau khi hoàn tất, chạy tiếp `./start.sh` để khởi chạy nhanh giao diện Streamlit.
 
 ### 📦 Cài đặt package tùy chọn
 
@@ -206,16 +143,15 @@ Các lệnh tương tự phần bên dưới nhưng ngắn gọn hơn.
 
 ### 🛡️ SmartScreen trên Windows
 
-Khi chạy `setup_window.cmd` hoặc `start_window.cmd` lần đầu, SmartScreen có thể chặn file với thông báo "Windows protected your PC". Để bỏ chặn:
+Khi chạy `setup.cmd` hoặc `run_resume_ai.cmd` lần đầu, SmartScreen có thể chặn file với thông báo "Windows protected your PC". Để bỏ chặn:
 
 1. Chuột phải vào file → **Properties** → tích **Unblock** → Apply.
 2. Hoặc chạy PowerShell:
    ```powershell
-   Unblock-File .\setup_window.cmd
-   Unblock-File .\start_window.cmd
+   Unblock-File .\setup.cmd
+   Unblock-File .\run_resume_ai.cmd
    ```
    Sau đó chạy script lại.
-3. Sau khi bỏ chặn (hoặc khi được hỏi), nhấn **More info → Run anyway** để chạy script.
 
 ## ⚙️ Sử dụng CLI Agent
 

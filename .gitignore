@@ -1,103 +1,17 @@
-# Python
+# Ignore files
 __pycache__/
-*.py[cod]
-*$py.class
 *.pyc
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-
-# Virtual environments
-.venv
-venv/
-env/
-ENV/
-env.bak/
-venv.bak/
-
-# Environment variables
 .env
-.env.local
-.env.production
-
-# Logs
 *.log
-logs/
-app.log
-cv_processor.log
 attachments/
 !attachments/.gitkeep
 log/*
 !log/.gitkeep
-
-# Node.js & Electron
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-dist/
-out/
-*.tgz
-*.tar.gz
-python-dist/
-
-# Files and outputs
-attachments/
 *.csv
-!cv_summary.csv
 !csv/cv_summary.csv
 !csv/.gitkeep
-!csv/cv_analysis.csv
-
-# Process IDs
-.pids
-
-# Temporary files
-*.tmp
-*.temp
-.tmp/
-.temp/
-uploads/
-temp/
-
-# OS files
-.DS_Store
-Thumbs.db
-Desktop.ini
-
-# IDE
-.idea/
-.vscode/
-
-# Virtual environment
 .venv
-
-# Reports (auto-generated)
 FIX_REPORT.md
 health_check_report.json
 UPGRADE_REPORT.md
 SYNC_GUIDE.md
-
-# Streamlit
-.streamlit/
-
-# Test files
-.pytest_cache/
-htmlcov/
-.coverage
