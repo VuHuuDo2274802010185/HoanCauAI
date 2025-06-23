@@ -2,12 +2,12 @@
 
 HoanCau AI Resume Processor là hệ thống tự động trích xuất thông tin quan trọng từ hồ sơ (.pdf, .docx), hỗ trợ chạy qua CLI, giao diện web (Streamlit) và API (FastAPI).
 
-## ⚡ Quick Start cho người mới
+## ⚡ Quick Start cho người dùng Windows
 
-1. Tải mã nguồn về máy
-2. **Windows:** chạy `start.cmd`
-3. **macOS/Linux:** chạy `./start.sh`
-4. Làm theo hướng dẫn hiển thị trên màn hình
+1. Vào trang GitHub của dự án và bấm **Code** → **Download ZIP** rồi giải nén.
+2. Nhấp đúp `setup_window.cmd` để cài Python (nếu cần) và chuẩn bị môi trường.
+3. Mở file `.env` vừa tạo bằng Notepad và điền API key cùng thông tin email.
+4. Nhấp đúp `start_window.cmd` để mở giao diện web tại `http://localhost:8501`.
 
 ## 📋 Yêu cầu hệ thống
 
@@ -80,7 +80,7 @@ source .venv/bin/activate      # Linux/Mac
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
-Hoặc đơn giản chạy `./setup.sh` (macOS/Linux) hoặc `setup.cmd` (Windows)
+Hoặc đơn giản chạy `./setup_linux.sh` (macOS/Linux) hoặc `setup_window.cmd` (Windows)
 để tự động tạo môi trường, cài dependencies, sao chép `.env.example` và
 tạo các thư mục cần thiết.
 
@@ -104,22 +104,22 @@ tạo các thư mục cần thiết.
 1. Truy cập trang GitHub repo và bấm **Code** → **Download ZIP** (hoặc dùng
    `git clone <repo_url>`).
 2. Giải nén (nếu tải ZIP) và mở `cmd` trong thư mục dự án.
-3. Chạy `setup.cmd` để tự động tạo `.env`, tạo virtual env và cài đặt
+3. Chạy `setup_window.cmd` để tự động tạo `.env`, tạo virtual env và cài đặt
    dependencies.
 4. Mở file `.env` vừa tạo và điền các biến như `GOOGLE_API_KEY`, thông tin
    `EMAIL_*`.
-5. Cuối cùng chạy `run_resume_ai.cmd` để mở ngay giao diện Streamlit.
+5. Cuối cùng chạy `start_window.cmd` để mở ngay giao diện Streamlit.
 
 ### 📦 Tự động setup trên macOS/Linux
 
 Trong thư mục dự án, chạy:
 
 ```bash
-./setup.sh
+./setup_linux.sh
 ```
 
-Script sẽ tạo `.env`, virtualenv và cài dependencies tương tự `setup.cmd`.
-Sau khi hoàn tất, chạy tiếp `./start.sh` để khởi chạy nhanh giao diện Streamlit.
+Script sẽ tạo `.env`, virtualenv và cài dependencies tương tự `setup_window.cmd`.
+Sau khi hoàn tất, chạy tiếp `./start_linux.sh` để khởi chạy nhanh giao diện Streamlit.
 
 ### 📦 Cài đặt package tùy chọn
 
@@ -143,13 +143,13 @@ Các lệnh tương tự phần bên dưới nhưng ngắn gọn hơn.
 
 ### 🛡️ SmartScreen trên Windows
 
-Khi chạy `setup.cmd` hoặc `run_resume_ai.cmd` lần đầu, SmartScreen có thể chặn file với thông báo "Windows protected your PC". Để bỏ chặn:
+Khi chạy `setup_window.cmd` hoặc `start_window.cmd` lần đầu, SmartScreen có thể chặn file với thông báo "Windows protected your PC". Để bỏ chặn:
 
 1. Chuột phải vào file → **Properties** → tích **Unblock** → Apply.
 2. Hoặc chạy PowerShell:
    ```powershell
-   Unblock-File .\setup.cmd
-   Unblock-File .\run_resume_ai.cmd
+   Unblock-File .\setup_window.cmd
+   Unblock-File .\start_window.cmd
    ```
    Sau đó chạy script lại.
 
