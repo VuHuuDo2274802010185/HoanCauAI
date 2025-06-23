@@ -122,12 +122,8 @@ QUY TẮC:
 - Cung cấp gợi ý khi phù hợp
 - Sử dụng emoji để làm cho câu trả lời sinh động hơn"""
     
-    # Data context
-    if total_records > 10:
-        data_preview = df.head(10).to_csv(index=False)
-        data_context = f"Dưới đây là 10 hồ sơ đầu tiên trong tổng số {total_records} hồ sơ:\n\n{data_preview}"
-    else:
-        data_context = f"Toàn bộ dữ liệu ({total_records} hồ sơ):\n\n{df.to_csv(index=False)}"
+    # Data context - use entire dataset instead of a preview
+    data_context = f"Toàn bộ dữ liệu ({total_records} hồ sơ):\n\n{df.to_csv(index=False)}"
     
     # Question with context
     question_with_context = f"Câu hỏi: {question}"
