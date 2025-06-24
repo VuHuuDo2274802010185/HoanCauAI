@@ -36,8 +36,6 @@ from modules.ui_utils import loading_overlay
 import requests
 import pandas as pd
 from datetime import datetime
-import markdown
-from html import escape
 from dotenv import set_key, load_dotenv
 
 # Configure logging with better formatting
@@ -462,64 +460,58 @@ def render_chat_statistics():
 
 @handle_error
 def render_chat_history():
-    """Render chat conversation history inside a scrollable container"""
+    """Render chat conversation history"""
     history = st.session_state.get("conversation_history", [])
     if not history:
         st.info("💬 Bắt đầu cuộc trò chuyện bằng cách gửi tin nhắn bên dưới!")
         return
 
-    messages_html = ""
     for message in history:
         role = message.get("role", "user")
         content = message.get("content", "")
         timestamp = message.get("timestamp", "")
 
         if role == "user":
-            content_html = escape(content)
-        else:
-            content_html = markdown.markdown(content)
-        if role == "user":
             # User message - aligned right
-            messages_html += f"""
-            <div style='display: flex; justify-content: flex-end; margin: 10px 0;'>
-                <div class='chat-message' style='
-                    background: linear-gradient(135deg, {st.session_state.get('accent_color', '#d4af37')} 0%, {st.session_state.get('secondary_color', '#f4e09c')} 100%);
-                    color: white;
-                    margin-left: 20%;
-                '>
-                    <strong>👤 Bạn:</strong><br>
-                    {content_html}
-                    <div style='font-size: 0.8em; opacity: 0.8; margin-top: 5px;'>
-                        {timestamp[:19] if timestamp else ''}
+            st.markdown(
+                f"""
+                <div style="display: flex; justify-content: flex-end; margin: 10px 0;">
+                    <div class="chat-message" style="
+                        background: linear-gradient(135deg, {st.session_state.get('accent_color', '#d4af37')} 0%, {st.session_state.get('secondary_color', '#f4e09c')} 100%);
+                        color: white;
+                        margin-left: 20%;
+                    ">
+                        <strong>👤 Bạn:</strong><br>
+                        {content}
+                        <div style="font-size: 0.8em; opacity: 0.8; margin-top: 5px;">
+                            {timestamp[:19] if timestamp else ''}
+                        </div>
                     </div>
                 </div>
-            </div>
-            """
+                """,
+                unsafe_allow_html=True
+            )
         else:
             # AI message - aligned left
-            messages_html += f"""
-            <div style='display: flex; justify-content: flex-start; margin: 10px 0;'>
-                <div class='chat-message' style='
-                    background: linear-gradient(135deg, {st.session_state.get('background_color', '#fffbf0')} 0%, {st.session_state.get('secondary_color', '#f4e09c')}44 100%);
-                    color: {st.session_state.get('text_color', '#000000')};
-                    border: 2px solid {st.session_state.get('secondary_color', '#f4e09c')};
-                    margin-right: 20%;
-                '>
-                    <strong>🤖 AI:</strong><br>
-                    {content_html}
-                    <div style='font-size: 0.8em; opacity: 0.7; margin-top: 5px;'>
-                        {timestamp[:19] if timestamp else ''}
+            st.markdown(
+                f"""
+                <div style="display: flex; justify-content: flex-start; margin: 10px 0;">
+                    <div class="chat-message" style="
+                        background: linear-gradient(135deg, {st.session_state.get('background_color', '#fffbf0')} 0%, {st.session_state.get('secondary_color', '#f4e09c')}44 100%);
+                        color: {st.session_state.get('text_color', '#000000')};
+                        border: 2px solid {st.session_state.get('secondary_color', '#f4e09c')};
+                        margin-right: 20%;
+                    ">
+                        <strong>🤖 AI:</strong><br>
+                        {content}
+                        <div style="font-size: 0.8em; opacity: 0.7; margin-top: 5px;">
+                            {timestamp[:19] if timestamp else ''}
+                        </div>
                     </div>
                 </div>
-            </div>
-            """
-
-    styled_html = (
-        "<div style='max-height: 500px; overflow-y: auto; overflow-x: auto;'>"
-        f"{messages_html}"
-        "</div>"
-    )
-    st.markdown(styled_html, unsafe_allow_html=True)
+                """,
+                unsafe_allow_html=True
+            )
 
 
 @handle_error
