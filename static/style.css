@@ -63,13 +63,13 @@ button[data-baseweb="base-button"]:hover {
 }
 
 /* DataFrame styling */
-.css-1ex1afd {
+div[data-testid="stDataFrame"] {
   background-color: var(--cv-bg-color) !important;
   color: var(--cv-text-color) !important;
 }
 
 /* Tabs styling */
-.css-1v0mbdj .css-1xt0zh0 {
+.stTabs [data-baseweb="tabs"] {
   background-color: var(--cv-bg-color) !important;
   color: var(--cv-text-color) !important;
 }
