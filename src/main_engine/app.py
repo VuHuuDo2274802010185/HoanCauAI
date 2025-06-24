@@ -35,6 +35,7 @@ import streamlit as st
 import requests
 import pandas as pd
 from datetime import datetime
+from dotenv import set_key, load_dotenv
 
 # Configure logging with better formatting
 logging.basicConfig(
@@ -71,12 +72,6 @@ try:
         st.error(f"Lỗi import tabs: {ie}")
         st.stop()
 
-    try:
-        from .tabs import env_tab
-    except ImportError:
-        logger.warning("env_tab not available; .env editing disabled")
-        import types
-        env_tab = types.SimpleNamespace(render=lambda *a, **k: None)
 
     try:
         from .tabs import chat_tab  # noqa: F401
@@ -870,7 +865,7 @@ provider, api_key, model = render_sidebar()
 
 # --- Email configuration with enhanced validation ---
 @handle_error
-def render_email_config():
+def render_email_config(root: Path):
     """Render email configuration section"""
     st.sidebar.header("📧 Thông tin Email")
     
@@ -895,6 +890,17 @@ def render_email_config():
         key="unseen_only",
         help="Nếu bỏ chọn, hệ thống sẽ quét toàn bộ hộp thư",
     )
+
+    if st.sidebar.button("💾 Lưu mật khẩu", key="save_email_pass"):
+        env_path = root / ".env"
+        try:
+            env_path.touch(exist_ok=True)
+            load_dotenv(env_path)
+            set_key(str(env_path), "EMAIL_USER", email_user)
+            set_key(str(env_path), "EMAIL_PASS", email_pass)
+            st.sidebar.success("Đã lưu thông tin email vào .env")
+        except Exception as e:
+            st.sidebar.error(f"Lỗi khi lưu file .env: {e}")
     
     # Email validation
     if email_user and "@" not in email_user:
@@ -953,7 +959,7 @@ def manage_auto_fetcher(email_user: str, email_pass: str, unseen_only: bool):
         st.sidebar.error(f"Lỗi khởi động auto fetcher: {e}")
 
 # Render email configuration
-email_user, email_pass, unseen_only = render_email_config()
+email_user, email_pass, unseen_only = render_email_config(ROOT)
 
 # Load style preferences from session state
 background_color = st.session_state.get("background_color", "#fffbf0")
@@ -1118,14 +1124,13 @@ custom_css = f"""
 st.markdown(custom_css, unsafe_allow_html=True)
 
 # --- Main UI Tabs ---
-tab_fetch, tab_process, tab_single, tab_results, tab_chat, tab_env = st.tabs(
+tab_fetch, tab_process, tab_single, tab_results, tab_chat = st.tabs(
     [
         "Lấy CV từ Email",
         "Xử lý CV",
         "Single File",
         "Kết quả",
         "Hỏi AI",
-        "Chỉnh .env",
     ]
 )
 
@@ -1143,9 +1148,6 @@ with tab_results:
 
 with tab_chat:
     render_enhanced_chat_tab()
-
-with tab_env:
-    env_tab.render(ROOT)
 
 
 # --- Footer ---
