@@ -3,6 +3,7 @@ import os
 import pandas as pd
 import streamlit as st
 from typing import cast
+from modules.ui_utils import loading_overlay
 
 from modules.qa_chatbot import QAChatbot
 from modules.config import OUTPUT_CSV
@@ -34,7 +35,7 @@ def render(provider: str, model: str, api_key: str) -> None:
                 model=cast(str, model),
                 api_key=cast(str, api_key),
             )
-            with st.spinner("Đang hỏi AI..."):
+            with loading_overlay("Đang hỏi AI..."):
                 try:
                     logging.info("Đang gửi câu hỏi tới AI")
                     answer = chatbot.ask_question(question, df)

@@ -31,6 +31,7 @@ if __package__ is None:
     __package__ = "main_engine"
 
 import streamlit as st
+from modules.ui_utils import loading_overlay
 
 import requests
 import pandas as pd
@@ -503,8 +504,7 @@ def process_chat_message(user_input: str):
         })
         
         # Get AI response
-        with st.spinner("🤖 AI đang suy nghĩ..."):
-            # Import QA chatbot
+        with loading_overlay("🤖 AI đang suy nghĩ..."):
             try:
                 from modules.qa_chatbot import QAChatbot
                 
@@ -754,7 +754,7 @@ def render_sidebar():
             if not api_key:
                 st.sidebar.warning("⚠️ Vui lòng nhập API Key trước khi lấy models")
             else:
-                with st.spinner("Đang lấy danh sách models..."):
+                with loading_overlay("Đang lấy danh sách models..."):
                     models = get_available_models(provider, api_key)
                     if models:
                         safe_session_state_set("available_models", models)
