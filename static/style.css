@@ -101,3 +101,11 @@ table.dataframe th,
 table.dataframe td {
   padding: 4px 6px;
 }
+
+/* Enable horizontal scroll for results table */
+.results-table-container {
+  overflow-x: auto;
+}
+.results-table-container table.dataframe {
+  width: max-content;
+}

@@ -34,7 +34,7 @@ def render() -> None:
 
         table_html = df.to_html(escape=False, index=False)
         styled_html = (
-            "<div style='max-height: 500px; overflow-y: auto; overflow-x: auto;'>"
+            "<div class='results-table-container' style='max-height: 500px; overflow-y: auto;'>"
             f"{table_html}"
             "</div>"
         )
