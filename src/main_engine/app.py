@@ -724,9 +724,10 @@ def initialize_app():
 initialize_app()
 
 # --- Apply theme from Streamlit config ---
-theme = st.get_option("theme.base") or "light"
+# Always force light theme for a consistent look
+theme = "light"
 st.markdown(
-    f"<script>document.documentElement.setAttribute('data-theme', '{theme}');</script>",
+    "<script>document.documentElement.setAttribute('data-theme', 'light');</script>",
     unsafe_allow_html=True,
 )
 
