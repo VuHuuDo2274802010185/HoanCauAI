@@ -91,11 +91,13 @@ LOG_FILE = _clean_path("LOG_FILE", str(LOG_DIR / "app.log"))
 
 ATTACHMENT_DIR = _clean_path("ATTACHMENT_DIR", "attachments")
 OUTPUT_CSV = _clean_path("OUTPUT_CSV", "csv/cv_summary.csv")
+OUTPUT_EXCEL = _clean_path("OUTPUT_EXCEL", "excel/cv_summary.xlsx")
 # File lưu log hội thoại chat
 CHAT_LOG_FILE = _clean_path("CHAT_LOG_FILE", str(LOG_DIR / "chat_log.json"))
 # tạo thư mục nếu chưa tồn tại
 ATTACHMENT_DIR.mkdir(parents=True, exist_ok=True)
 OUTPUT_CSV.parent.mkdir(parents=True, exist_ok=True)
+OUTPUT_EXCEL.parent.mkdir(parents=True, exist_ok=True)
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 CHAT_LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
 LOG_FILE.parent.mkdir(parents=True, exist_ok=True)

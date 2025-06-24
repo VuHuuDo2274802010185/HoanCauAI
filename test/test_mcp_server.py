@@ -17,6 +17,7 @@ os.environ.setdefault("EMAIL_USER", "user")
 os.environ.setdefault("EMAIL_PASS", "pass")
 os.environ.setdefault("ATTACHMENT_DIR", "attachments")
 os.environ.setdefault("OUTPUT_CSV", "csv/out.csv")
+os.environ.setdefault("OUTPUT_EXCEL", "excel/out.xlsx")
 
 import modules.mcp_server as mcp
 
@@ -34,6 +35,8 @@ class DummyProcessor:
         return pd.DataFrame([{"a": 1}])
     def save_to_csv(self, df, path):
         self.saved = path
+    def save_to_excel(self, df, path):
+        self.saved_excel = path
     def extract_text(self, path):
         return "text"
     def extract_info_with_llm(self, text):

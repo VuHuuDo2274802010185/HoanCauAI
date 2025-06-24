@@ -18,6 +18,7 @@ from modules.dynamic_llm_client import DynamicLLMClient
 from modules.config import (
     ATTACHMENT_DIR,
     OUTPUT_CSV,
+    OUTPUT_EXCEL,
     EMAIL_HOST,
     EMAIL_PORT,
     LLM_PROVIDER,
@@ -106,7 +107,10 @@ if st.button("Process CV"):
             progress.progress(idx / total)
         df = pd.DataFrame(results)
         processor.save_to_csv(df, str(OUTPUT_CSV))
-        st.success(f"Đã xử lý {len(df)} CV. Kết quả lưu ở {OUTPUT_CSV}")
+        processor.save_to_excel(df, str(OUTPUT_EXCEL))
+        st.success(
+            f"Đã xử lý {len(df)} CV. Kết quả lưu ở {OUTPUT_CSV} và {OUTPUT_EXCEL}"
+        )
 
 # --- View results ---
 st.header("Xem kết quả")
@@ -119,5 +123,13 @@ if OUTPUT_CSV.exists():
         file_name=OUTPUT_CSV.name,
         mime="text/csv",
     )
+    if OUTPUT_EXCEL.exists():
+        with open(OUTPUT_EXCEL, "rb") as f:
+            st.download_button(
+                "Tải Excel",
+                f.read(),
+                file_name=OUTPUT_EXCEL.name,
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
 else:
     st.info("Chưa có kết quả để hiển thị.")

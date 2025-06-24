@@ -4,7 +4,7 @@ import pandas as pd
 import streamlit as st
 
 from modules.cv_processor import CVProcessor
-from modules.config import ATTACHMENT_DIR, OUTPUT_CSV, get_model_price
+from modules.config import ATTACHMENT_DIR, OUTPUT_CSV, OUTPUT_EXCEL, get_model_price
 from modules.dynamic_llm_client import DynamicLLMClient
 
 
@@ -70,5 +70,8 @@ def render(provider: str, model: str, api_key: str) -> None:
                 ],
             )
             processor.save_to_csv(df, str(OUTPUT_CSV))
+            processor.save_to_excel(df, str(OUTPUT_EXCEL))
             logging.info(f"Đã xử lý {len(df)} CV và lưu kết quả")
-            st.success(f"Đã xử lý {len(df)} CV và lưu vào `{OUTPUT_CSV.name}`.")
+            st.success(
+                f"Đã xử lý {len(df)} CV và lưu vào `{OUTPUT_CSV.name}` và `{OUTPUT_EXCEL.name}`."
+            )

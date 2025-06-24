@@ -10,6 +10,7 @@ from typing import List, Dict, Optional  # khai báo kiểu
 import pandas as pd  # xử lý DataFrame
 pd.set_option("display.max_colwidth", None)  # hiển thị đầy đủ nội dung các cột
 import docx  # đọc file .docx
+from openpyxl.styles import Font, PatternFill  # định dạng Excel
 
 # --- Thiết lập logger cho module ---
 logger = logging.getLogger(__name__)  # lấy logger theo tên module
@@ -43,7 +44,7 @@ except ImportError:
             _PDF_EX = None  # không có thư viện PDF nào
 
 from .llm_client import LLMClient  # client LLM mặc định
-from .config import ATTACHMENT_DIR, OUTPUT_CSV  # cấu hình thư mục và file xuất
+from .config import ATTACHMENT_DIR, OUTPUT_CSV, OUTPUT_EXCEL  # cấu hình thư mục và file xuất
 from .prompts import CV_EXTRACTION_PROMPT  # prompt LLM để trích xuất CV
 
 class CVProcessor:
@@ -245,4 +246,36 @@ class CVProcessor:
         Ghi đè file CSV mỗi lần chạy; nếu muốn append, có thể chuyển mode và header
         """
         df.to_csv(output, index=False, encoding="utf-8-sig")  # lưu file
+        logger.info(f"✅ Đã lưu {len(df)} hồ sơ vào {output}")
+
+    def save_to_excel(self, df: pd.DataFrame, output: str = OUTPUT_EXCEL) -> None:
+        """Ghi DataFrame ra file Excel với định dạng đẹp và hyperlink"""
+        df = df.copy()
+        with pd.ExcelWriter(output, engine="openpyxl") as writer:
+            df.to_excel(writer, index=False, sheet_name="CVs")
+            wb = writer.book
+            ws = writer.sheets["CVs"]
+
+            # Định dạng header
+            header_font = Font(bold=True)
+            header_fill = PatternFill("solid", fgColor="FFFFCC")
+            for cell in ws[1]:
+                cell.font = header_font
+                cell.fill = header_fill
+
+            ws.freeze_panes = "A2"
+
+            # Auto-width cho các cột
+            for column_cells in ws.columns:
+                length = max(len(str(cell.value)) if cell.value is not None else 0 for cell in column_cells)
+                ws.column_dimensions[column_cells[0].column_letter].width = min(length + 2, 50)
+
+            # Tạo hyperlink cho cột "Nguồn"
+            if "Nguồn" in df.columns:
+                col_idx = list(df.columns).index("Nguồn") + 1
+                for row in range(2, len(df) + 2):
+                    fname = ws.cell(row=row, column=col_idx).value
+                    path = (ATTACHMENT_DIR / str(fname)).resolve()
+                    ws.cell(row=row, column=col_idx).value = f'=HYPERLINK("{path}", "{fname}")'
+
         logger.info(f"✅ Đã lưu {len(df)} hồ sơ vào {output}")
