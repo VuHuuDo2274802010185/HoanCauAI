@@ -461,89 +461,32 @@ def render_chat_statistics():
 
 @handle_error
 def render_chat_history():
-    """Render chat conversation history inside a scrollable container"""
+    """Render chat conversation history using Streamlit chat components."""
     history = st.session_state.get("conversation_history", [])
     if not history:
         st.info("💬 Bắt đầu cuộc trò chuyện bằng cách gửi tin nhắn bên dưới!")
         return
 
-    messages_html = ""
     for message in history:
         role = message.get("role", "user")
         content = message.get("content", "")
         timestamp = message.get("timestamp", "")
 
-        if role == "user":
-            content_html = escape(content)
-        else:
-            content_html = markdown.markdown(content)
-        if role == "user":
-            # User message - aligned right
-            messages_html += f"""
-            <div style='display: flex; justify-content: flex-end; margin: 10px 0;'>
-                <div class='chat-message' style='
-                    background: linear-gradient(135deg, {st.session_state.get('accent_color', '#d4af37')} 0%, {st.session_state.get('secondary_color', '#f4e09c')} 100%);
-                    color: white;
-                    margin-left: 20%;
-                '>
-                    <strong>👤 Bạn:</strong><br>
-                    {content_html}
-                    <div style='font-size: 0.8em; opacity: 0.8; margin-top: 5px;'>
-                        {timestamp[:19] if timestamp else ''}
-                    </div>
-                </div>
-            </div>
-            """
-        else:
-            # AI message - aligned left
-            messages_html += f"""
-            <div style='display: flex; justify-content: flex-start; margin: 10px 0;'>
-                <div class='chat-message' style='
-                    background: linear-gradient(135deg, {st.session_state.get('background_color', '#fffbf0')} 0%, {st.session_state.get('secondary_color', '#f4e09c')}44 100%);
-                    color: {st.session_state.get('text_color', '#000000')};
-                    border: 2px solid {st.session_state.get('secondary_color', '#f4e09c')};
-                    margin-right: 20%;
-                '>
-                    <strong>🤖 AI:</strong><br>
-                    {content_html}
-                    <div style='font-size: 0.8em; opacity: 0.7; margin-top: 5px;'>
-                        {timestamp[:19] if timestamp else ''}
-                    </div>
-                </div>
-            </div>
-            """
-
-    styled_html = (
-        "<div style='max-height: 500px; overflow-y: auto; overflow-x: auto;'>"
-        f"{messages_html}"
-        "</div>"
-    )
-    st.markdown(styled_html, unsafe_allow_html=True)
+        avatar = "👤" if role == "user" else "🤖"
+        with st.chat_message("assistant" if role != "user" else "user", avatar=avatar):
+            if role == "user":
+                st.markdown(escape(content))
+            else:
+                st.markdown(content, unsafe_allow_html=True)
+            if timestamp:
+                st.caption(timestamp[:19])
 
 
 @handle_error
 def render_chat_input_form():
-    """Render chat input form"""
-    with st.form("chat_form", clear_on_submit=True):
-        col1, col2 = st.columns([4, 1])
-        
-        with col1:
-            user_input = st.text_area(
-                "💬 Nhập câu hỏi của bạn:",
-                placeholder="Ví dụ: Tóm tắt thông tin các ứng viên có kinh nghiệm AI...",
-                height=100,
-                help="Nhấn Ctrl+Enter để gửi nhanh"
-            )
-        
-        with col2:
-            st.markdown("<br>", unsafe_allow_html=True)  # Spacing
-            submit_button = st.form_submit_button(
-                "📨 Gửi",
-                help="Gửi câu hỏi cho AI",
-                use_container_width=True
-            )
-    
-    if submit_button and user_input.strip():
+    """Render chat input box using Streamlit's chat_input component."""
+    user_input = st.chat_input("💬 Nhập câu hỏi của bạn...")
+    if user_input and user_input.strip():
         process_chat_message(user_input.strip())
 
 
