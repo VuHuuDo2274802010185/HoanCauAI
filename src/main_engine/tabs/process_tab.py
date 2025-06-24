@@ -14,6 +14,11 @@ def render(provider: str, model: str, api_key: str) -> None:
     price = get_model_price(model)
     label = f"{model} ({price})" if price != "unknown" else model
     st.markdown(f"**LLM:** `{provider}` / `{label}`")
+
+    # Placeholders to avoid creating new widgets on every run
+    progress_slot = st.empty()
+    status_slot = st.empty()
+
     if st.button("Bắt đầu xử lý CV", help="Phân tích tất cả file trong attachments"):
         logging.info("Bắt đầu xử lý batch CV từ attachments")
         files = [
@@ -31,8 +36,9 @@ def render(provider: str, model: str, api_key: str) -> None:
                     api_key=api_key,
                 )
             )
-            progress = st.progress(0)
-            status = st.empty()
+            # Reuse placeholders so old progress bars don't stack
+            progress = progress_slot.progress(0)
+            status = status_slot.empty()
             results = []
             total = len(files)
             for idx, path in enumerate(files, start=1):
@@ -75,3 +81,5 @@ def render(provider: str, model: str, api_key: str) -> None:
             st.success(
                 f"Đã xử lý {len(df)} CV và lưu vào `{OUTPUT_CSV.name}` và `{OUTPUT_EXCEL.name}`."
             )
+            progress_slot.empty()
+            status_slot.empty()
