@@ -91,7 +91,8 @@ tạo các thư mục cần thiết.
    cp .env.example .env
    ```
    Sau đó mở `.env` bằng editor bất kỳ và thay thế các giá trị placeholder
-   (như `your_google_api_key`) bằng thông tin thực tế. Những biến quan trọng gồm:
+   (như `your_google_api_key`) bằng thông tin thực tế hoặc chạy
+   `python scripts/update_env.py` để nhập giá trị trực tiếp. Những biến quan trọng gồm:
    `LLM_PROVIDER`, `LLM_MODEL`, một trong các khóa API (`GOOGLE_API_KEY` hoặc
    `OPENROUTER_API_KEY`), `EMAIL_USER` và `EMAIL_PASS`. File `.env` đã nằm trong
    `.gitignore` nên **không commit** lên Git. Nếu gặp lỗi cấu hình, hãy so sánh
