@@ -55,7 +55,10 @@ def full_process(unseen_only):
         click.echo("Không có CV mới để xử lý.")
     else:
         processor.save_to_csv(df, str(settings.output_csv))
-        click.echo(f"Đã xử lý {len(df)} CV và lưu vào {settings.output_csv}")
+        processor.save_to_excel(df, str(settings.output_excel))
+        click.echo(
+            f"Đã xử lý {len(df)} CV và lưu vào {settings.output_csv} & {settings.output_excel}"
+        )
 
 @cli.command()
 @click.argument('file', type=click.Path(exists=True))

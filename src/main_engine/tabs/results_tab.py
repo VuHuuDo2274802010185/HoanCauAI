@@ -3,7 +3,7 @@ import os
 import pandas as pd
 import streamlit as st
 
-from modules.config import ATTACHMENT_DIR, OUTPUT_CSV
+from modules.config import ATTACHMENT_DIR, OUTPUT_CSV, OUTPUT_EXCEL
 
 
 def render() -> None:
@@ -31,5 +31,14 @@ def render() -> None:
             mime="text/csv",
             help="Lưu kết quả phân tích về máy",
         )
+        if os.path.exists(OUTPUT_EXCEL):
+            with open(OUTPUT_EXCEL, "rb") as f:
+                st.download_button(
+                    label="Tải xuống Excel",
+                    data=f.read(),
+                    file_name=OUTPUT_EXCEL.name,
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    help="File Excel kèm link tới CV gốc",
+                )
     else:
         st.info("Chưa có kết quả. Vui lòng chạy Batch hoặc Single.")

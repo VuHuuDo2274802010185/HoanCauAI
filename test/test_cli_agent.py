@@ -47,6 +47,8 @@ def cli_module(monkeypatch, tmp_path):
             return DummyDF(calls.get('df_rows', []))
         def save_to_csv(self, df, path):
             calls['saved'] = path
+        def save_to_excel(self, df, path):
+            calls['saved_excel'] = path
         def extract_text(self, f):
             calls['extract_text'] = f
             return 'text'
@@ -84,7 +86,8 @@ def cli_module(monkeypatch, tmp_path):
         email_user='u',
         email_pass='pw',
         email_unseen_only=True,
-        output_csv=tmp_path / 'out.csv'
+        output_csv=tmp_path / 'out.csv',
+        output_excel=tmp_path / 'out.xlsx'
     )
     monkeypatch.setitem(sys.modules, 'modules.mcp_server', types.SimpleNamespace(settings=settings))
 

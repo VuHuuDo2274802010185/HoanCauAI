@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     email_pass: str        # mật khẩu/app-password email
     attachment_dir: Path   # thư mục lưu tệp đính kèm
     output_csv: Path       # đường dẫn file CSV xuất kết quả
+    output_excel: Path     # đường dẫn file Excel xuất kết quả
     email_unseen_only: bool = True  # chỉ quét email chưa đọc nếu True
     platform_api_key: str | None = None  # API key cho các platform (tùy chọn)
 
@@ -41,6 +42,7 @@ settings = Settings()
 settings.attachment_dir.mkdir(parents=True, exist_ok=True)
 # Đảm bảo thư mục chứa file kết quả tồn tại
 settings.output_csv.parent.mkdir(parents=True, exist_ok=True)
+settings.output_excel.parent.mkdir(parents=True, exist_ok=True)
 
 # Cấu hình logging cho toàn ứng dụng
 logging.basicConfig(
@@ -94,6 +96,7 @@ async def run_full():
 
     # Lưu DataFrame vào CSV, ghi đè file cũ
     processor.save_to_csv(df, str(settings.output_csv))
+    processor.save_to_excel(df, str(settings.output_excel))
     return {"processed": len(df)}
 
 
