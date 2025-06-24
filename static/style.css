@@ -105,9 +105,11 @@ table.dataframe td {
 /* Enable horizontal scroll for results table */
 .results-table-container {
   overflow-x: auto;
+  max-width: 100%;
 }
 .results-table-container table.dataframe {
   width: max-content;
+  max-width: 100%;
 }
 /* Loading overlay styles */
 .loading-overlay {
