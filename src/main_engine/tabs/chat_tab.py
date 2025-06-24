@@ -38,7 +38,9 @@ def render(provider: str, model: str, api_key: str) -> None:
                 try:
                     logging.info("Đang gửi câu hỏi tới AI")
                     answer = chatbot.ask_question(question, df)
-                    st.markdown(answer)
+                    # Allow basic HTML in the answer so line breaks and lists
+                    # from the LLM render correctly in Streamlit.
+                    st.markdown(answer, unsafe_allow_html=True)
                 except Exception as e:
                     logging.error(f"Lỗi hỏi AI: {e}")
                     st.error(f"Lỗi khi hỏi AI: {e}")
