@@ -35,6 +35,8 @@ import streamlit as st
 import requests
 import pandas as pd
 from datetime import datetime
+import markdown
+from html import escape
 from dotenv import set_key, load_dotenv
 
 # Configure logging with better formatting
@@ -472,6 +474,10 @@ def render_chat_history():
         timestamp = message.get("timestamp", "")
 
         if role == "user":
+            content_html = escape(content)
+        else:
+            content_html = markdown.markdown(content)
+        if role == "user":
             # User message - aligned right
             messages_html += f"""
             <div style='display: flex; justify-content: flex-end; margin: 10px 0;'>
@@ -481,7 +487,7 @@ def render_chat_history():
                     margin-left: 20%;
                 '>
                     <strong>👤 Bạn:</strong><br>
-                    {content}
+                    {content_html}
                     <div style='font-size: 0.8em; opacity: 0.8; margin-top: 5px;'>
                         {timestamp[:19] if timestamp else ''}
                     </div>
@@ -499,7 +505,7 @@ def render_chat_history():
                     margin-right: 20%;
                 '>
                     <strong>🤖 AI:</strong><br>
-                    {content}
+                    {content_html}
                     <div style='font-size: 0.8em; opacity: 0.7; margin-top: 5px;'>
                         {timestamp[:19] if timestamp else ''}
                     </div>
