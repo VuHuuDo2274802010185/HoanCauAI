@@ -1,5 +1,6 @@
 import logging
 from typing import List
+from pathlib import Path
 import streamlit as st
 
 from modules.config import ATTACHMENT_DIR, EMAIL_HOST, EMAIL_PORT
@@ -28,8 +29,18 @@ def render(email_user: str, email_pass: str, unseen_only: bool) -> None:
                 st.write(new_files)
             else:
                 st.info("Không có file đính kèm mới.")
-        attachments = [str(p) for p in ATTACHMENT_DIR.glob("*")]
-        st.write(attachments)
+        attachments = sorted(ATTACHMENT_DIR.glob("*"))
+        if attachments:
+            items = "".join(f"<li>{Path(p).name}</li>" for p in attachments)
+            list_html = f"<ul>{items}</ul>"
+            styled_html = (
+                "<div style='max-height: 400px; overflow-y: auto; overflow-x: auto;'>"
+                f"{list_html}"
+                "</div>"
+            )
+            st.markdown(styled_html, unsafe_allow_html=True)
+        else:
+            st.info("Chưa có CV nào được tải về.")
     if st.button("Xóa toàn bộ attachments", help="Xoá tất cả file đã tải"):
         st.session_state.confirm_delete = True
     if st.session_state.get("confirm_delete"):

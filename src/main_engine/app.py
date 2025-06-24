@@ -65,24 +65,25 @@ try:
     from modules.auto_fetcher import watch_loop
     
     try:
-        from .tabs import (
-            fetch_tab,
-            process_tab,
-            single_tab,
-            results_tab,
-            env_tab,
-        )
-        # Import chat_tab only if exists, otherwise use built-in
-        try:
-            from .tabs import chat_tab  # noqa: F401
-            HAS_EXTERNAL_CHAT_TAB = True
-        except ImportError:
-            HAS_EXTERNAL_CHAT_TAB = False
-            logger.info("Using built-in chat tab implementation")
+        from .tabs import fetch_tab, process_tab, single_tab, results_tab
     except ImportError as ie:
-        logger.warning(f"Some tab imports failed: {ie}")
-        # Set fallback flags
+        logger.error(f"Failed to import core tabs: {ie}")
+        st.error(f"Lỗi import tabs: {ie}")
+        st.stop()
+
+    try:
+        from .tabs import env_tab
+    except ImportError:
+        logger.warning("env_tab not available; .env editing disabled")
+        import types
+        env_tab = types.SimpleNamespace(render=lambda *a, **k: None)
+
+    try:
+        from .tabs import chat_tab  # noqa: F401
+        HAS_EXTERNAL_CHAT_TAB = True
+    except ImportError:
         HAS_EXTERNAL_CHAT_TAB = False
+        logger.info("Using built-in chat tab implementation")
 except ImportError as e:
     logger.error(f"Failed to import modules: {e}")
     st.error(f"Lỗi import modules: {e}")
