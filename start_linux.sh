@@ -1,81 +1,41 @@
-#!/bin/bash
-# Hoàn Cầu AI CV Processor - Quick Start Script
+#!/usr/bin/env bash
+# HoanCau AI - Run Script for macOS/Linux
+set -e
 
-echo "🚀 Hoàn Cầu AI CV Processor - Quick Start"
-echo "=========================================="
-
-# Check if we're in the right directory
+# 0) Ensure we're in project root
 if [ ! -f "src/main_engine/app.py" ]; then
-    echo "❌ Error: Please run this script from the project root directory"
+    echo "[ERROR] Please run this script from the project root directory" >&2
     exit 1
 fi
 
-# Check Python version
-echo "🐍 Checking Python version..."
-python3 --version
+# 1) Check for python3
+if ! command -v python3 >/dev/null 2>&1; then
+    echo "[ERROR] python3 is required but not found." >&2
+    exit 1
+fi
 
-# Check virtual environment
-if [ -d ".venv" ]; then
-    echo "✅ Virtual environment found"
+# 2) Activate virtual environment if present
+if [ -f ".venv/bin/activate" ]; then
     source .venv/bin/activate
+    echo "[OK] Virtual environment activated."
 else
-    echo "⚠️  No virtual environment found. Creating one..."
-    python3 -m venv .venv
-    source .venv/bin/activate
-    echo "✅ Virtual environment created and activated"
+    echo "[WARN] .venv not found, using system Python."
 fi
 
-# Install dependencies
-echo "📦 Installing dependencies..."
-pip install -q -r requirements.txt
+MODE=$1
+shift || true
 
-# Run health check
-echo "🏥 Running health check..."
-python3 scripts/health_check.py
-health_status=$?
-
-if [ $health_status -eq 0 ]; then
-    echo "✅ Health check passed!"
-else
-    echo "⚠️  Health check found some issues, but continuing..."
-fi
-
-# Check for .env file
-if [ ! -f ".env" ]; then
-    echo "📝 Creating .env file from template..."
-    cp .env.example .env
-    echo "⚠️  Please edit .env file with your API keys and configuration"
-    echo "📁 Opening .env file for editing..."
-    ${EDITOR:-nano} .env
-fi
-
-# Create required directories
-echo "📁 Ensuring required directories exist..."
-mkdir -p attachments csv log static
-
-echo ""
-echo "🎉 Setup completed!"
-echo ""
-echo "📋 Next steps:"
-echo "1. Edit .env file with your API keys if you haven't already"
-echo "2. Run the application with: python3 -m streamlit run src/main_engine/app.py"
-echo "3. Open your browser to: http://localhost:8501"
-echo ""
-echo "🔧 Available commands:"
-echo "- Health check: python3 scripts/health_check.py"
-echo "- CLI mode: python3 scripts/cli_agent.py --help"
-echo "- Simple mode: python3 -m streamlit run scripts/simple_app.py"
-echo ""
-
-# Ask if user wants to start the app
-read -p "🚀 Start the Streamlit app now? (y/N): " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo "🎬 Starting Hoàn Cầu AI CV Processor..."
-    echo "📱 Access the app at: http://localhost:8501"
-    echo "🛑 Press Ctrl+C to stop the server"
-    echo ""
-    python3 -m streamlit run src/main_engine/app.py --server.port 8501 --server.address 0.0.0.0
-else
-    echo "👋 Setup complete! Run 'python3 -m streamlit run src/main_engine/app.py' when you're ready."
-fi
+case "$MODE" in
+    cli)
+        echo "[MODE] Running CLI processor..."
+        python3 src/main_engine/main.py "$@"
+        ;;
+    select)
+        echo "[MODE] Selecting TOP 5 resumes..."
+        python3 src/main_engine/select_top5.py "$@"
+        ;;
+    *)
+        echo "[MODE] Launching Streamlit UI..."
+        streamlit run src/main_engine/app.py
+        ;;
+esac
