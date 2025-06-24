@@ -28,7 +28,7 @@ img[src*="logo.png"] {
 body {
   background-color: var(--cv-bg-color) !important;
   color: var(--cv-text-color) !important;
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   font-family: 'Be Vietnam Pro', sans-serif;
 }
 
@@ -91,4 +91,13 @@ div[data-testid="stDataFrame"] td {
   white-space: pre-wrap !important;
   word-break: break-word !important;
   max-width: 300px;
+}
+
+/* Compact result table */
+table.dataframe {
+  font-size: 0.85rem;
+}
+table.dataframe th,
+table.dataframe td {
+  padding: 4px 6px;
 }
