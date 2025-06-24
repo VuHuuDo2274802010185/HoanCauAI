@@ -748,7 +748,11 @@ def render_sidebar():
     logo_path = ROOT / "static" / "logo.png"
     if logo_path.exists():
         try:
-            st.sidebar.image(str(logo_path), use_container_width=True)
+            st.sidebar.image(
+                str(logo_path),
+                use_container_width=True,
+                caption="Logo Hoàn Cầu AI",
+            )
         except Exception as e:
             logger.warning(f"Failed to load logo: {e}")
             st.sidebar.markdown("**🏢 Hoàn Cầu AI CV Processor**")
