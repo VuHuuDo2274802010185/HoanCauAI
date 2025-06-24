@@ -464,58 +464,60 @@ def render_chat_statistics():
 
 @handle_error
 def render_chat_history():
-    """Render chat conversation history"""
+    """Render chat conversation history inside a scrollable container"""
     history = st.session_state.get("conversation_history", [])
     if not history:
         st.info("💬 Bắt đầu cuộc trò chuyện bằng cách gửi tin nhắn bên dưới!")
         return
-    
-    for i, message in enumerate(history):
+
+    messages_html = ""
+    for message in history:
         role = message.get("role", "user")
         content = message.get("content", "")
         timestamp = message.get("timestamp", "")
-        
+
         if role == "user":
             # User message - aligned right
-            st.markdown(
-                f"""
-                <div style="display: flex; justify-content: flex-end; margin: 10px 0;">
-                    <div class="chat-message" style="
-                        background: linear-gradient(135deg, {st.session_state.get('accent_color', '#d4af37')} 0%, {st.session_state.get('secondary_color', '#f4e09c')} 100%);
-                        color: white;
-                        margin-left: 20%;
-                    ">
-                        <strong>👤 Bạn:</strong><br>
-                        {content}
-                        <div style="font-size: 0.8em; opacity: 0.8; margin-top: 5px;">
-                            {timestamp[:19] if timestamp else ''}
-                        </div>
+            messages_html += f"""
+            <div style='display: flex; justify-content: flex-end; margin: 10px 0;'>
+                <div class='chat-message' style='
+                    background: linear-gradient(135deg, {st.session_state.get('accent_color', '#d4af37')} 0%, {st.session_state.get('secondary_color', '#f4e09c')} 100%);
+                    color: white;
+                    margin-left: 20%;
+                '>
+                    <strong>👤 Bạn:</strong><br>
+                    {content}
+                    <div style='font-size: 0.8em; opacity: 0.8; margin-top: 5px;'>
+                        {timestamp[:19] if timestamp else ''}
                     </div>
                 </div>
-                """,
-                unsafe_allow_html=True
-            )
+            </div>
+            """
         else:
             # AI message - aligned left
-            st.markdown(
-                f"""
-                <div style="display: flex; justify-content: flex-start; margin: 10px 0;">
-                    <div class="chat-message" style="
-                        background: linear-gradient(135deg, {st.session_state.get('background_color', '#fffbf0')} 0%, {st.session_state.get('secondary_color', '#f4e09c')}44 100%);
-                        color: {st.session_state.get('text_color', '#000000')};
-                        border: 2px solid {st.session_state.get('secondary_color', '#f4e09c')};
-                        margin-right: 20%;
-                    ">
-                        <strong>🤖 AI:</strong><br>
-                        {content}
-                        <div style="font-size: 0.8em; opacity: 0.7; margin-top: 5px;">
-                            {timestamp[:19] if timestamp else ''}
-                        </div>
+            messages_html += f"""
+            <div style='display: flex; justify-content: flex-start; margin: 10px 0;'>
+                <div class='chat-message' style='
+                    background: linear-gradient(135deg, {st.session_state.get('background_color', '#fffbf0')} 0%, {st.session_state.get('secondary_color', '#f4e09c')}44 100%);
+                    color: {st.session_state.get('text_color', '#000000')};
+                    border: 2px solid {st.session_state.get('secondary_color', '#f4e09c')};
+                    margin-right: 20%;
+                '>
+                    <strong>🤖 AI:</strong><br>
+                    {content}
+                    <div style='font-size: 0.8em; opacity: 0.7; margin-top: 5px;'>
+                        {timestamp[:19] if timestamp else ''}
                     </div>
                 </div>
-                """,
-                unsafe_allow_html=True
-            )
+            </div>
+            """
+
+    styled_html = (
+        "<div style='max-height: 500px; overflow-y: auto; overflow-x: auto;'>"
+        f"{messages_html}"
+        "</div>"
+    )
+    st.markdown(styled_html, unsafe_allow_html=True)
 
 
 @handle_error
