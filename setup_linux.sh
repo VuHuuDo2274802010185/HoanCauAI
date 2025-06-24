@@ -21,10 +21,13 @@ fi
 # 3) Activate virtual environment
 source .venv/bin/activate
 
-# 4) Install dependencies
+# 4) Install dependencies using uv if available
 echo "Installing dependencies..."
-pip install --upgrade pip
-pip install -r requirements.txt
+if ! command -v uv >/dev/null 2>&1; then
+    python3 -m pip install --upgrade uv
+fi
+uv pip install --upgrade pip
+uv pip install -r requirements.txt
 
 # 5) Copy .env.example to .env if needed
 if [ ! -f ".env" ]; then
