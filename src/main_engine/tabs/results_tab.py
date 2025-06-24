@@ -13,21 +13,13 @@ def render() -> None:
         df = pd.read_csv(OUTPUT_CSV, encoding="utf-8-sig")
 
         def make_link(fname: str) -> str:
-            """Create a safe link that works across browsers."""
+            """Return a direct download link to the attachment."""
             path = (ATTACHMENT_DIR / fname).resolve()
             if not path.exists():
                 return fname
-            import base64
 
-            data = base64.b64encode(path.read_bytes()).decode()
-            mime = (
-                "application/pdf"
-                if path.suffix.lower() == ".pdf"
-                else "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            )
-            return (
-                f'<a download="{fname}" href="data:{mime};base64,{data}">{fname}</a>'
-            )
+            url = path.as_uri()
+            return f'<a href="{url}" download target="_blank">{fname}</a>'
 
         if "Nguồn" in df.columns:
             df["Nguồn"] = df["Nguồn"].apply(make_link)
