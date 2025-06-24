@@ -196,6 +196,7 @@ Truy cập `http://localhost:8501` để:
 - Xử lý batch, xử lý đơn, xem CSV và chat với AI.
 - Trong tab **MCP Server**, nhập API key (Google/OpenRouter/VectorShift) và nhấn
   "Khởi động" để server tự nhận diện platform.
+- Tab **Chỉnh .env** cho phép xem và lưu nội dung file cấu hình ngay trên giao diện.
 
 ### 🚲 Simple Mode
 

@@ -70,6 +70,7 @@ try:
             process_tab,
             single_tab,
             results_tab,
+            env_tab,
         )
         # Import chat_tab only if exists, otherwise use built-in
         try:
@@ -1115,14 +1116,15 @@ custom_css = f"""
 
 st.markdown(custom_css, unsafe_allow_html=True)
 
-# --- Main UI: 3 Tabs ---
-tab_fetch, tab_process, tab_single, tab_results, tab_chat = st.tabs(
+# --- Main UI Tabs ---
+tab_fetch, tab_process, tab_single, tab_results, tab_chat, tab_env = st.tabs(
     [
         "Lấy CV từ Email",
         "Xử lý CV",
         "Single File",
         "Kết quả",
         "Hỏi AI",
+        "Chỉnh .env",
     ]
 )
 
@@ -1140,6 +1142,9 @@ with tab_results:
 
 with tab_chat:
     render_enhanced_chat_tab()
+
+with tab_env:
+    env_tab.render(ROOT)
 
 
 # --- Footer ---
