@@ -898,7 +898,13 @@ def render_email_config(root: Path):
             load_dotenv(env_path)
             set_key(str(env_path), "EMAIL_USER", email_user)
             set_key(str(env_path), "EMAIL_PASS", email_pass)
-            st.sidebar.success("Đã lưu thông tin email vào .env")
+            # Save LLM provider and corresponding API key as well
+            set_key(str(env_path), "LLM_PROVIDER", provider)
+            if provider == "google":
+                set_key(str(env_path), "GOOGLE_API_KEY", api_key)
+            else:
+                set_key(str(env_path), "OPENROUTER_API_KEY", api_key)
+            st.sidebar.success("Đã lưu thông tin email và API vào .env")
         except Exception as e:
             st.sidebar.error(f"Lỗi khi lưu file .env: {e}")
     
