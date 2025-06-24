@@ -1,6 +1,5 @@
 import os
 import sys
-import threading
 import click
 import pandas as pd
 import uvicorn

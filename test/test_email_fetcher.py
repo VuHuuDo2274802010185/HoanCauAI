@@ -2,7 +2,6 @@ import sys
 import os
 import types
 from email.message import EmailMessage
-from pathlib import Path
 
 import importlib
 import pytest

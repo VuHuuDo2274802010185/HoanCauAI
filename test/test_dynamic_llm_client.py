@@ -1,7 +1,6 @@
 import sys
 import os
 import types
-import importlib
 import pytest
 
 # Ensure repo root and src in path
