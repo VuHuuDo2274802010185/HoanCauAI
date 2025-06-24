@@ -32,10 +32,13 @@ def render() -> None:
         if "Nguồn" in df.columns:
             df["Nguồn"] = df["Nguồn"].apply(make_link)
 
-        st.markdown(
-            df.to_html(escape=False, index=False),
-            unsafe_allow_html=True,
+        table_html = df.to_html(escape=False, index=False)
+        styled_html = (
+            "<div style='max-height: 500px; overflow-y: auto; overflow-x: auto;'>"
+            f"{table_html}"
+            "</div>"
         )
+        st.markdown(styled_html, unsafe_allow_html=True)
         csv_bytes = df.to_csv(index=False, encoding="utf-8-sig").encode()
         st.download_button(
             label="Tải xuống CSV",
