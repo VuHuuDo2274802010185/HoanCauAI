@@ -1,9 +1,6 @@
 import sys
 import os
-import types
-import importlib
 import pandas as pd
-import pytest
 from fastapi.testclient import TestClient
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
