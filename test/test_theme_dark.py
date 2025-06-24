@@ -92,10 +92,10 @@ def _install_app(monkeypatch):
     return mod
 
 
-def _css_dark_values():
+def _css_light_values():
     css = (Path(__file__).resolve().parents[1] / "static" / "style.css").read_text()
-    m = re.search(r':root\[data-theme="dark"\]\s*{([^}]*)}', css, re.M)
-    assert m, "dark theme section missing"
+    m = re.search(r':root\[data-theme="light"\]\s*{([^}]*)}', css, re.M)
+    assert m, "light theme section missing"
     body = m.group(1)
     def g(var):
         m2 = re.search(rf'--{var}:\s*([^;]+);', body)
@@ -108,8 +108,8 @@ def _css_dark_values():
     }
 
 
-def test_dark_theme_session_state(monkeypatch):
+def test_theme_forced_light(monkeypatch):
     app = _install_app(monkeypatch)
-    expected = _css_dark_values()
+    expected = _css_light_values()
     for k, v in expected.items():
         assert app.st.session_state[k] == v

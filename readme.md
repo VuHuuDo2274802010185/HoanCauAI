@@ -208,14 +208,7 @@ streamlit run scripts/simple_app.py
 
 ### 🌙 Dark Mode
 
-Để kích hoạt giao diện nền tối cho Streamlit, hãy tạo file `.streamlit/config.toml` với nội dung:
-
-```toml
-[theme]
-base = "dark"
-```
-
-Sau khi chạy ứng dụng, bạn có thể tùy chỉnh thêm các màu sắc trong `static/style.css` nếu muốn.
+Ứng dụng hiện luôn sử dụng giao diện sáng (light theme) để đảm bảo trải nghiệm thống nhất. Nếu muốn bật chế độ tối, bạn cần tự chỉnh sửa mã nguồn.
 
 ## 🗂️ Cấu trúc dự án
 
