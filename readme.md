@@ -107,6 +107,14 @@ tạo các thư mục cần thiết.
 2. Giải nén (nếu tải ZIP) và mở `cmd` trong thư mục dự án.
 3. Chạy `setup.cmd` để tự động tạo `.env`, tạo virtual env và cài đặt
    dependencies.
+   Nếu thư mục dự án nằm trong OneDrive/Dropbox và cài đặt bị lỗi liên quan đến
+   `hardlink` hoặc `Failed to read typing-extensions`, hãy chạy thêm:
+
+   ```cmd
+   set UV_LINK_MODE=copy
+   ```
+
+   rồi xóa thư mục `.venv` (nếu đã có) và chạy lại `setup.cmd`.
 4. Mở file `.env` vừa tạo và điền các biến như `GOOGLE_API_KEY`, thông tin
    `EMAIL_*`.
 5. Cuối cùng chạy `run_resume_ai.cmd` để mở ngay giao diện Streamlit.
