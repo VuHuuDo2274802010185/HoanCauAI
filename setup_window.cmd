@@ -66,12 +66,14 @@ if not exist "%~dp0.venv\Scripts\activate.bat" (
 :: 4) Kích hoạt virtual environment
 call "%~dp0.venv\Scripts\activate.bat"
 echo Đã kích hoạt virtual environment.
+:: Đặt chế độ copy để tránh lỗi hardlink khi thư mục nằm trên dịch vụ cloud
+set UV_LINK_MODE=copy
 
 :: 5) Cài đặt dependencies
 echo Đang cài đặt dependencies...
 %PYTHON_CMD% -m pip install --upgrade uv
 uv pip install --upgrade pip
-uv pip install -r "%~dp0requirements.txt"
+uv pip install -r "%~dp0requirements.txt" --link-mode=copy --reinstall
 echo Hoàn tất cài đặt dependencies.
 
 :: 6) Tạo thư mục attachments
