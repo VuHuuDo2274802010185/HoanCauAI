@@ -50,6 +50,7 @@ from .config import (
     OUTPUT_EXCEL,
     EMAIL_UNSEEN_ONLY,
 )
+from .sent_time_store import load_sent_times
 from .prompts import CV_EXTRACTION_PROMPT  # prompt LLM để trích xuất CV
 
 class CVProcessor:
@@ -207,10 +208,15 @@ class CVProcessor:
         if self.fetcher:
             unseen = unseen_only if unseen_only is not None else EMAIL_UNSEEN_ONLY
             files: List[str] = self.fetcher.fetch_cv_attachments(unseen_only=unseen)
-            sent_map = dict(getattr(self.fetcher, "last_fetch_info", []))
         else:
             files = []
-            sent_map = {}
+
+        sent_map = {
+            os.path.join(ATTACHMENT_DIR, fname): ts
+            for fname, ts in load_sent_times().items()
+        }
+        if self.fetcher:
+            sent_map.update(dict(getattr(self.fetcher, "last_fetch_info", [])))
         if not files:
             logger.info("🔍 Không tìm thấy qua fetcher, dò thư mục attachments...")
             files = [

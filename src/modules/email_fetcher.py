@@ -12,6 +12,7 @@ from typing import List, Optional, Tuple
 from email.utils import parsedate_to_datetime
 
 from .config import ATTACHMENT_DIR, EMAIL_UNSEEN_ONLY  # đường dẫn lưu file đính kèm và chế độ quét
+from .sent_time_store import record_sent_time
 
 # --- Logger của module (tránh nhân đôi handler khi tạo nhiều instance) ---
 logger = logging.getLogger(__name__)
@@ -248,6 +249,10 @@ class EmailFetcher:
                         f.write(part.get_payload(decode=True))
                     new_files.append(path)
                     self.last_fetch_info.append((path, sent_time))
+                    try:
+                        record_sent_time(path, sent_time)
+                    except Exception as e:
+                        self.logger.warning(f"Could not record sent time for {path}: {e}")
                     self.logger.info(f"[OK] Lưu đính kèm mới: {path}")
 
                 # Đánh dấu email đã đọc để tránh xử lý lại lần sau
