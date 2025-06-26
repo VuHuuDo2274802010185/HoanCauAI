@@ -106,6 +106,18 @@ if not exist "%~dp0static" (
     echo Thư mục static đã tồn tại.
 )
 
+:: 7) Tạo shortcut "HoanCauAi.cmd" ra Desktop nếu chưa tồn tại
+for /f "tokens=2,*" %%i in ('reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders" /v Desktop') do set DESKTOP_PATH=%%j
+set "SHORTCUT=%DESKTOP_PATH%\HoanCauAi.cmd.lnk"
+if not exist "%SHORTCUT%" (
+    powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+        "$s=(New-Object -COM WScript.Shell).CreateShortcut('%SHORTCUT%');" ^
+        "$s.TargetPath='%~dp0start_window.cmd';" ^
+        "$s.WorkingDirectory='%~dp0';" ^
+        "$s.IconLocation='%~dp0static\\logo.png';" ^
+        "$s.Save()"
+)
+
 echo Setup hoàn tất! Nhấn bất kỳ phím nào để thoát.
 popd
 pause
