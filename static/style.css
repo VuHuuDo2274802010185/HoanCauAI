@@ -112,6 +112,12 @@ table.dataframe td {
   max-width: 100%;
   border-collapse: collapse;
 }
+/* Wrap text inside the results table to avoid stretching the layout */
+.results-table-container td {
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-width: 300px;
+}
 
 /* Sticky header and zebra rows */
 .results-table-container th {
