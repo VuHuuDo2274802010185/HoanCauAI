@@ -109,7 +109,6 @@ table.dataframe td {
 }
 .results-table-container table.dataframe {
   width: max-content;
-  max-width: 100%;
   border-collapse: collapse;
 }
 /* Wrap text inside the results table to avoid stretching the layout */
