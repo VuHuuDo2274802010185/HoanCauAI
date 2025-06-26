@@ -49,6 +49,7 @@ def render(provider: str, model: str, api_key: str) -> None:
                 info = processor.extract_info_with_llm(text)
                 results.append(
                     {
+                        "Thời gian gửi": "",
                         "Nguồn": fname,
                         "Họ tên": info.get("ten", ""),
                         "Tuổi": info.get("tuoi", ""),
@@ -64,6 +65,7 @@ def render(provider: str, model: str, api_key: str) -> None:
             df = pd.DataFrame(
                 results,
                 columns=[
+                    "Thời gian gửi",
                     "Nguồn",
                     "Họ tên",
                     "Tuổi",
