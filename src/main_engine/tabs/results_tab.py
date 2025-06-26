@@ -10,7 +10,8 @@ def render() -> None:
     """Render UI for viewing and downloading results."""
     st.subheader("Xem và tải kết quả")
     if os.path.exists(OUTPUT_CSV):
-        df = pd.read_csv(OUTPUT_CSV, encoding="utf-8-sig")
+        df = pd.read_csv(OUTPUT_CSV, encoding="utf-8-sig", keep_default_na=False)
+        df.fillna("", inplace=True)  # Replace NaN with empty strings for display
 
         def make_link(fname: str) -> str:
             """Create a safe link that works across browsers."""
