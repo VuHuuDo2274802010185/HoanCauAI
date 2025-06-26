@@ -49,7 +49,7 @@ HoanCau AI Resume Processor là hệ thống tự động trích xuất thông t
   ```
   Kết quả trả về danh sách đường dẫn file (nếu trống, nghĩa là không tìm thấy attachment trong inbox).
   Thuộc tính `last_fetch_info` chứa cặp `(path, sent_time)` cho mỗi file mới tải.
-  Khi xử lý bằng `CVProcessor`, cột `Thời gian gửi` trong bảng kết quả sẽ hiển thị giá trị `sent_time` này.
+  Khi xử lý bằng `CVProcessor`, cột `Thời gian gửi` (đứng trước cột `Nguồn`) trong bảng kết quả sẽ hiển thị giá trị `sent_time` này.
 - Nếu vẫn không có email, kiểm tra folder IMAP mặc định là `INBOX`, hoặc đổi:
   ```python
   f.mail.select('INBOX.Sent Mail')  # hoặc tên folder khác

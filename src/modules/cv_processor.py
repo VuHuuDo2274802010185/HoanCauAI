@@ -220,8 +220,8 @@ class CVProcessor:
             info = self.extract_info_with_llm(txt) or {}
             # gom thông tin vào dict
             rows.append({
-                "Nguồn": os.path.basename(path),
                 "Thời gian gửi": sent_map.get(path, ""),
+                "Nguồn": os.path.basename(path),
                 "Họ tên": info.get("ten", ""),
                 "Tuổi": info.get("tuoi", ""),
                 "Email": info.get("email", ""),
@@ -233,8 +233,8 @@ class CVProcessor:
             })
 
         df = pd.DataFrame(rows, columns=[
-            "Nguồn",
             "Thời gian gửi",
+            "Nguồn",
             "Họ tên",
             "Tuổi",
             "Email",
