@@ -181,13 +181,12 @@ def process_chat_message(user_input: str):
 
 
 @handle_error
-def export_chat_history():
-    """Export chat history to file."""
+def export_chat_history() -> str | None:
+    """Return chat history as Markdown for download."""
     try:
         history = st.session_state.get("conversation_history", [])
         if not history:
-            st.warning("Không có lịch sử chat để xuất.")
-            return
+            return None
         export_content = "# Lịch sử Chat - Hoàn Cầu AI CV Processor\n\n"
         export_content += f"Xuất lúc: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
         export_content += f"Tổng số tin nhắn: {len(history)}\n\n"
@@ -200,17 +199,11 @@ def export_chat_history():
             export_content += f"**Thời gian:** {timestamp}\n\n"
             export_content += f"{content}\n\n"
             export_content += "---\n\n"
-        st.download_button(
-            label="💾 Tải xuống lịch sử chat",
-            data=export_content,
-            file_name=f"chat_history_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
-            mime="text/markdown",
-            help="Tải xuống lịch sử chat dưới dạng file Markdown",
-        )
-        st.success("✅ File xuất sẵn sàng để tải xuống!")
+        return export_content
     except Exception as e:
         st.error(f"❌ Lỗi xuất file: {e}")
         logger.error("Export error: %s", e)
+        return None
 
 
 @handle_error
@@ -282,8 +275,23 @@ def render_enhanced_chat_tab():
             st.success("Đã xóa lịch sử chat!")
             st.rerun()
     with col2:
-        if st.button("📥 Xuất chat", help="Xuất lịch sử chat ra file"):
-            export_chat_history()
+        export_data = export_chat_history()
+        if export_data:
+            st.download_button(
+                label="📥 Xuất chat",
+                data=export_data,
+                file_name=f"chat_history_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
+                mime="text/markdown",
+                help="Tải xuống lịch sử chat",
+                use_container_width=True,
+            )
+        else:
+            st.button(
+                "📥 Xuất chat",
+                disabled=True,
+                help="Không có lịch sử chat để xuất",
+                use_container_width=True,
+            )
     with col3:
         if st.button("📊 Thống kê", help="Xem thống kê chi tiết"):
             st.session_state["show_chat_stats"] = not st.session_state.get("show_chat_stats", False)
