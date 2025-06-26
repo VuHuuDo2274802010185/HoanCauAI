@@ -1,20 +1,20 @@
 /* static/style.css */
-@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
 
 /* Simple theme variables */
 :root[data-theme="light"] {
-  --cv-text-color: #000000;
-  --cv-bg-color: #fffbf0;
-  --cv-accent-color: #f4e09c;
+  --cv-text-color: #222222;
+  --cv-bg-color: #faf9f6;
+  --cv-accent-color: #f6f1d6;
   --btn-gold: #d4af37;
   --btn-gold-border: #d4af37;
-  --btn-text-color: #000000;
+  --btn-text-color: #222222;
 }
 
 :root[data-theme="dark"] {
-  --cv-text-color: #f0f0f0;
-  --cv-bg-color: #121212;
-  --cv-accent-color: #333333;
+  --cv-text-color: #e6e6e6;
+  --cv-bg-color: #181818;
+  --cv-accent-color: #252525;
   --btn-gold: #d4af37;
   --btn-gold-border: #d4af37;
   --btn-text-color: #ffffff;
@@ -29,7 +29,8 @@ body {
   background-color: var(--cv-bg-color) !important;
   color: var(--cv-text-color) !important;
   font-size: 0.95rem;
-  font-family: 'Be Vietnam Pro', sans-serif;
+  font-family: 'Poppins', 'Be Vietnam Pro', sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Button styling for BaseWeb buttons */

@@ -77,7 +77,7 @@ def render_chat_history():
                 f"""
                 <div style="display: flex; justify-content: flex-end; margin: 10px 0;">
                     <div class="chat-message" style="
-                        background: linear-gradient(135deg, {st.session_state.get('accent_color', '#d4af37')} 0%, {st.session_state.get('secondary_color', '#f4e09c')} 100%);
+                        background: linear-gradient(135deg, {st.session_state.get('accent_color', '#d4af37')} 0%, {st.session_state.get('secondary_color', '#f6f1d6')} 100%);
                         color: white;
                         margin-left: 20%;
                     ">
@@ -96,9 +96,9 @@ def render_chat_history():
                 f"""
                 <div style="display: flex; justify-content: flex-start; margin:10px 0;">
                     <div class="chat-message" style="
-                        background: linear-gradient(135deg, {st.session_state.get('background_color', '#fffbf0')} 0%, {st.session_state.get('secondary_color', '#f4e09c')}44 100%);
-                        color: {st.session_state.get('text_color', '#000000')};
-                        border: 2px solid {st.session_state.get('secondary_color', '#f4e09c')};
+                        background: linear-gradient(135deg, {st.session_state.get('background_color', '#faf9f6')} 0%, {st.session_state.get('secondary_color', '#f6f1d6')}44 100%);
+                        color: {st.session_state.get('text_color', '#222222')};
+                        border: 2px solid {st.session_state.get('secondary_color', '#f6f1d6')};
                         margin-right: 20%;
                     ">
                         <strong>🤖 AI:</strong><br>
