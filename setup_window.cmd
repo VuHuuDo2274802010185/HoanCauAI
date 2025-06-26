@@ -107,16 +107,118 @@ if not exist "%~dp0static" (
 )
 
 :: 7) Tạo shortcut "HoanCauAi.cmd" ra Desktop nếu chưa tồn tại
-for /f "tokens=2,*" %%i in ('reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders" /v Desktop') do set DESKTOP_PATH=%%j
-set "SHORTCUT=%DESKTOP_PATH%\HoanCauAi.cmd.lnk"
-if not exist "%SHORTCUT%" (
-    powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-        "$s=(New-Object -COM WScript.Shell).CreateShortcut('%SHORTCUT%');" ^
-        "$s.TargetPath='%~dp0start_window.cmd';" ^
-        "$s.WorkingDirectory='%~dp0';" ^
-        "$s.IconLocation='%~dp0static\\logo.png';" ^
-        "$s.Save()"
+echo 🔗 Đang tạo shortcut trên Desktop...
+
+REM Lấy đường dẫn Desktop
+for /f "tokens=2,*" %%i in ('reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders" /v Desktop 2^>nul') do set "DESKTOP_PATH=%%j"
+
+REM Kiểm tra nếu không lấy được đường dẫn từ registry
+if not defined DESKTOP_PATH (
+    REM Thử dùng biến môi trường USERPROFILE
+    set "DESKTOP_PATH=%USERPROFILE%\Desktop"
+    if not exist "!DESKTOP_PATH!" (
+        echo [Lỗi] Không thể xác định đường dẫn Desktop.
+        echo Vui lòng kiểm tra quyền truy cập registry hoặc tạo shortcut thủ công.
+        goto :skip_shortcut
+    )
 )
+
+REM Kiểm tra Desktop có tồn tại không
+if not exist "%DESKTOP_PATH%" (
+    echo [Lỗi] Thư mục Desktop không tồn tại: %DESKTOP_PATH%
+    goto :skip_shortcut
+)
+
+REM Tạo shortcut
+set "SHORTCUT_NAME=HoanCauAi.lnk"
+set "SHORTCUT_PATH=%DESKTOP_PATH%\%SHORTCUT_NAME%"
+set "TARGET_FILE=%~dp0start_window.cmd"
+
+REM Kiểm tra file target có tồn tại không
+if not exist "%TARGET_FILE%" (
+    echo [Cảnh báo] File start_window.cmd không tồn tại. Shortcut có thể không hoạt động.
+)
+
+REM Tạo shortcut bằng PowerShell
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+    "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8;" ^
+    "try {" ^
+    "    $WshShell = New-Object -ComObject WScript.Shell;" ^
+    "    $Shortcut = $WshShell.CreateShortcut('%SHORTCUT_PATH%');" ^
+    "    $Shortcut.TargetPath = '%TARGET_FILE%';" ^
+    "    $Shortcut.WorkingDirectory = '%~dp0';" ^
+    "    $Shortcut.Description = 'Resume AI - HoanCauAi Application';" ^
+    "    " ^
+    "    if (Test-Path '%~dp0static\logo.ico') {" ^
+    "        $Shortcut.IconLocation = '%~dp0static\logo.ico';" ^
+    "        Write-Host 'Sử dụng logo.ico làm icon';" ^
+    "    } elseif (Test-Path '%~dp0static\logo.png') {" ^
+    "        try {" ^
+    "            Add-Type -AssemblyName System.Drawing;" ^
+    "            $png = [System.Drawing.Image]::FromFile('%~dp0static\logo.png');" ^
+    "            $bitmap = New-Object System.Drawing.Bitmap($png, 32, 32);" ^
+    "            $iconPath = '%~dp0static\logo_generated.ico';" ^
+    "            $iconHandle = $bitmap.GetHicon();" ^
+    "            $icon = [System.Drawing.Icon]::FromHandle($iconHandle);" ^
+    "            $fileStream = [System.IO.FileStream]::new($iconPath, [System.IO.FileMode]::Create);" ^
+    "            $icon.Save($fileStream);" ^
+    "            $fileStream.Close();" ^
+    "            $png.Dispose();" ^
+    "            $bitmap.Dispose();" ^
+    "            $icon.Dispose();" ^
+    "            $Shortcut.IconLocation = $iconPath;" ^
+    "            Write-Host 'Đã chuyển đổi logo.png thành icon';" ^
+    "        } catch {" ^
+    "            Write-Host 'Không thể chuyển đổi PNG sang ICO:' $_.Exception.Message;" ^
+    "            $Shortcut.IconLocation = 'C:\Windows\System32\cmd.exe,0';" ^
+    "            Write-Host 'Sử dụng icon mặc định';" ^
+    "        }" ^
+    "    } else {" ^
+    "        $Shortcut.IconLocation = 'C:\Windows\System32\cmd.exe,0';" ^
+    "        Write-Host 'Không tìm thấy logo, sử dụng icon mặc định';" ^
+    "    }" ^
+    "    " ^
+    "    $Shortcut.Save();" ^
+    "    Write-Host 'Đã tạo shortcut thành công: %SHORTCUT_NAME%';" ^
+    "} catch {" ^
+    "    Write-Host 'Lỗi tạo shortcut:' $_.Exception.Message;" ^
+    "    exit 1;" ^
+    "}"
+
+REM Khôi phục encoding sau khi chạy PowerShell
+chcp %ORIG_CP% >nul
+
+if errorlevel 1 (
+    echo [Lỗi] Không thể tạo shortcut bằng PowerShell.
+    echo Đang thử tạo file batch thay thế...
+    
+    REM Tạo file .cmd thay thế trên Desktop với icon
+    set "BATCH_FILE=%DESKTOP_PATH%\HoanCauAi.cmd"
+    (
+        echo @echo off
+        echo title Resume AI - HoanCauAi
+        echo cd /d "%~dp0"
+        echo call "%TARGET_FILE%"
+        echo pause
+    ) > "%BATCH_FILE%"
+    
+    if exist "%BATCH_FILE%" (
+        echo Đã tạo file batch trên Desktop: HoanCauAi.cmd
+        
+        REM Thử tạo icon cho file batch bằng Desktop.ini (nếu có thể)
+        if exist "%~dp0static\logo.ico" (
+            echo Đã sử dụng logo.ico cho file batch
+        ) else if exist "%~dp0static\logo.png" (
+            echo Logo.png được phát hiện nhưng cần chuyển đổi sang .ico để hiển thị đúng
+        )
+    ) else (
+        echo [Lỗi] Không thể tạo file batch trên Desktop.
+    )
+) else (
+    echo ✅ Đã tạo shortcut thành công trên Desktop với icon tùy chỉnh.
+)
+
+:skip_shortcut
 
 echo Setup hoàn tất! Nhấn bất kỳ phím nào để thoát.
 pause
