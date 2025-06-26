@@ -535,7 +535,14 @@ with tab_fetch:
     fetch_tab.render(email_user, email_pass, unseen_only)
 
 with tab_process:
-    process_tab.render(provider, model, api_key)
+    process_tab.render(
+        provider,
+        model,
+        api_key,
+        email_user=email_user,
+        email_pass=email_pass,
+        unseen_only=unseen_only,
+    )
 
 with tab_single:
     single_tab.render(provider, model, api_key, ROOT)
