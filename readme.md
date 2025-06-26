@@ -79,6 +79,7 @@ source .venv/bin/activate      # Linux/Mac
 # .venv\Scripts\activate     # Windows
 pip install --upgrade pip
 pip install -r requirements.txt
+pip install -r requirements-dev.txt # for running tests
 ```
 Hoặc đơn giản chạy `./setup.sh` (macOS/Linux) hoặc `setup.cmd` (Windows)
 để tự động tạo môi trường, cài dependencies, sao chép `.env.example` và
@@ -241,11 +242,13 @@ HoanCauAI/
 
 ## 🧪 Chạy test
 
-Sau khi cài đặt các phụ thuộc, chạy toàn bộ test bằng:
+Truoc khi chay test, cai dat cac goi trong `requirements-dev.txt`:
 
 ```bash
+pip install -r requirements-dev.txt
 pytest
 ```
+
 
 Các test tự tạo module giả mạo cho `pandas` và `requests` nếu bạn chưa cài hai
 thư viện này. Điều này giúp chạy test nhanh mà không cần cài đầy đủ phụ
