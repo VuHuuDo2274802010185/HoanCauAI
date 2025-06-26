@@ -1,7 +1,7 @@
 import json
 import logging
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 import pandas as pd
 from pathlib import Path
 from typing import Optional, Dict, Any
@@ -41,7 +41,7 @@ logger.setLevel(logging.INFO)
 def _log_chat(question: str, answer: str, log_file: Path = CHAT_LOG_FILE) -> None:
     """Append a Q&A pair to the chat log file in JSON format with enhanced metadata."""
     entry = {
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "question": question,
         "answer": answer,
         "question_length": len(question),
@@ -53,8 +53,12 @@ def _log_chat(question: str, answer: str, log_file: Path = CHAT_LOG_FILE) -> Non
         log_file.parent.mkdir(parents=True, exist_ok=True)
         
         if log_file.exists():
-            with open(log_file, "r", encoding="utf-8") as f:
-                data = json.load(f)
+            try:
+                with open(log_file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+            except json.JSONDecodeError:
+                logger.warning("Chat log corrupted, recreating")
+                data = []
         else:
             data = []
             
@@ -225,8 +229,12 @@ def get_chat_statistics(log_file: Path = CHAT_LOG_FILE) -> Dict[str, Any]:
         if not log_file.exists():
             return {"total_chats": 0, "question_types": {}, "average_lengths": {}}
         
-        with open(log_file, "r", encoding="utf-8") as f:
-            data = json.load(f)
+        try:
+            with open(log_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except json.JSONDecodeError:
+            logger.warning("Chat log corrupted, ignoring statistics")
+            return {"total_chats": 0, "question_types": {}, "average_lengths": {}}
         
         if not data:
             return {"total_chats": 0, "question_types": {}, "average_lengths": {}}
