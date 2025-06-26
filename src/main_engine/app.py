@@ -397,13 +397,21 @@ custom_css = f"""
         border-right: 2px solid {accent_color}22;
     }}
     
+    .stButton {{
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        margin: 0.5rem 0;
+    }}
+
     .stButton > button {{
+        min-width: 160px;
         background: linear-gradient(135deg, {accent_color} 0%, {secondary_color} 100%);
         color: var(--btn-text-color);
         border-radius: {border_radius}px;
         border: none;
-        padding: 0.6rem 1.2rem;
-        font-weight: 500;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
         font-family: '{font_family}', sans-serif;
         box-shadow: 0 4px 15px {accent_color}33;
         transition: all 0.3s ease;
