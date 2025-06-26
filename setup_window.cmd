@@ -139,59 +139,42 @@ if not exist "%TARGET_FILE%" (
     echo [Cảnh báo] File start_window.cmd không tồn tại. Shortcut có thể không hoạt động.
 )
 
-REM Tạo shortcut bằng PowerShell
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-    "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8;" ^
-    "try {" ^
-    "    $WshShell = New-Object -ComObject WScript.Shell;" ^
-    "    $Shortcut = $WshShell.CreateShortcut('%SHORTCUT_PATH%');" ^
-    "    $Shortcut.TargetPath = '%TARGET_FILE%';" ^
-    "    $Shortcut.WorkingDirectory = '%~dp0';" ^
-    "    $Shortcut.Description = 'Resume AI - HoanCauAi Application';" ^
-    "    " ^
-    "    if (Test-Path '%~dp0static\logo.ico') {" ^
-    "        $Shortcut.IconLocation = '%~dp0static\logo.ico';" ^
-    "        Write-Host 'Sử dụng logo.ico làm icon';" ^
-    "    } elseif (Test-Path '%~dp0static\logo.png') {" ^
-    "        try {" ^
-    "            Add-Type -AssemblyName System.Drawing;" ^
-    "            $png = [System.Drawing.Image]::FromFile('%~dp0static\logo.png');" ^
-    "            $bitmap = New-Object System.Drawing.Bitmap($png, 32, 32);" ^
-    "            $iconPath = '%~dp0static\logo_generated.ico';" ^
-    "            $iconHandle = $bitmap.GetHicon();" ^
-    "            $icon = [System.Drawing.Icon]::FromHandle($iconHandle);" ^
-    "            $fileStream = [System.IO.FileStream]::new($iconPath, [System.IO.FileMode]::Create);" ^
-    "            $icon.Save($fileStream);" ^
-    "            $fileStream.Close();" ^
-    "            $png.Dispose();" ^
-    "            $bitmap.Dispose();" ^
-    "            $icon.Dispose();" ^
-    "            $Shortcut.IconLocation = $iconPath;" ^
-    "            Write-Host 'Đã chuyển đổi logo.png thành icon';" ^
-    "        } catch {" ^
-    "            Write-Host 'Không thể chuyển đổi PNG sang ICO:' $_.Exception.Message;" ^
-    "            $Shortcut.IconLocation = 'C:\Windows\System32\cmd.exe,0';" ^
-    "            Write-Host 'Sử dụng icon mặc định';" ^
-    "        }" ^
-    "    } else {" ^
-    "        $Shortcut.IconLocation = 'C:\Windows\System32\cmd.exe,0';" ^
-    "        Write-Host 'Không tìm thấy logo, sử dụng icon mặc định';" ^
-    "    }" ^
-    "    " ^
-    "    $Shortcut.Save();" ^
-    "    Write-Host 'Đã tạo shortcut thành công: %SHORTCUT_NAME%';" ^
-    "} catch {" ^
-    "    Write-Host 'Lỗi tạo shortcut:' $_.Exception.Message;" ^
-    "    exit 1;" ^
-    "}"
+REM Tạo VBScript tạm thời (không ảnh hưởng encoding)
+set "VBS_SCRIPT=%TEMP%\create_shortcut.vbs"
+(
+    echo Set WshShell = CreateObject("WScript.Shell"^)
+    echo Set oShellLink = WshShell.CreateShortcut("%SHORTCUT_PATH%"^)
+    echo oShellLink.TargetPath = "%TARGET_FILE%"
+    echo oShellLink.WorkingDirectory = "%~dp0"
+    echo oShellLink.Description = "Resume AI - HoanCauAi Application"
+    echo.
+    echo ' Xử lý icon
+    echo If CreateObject("Scripting.FileSystemObject"^).FileExists("%~dp0static\logo.ico"^) Then
+    echo     oShellLink.IconLocation = "%~dp0static\logo.ico"
+    echo ElseIf CreateObject("Scripting.FileSystemObject"^).FileExists("%~dp0static\logo.png"^) Then
+    echo     ' Dùng icon mặc định vì VBS không thể chuyển đổi PNG
+    echo     oShellLink.IconLocation = "C:\Windows\System32\cmd.exe,0"
+    echo Else
+    echo     oShellLink.IconLocation = "C:\Windows\System32\cmd.exe,0"
+    echo End If
+    echo.
+    echo oShellLink.Save
+) > "%VBS_SCRIPT%"
 
-set "PS_EXITCODE=%ERRORLEVEL%"
+REM Chạy VBScript (không ảnh hưởng encoding)
+cscript //nologo "%VBS_SCRIPT%" >nul 2>&1
 
-if %PS_EXITCODE% NEQ 0 (
-    echo [Lỗi] Không thể tạo shortcut bằng PowerShell.
+REM Xóa file tạm thời
+del "%VBS_SCRIPT%" >nul 2>&1
+
+REM Kiểm tra kết quả
+if exist "%SHORTCUT_PATH%" (
+    echo ✅ Đã tạo shortcut thành công trên Desktop.
+) else (
+    echo [Lỗi] Không thể tạo shortcut bằng VBScript.
     echo Đang thử tạo file batch thay thế...
     
-    REM Tạo file .cmd thay thế trên Desktop với icon
+    REM Tạo file .cmd thay thế trên Desktop
     set "BATCH_FILE=%DESKTOP_PATH%\HoanCauAi.cmd"
     (
         echo @echo off
@@ -203,18 +186,9 @@ if %PS_EXITCODE% NEQ 0 (
     
     if exist "%BATCH_FILE%" (
         echo Đã tạo file batch trên Desktop: HoanCauAi.cmd
-        
-        REM Thử tạo icon cho file batch bằng Desktop.ini (nếu có thể)
-        if exist "%~dp0static\logo.ico" (
-            echo Đã sử dụng logo.ico cho file batch
-        ) else if exist "%~dp0static\logo.png" (
-            echo Logo.png được phát hiện nhưng cần chuyển đổi sang .ico để hiển thị đúng
-        )
     ) else (
         echo [Lỗi] Không thể tạo file batch trên Desktop.
     )
-) else (
-    echo ✅ Đã tạo shortcut thành công trên Desktop với icon tùy chỉnh.
 )
 
 :skip_shortcut
