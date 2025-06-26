@@ -185,10 +185,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
     "    exit 1;" ^
     "}"
 
-REM Khôi phục encoding sau khi chạy PowerShell
-chcp %ORIG_CP% >nul
+set "PS_EXITCODE=%ERRORLEVEL%"
 
-if errorlevel 1 (
+if %PS_EXITCODE% NEQ 0 (
     echo [Lỗi] Không thể tạo shortcut bằng PowerShell.
     echo Đang thử tạo file batch thay thế...
     
