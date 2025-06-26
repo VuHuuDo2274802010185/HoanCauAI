@@ -113,36 +113,6 @@ def validate_configuration() -> Dict[str, bool]:
     return config_status
 
 
-# --- Theme presets ---
-THEME_PRESETS = {
-    "light": {
-        "background_color": "#fffbf0",
-        "text_color": "#000000",
-        "accent_color": "#d4af37",
-        "secondary_color": "#f4e09c",
-    },
-    "dark": {
-        "background_color": "#121212",
-        "text_color": "#f0f0f0",
-        "accent_color": "#d4af37",
-        "secondary_color": "#333333",
-    },
-    "luxury": {
-        "background_color": "#1a1a1a",
-        "text_color": "#f5f5f5",
-        "accent_color": "#c6a307",
-        "secondary_color": "#2d2d2d",
-    },
-}
-
-
-def apply_theme(theme_name: str) -> None:
-    """Update color settings based on theme preset."""
-    theme = THEME_PRESETS.get(theme_name, THEME_PRESETS["light"])
-    for key, value in theme.items():
-        st.session_state[key] = value
-
-
 # --- Initialize session state with defaults ---
 def initialize_session_state():
     """Initialize session state with safe defaults"""
@@ -152,7 +122,6 @@ def initialize_session_state():
         "text_color": "#000000",
         "accent_color": "#d4af37",
         "secondary_color": "#f4e09c",
-        "theme": "light",
         "font_family_index": 0,
         "font_size": 14,
         "border_radius": 8,
@@ -166,8 +135,6 @@ def initialize_session_state():
     for key, value in defaults.items():
         if key not in st.session_state:
             safe_session_state_set(key, value)
-
-    apply_theme(st.session_state.get("theme", "light"))
 
 
 # --- Enhanced Streamlit logging handler ---
@@ -371,12 +338,12 @@ def get_available_models(provider: str, api_key: str) -> list:
 initialize_session_state()
 configure_streamlit_page()
 load_css()
+
+st.session_state["accent_color"] = "#d4af37"
 # Sidebar configuration
 provider, api_key, model = render_sidebar(
     validate_configuration, detect_platform, get_available_models
 )
-
-apply_theme(st.session_state.get("theme", "light"))
 
 
 # Render email configuration
