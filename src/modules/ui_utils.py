@@ -58,24 +58,31 @@ def display_logs(container: st.delta_generator.DeltaGenerator, max_lines: int = 
 
 @contextmanager
 def loading_logs(message: str = "Đang xử lý..."):
-    """Overlay loading kèm container hiển thị log."""
+    """Overlay loading hiển thị log realtime."""
     overlay = st.empty()
-    log_container = st.empty()
-    overlay_html = f"""
-    <div class='loading-overlay'>
-        <div class='loading-spinner'>
-            <div class='loading-dot'></div>
-            <div class='loading-dot'></div>
-            <div class='loading-dot'></div>
+
+    def render(log_text: str = "") -> None:
+        overlay_html = f"""
+        <div class='loading-overlay'>
+            <div class='loading-spinner'>
+                <div class='loading-dot'></div>
+                <div class='loading-dot'></div>
+                <div class='loading-dot'></div>
+            </div>
+            <div class='loading-text'>{message}</div>
+            <pre class='loading-log'>{log_text}</pre>
         </div>
-        <div class='loading-text'>{message}</div>
-    </div>
-    """
-    overlay.markdown(overlay_html, unsafe_allow_html=True)
+        """
+        overlay.markdown(overlay_html, unsafe_allow_html=True)
+
+    # Lưu hàm cập nhật overlay vào session_state để handler có thể gọi
+    st.session_state["log_overlay_updater"] = render
+    render()
     try:
-        yield log_container
+        yield overlay
     finally:
         overlay.empty()
+        st.session_state.pop("log_overlay_updater", None)
 
 
 __all__ = ["loading_overlay", "loading_logs", "display_logs"]
