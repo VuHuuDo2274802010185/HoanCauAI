@@ -118,10 +118,10 @@ def initialize_session_state():
     """Initialize session state with safe defaults"""
     defaults = {
         "conversation_history": [],
-        "background_color": "#fffbf0",
-        "text_color": "#000000",
+        "background_color": "#faf9f6",
+        "text_color": "#222222",
         "accent_color": "#d4af37",
-        "secondary_color": "#f4e09c",
+        "secondary_color": "#f6f1d6",
         "font_family_index": 0,
         "font_size": 14,
         "border_radius": 8,
@@ -350,10 +350,10 @@ provider, api_key, model = render_sidebar(
 email_user, email_pass, unseen_only = render_email_config(ROOT, provider, api_key)
 
 # Load style preferences from session state
-background_color = st.session_state.get("background_color", "#fffbf0")
-text_color = st.session_state.get("text_color", "#000000")
+background_color = st.session_state.get("background_color", "#faf9f6")
+text_color = st.session_state.get("text_color", "#222222")
 accent_color = st.session_state.get("accent_color", "#d4af37")
-secondary_color = st.session_state.get("secondary_color", "#f4e09c")
+secondary_color = st.session_state.get("secondary_color", "#f6f1d6")
 font_options = [
     "Be Vietnam Pro",
     "Poppins",

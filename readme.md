@@ -219,7 +219,7 @@ streamlit run scripts/simple_app.py
 
 ### 🌙 Dark Mode
 
-Ứng dụng hiện luôn sử dụng giao diện sáng (light theme) để đảm bảo trải nghiệm thống nhất. Nếu muốn bật chế độ tối, bạn cần tự chỉnh sửa mã nguồn.
+Giao diện nay hỗ trợ cả chế độ sáng và tối. Streamlit sẽ áp dụng theme dựa trên cài đặt trong `~/.streamlit/config.toml` hoặc lựa chọn *Appearance* ở menu cài đặt (biểu tượng bánh răng). Theme tối sử dụng tông vàng chủ đạo như chế độ sáng nhưng với nền đen dịu mắt, phù hợp làm việc ban đêm.
 
 ## 🗂️ Cấu trúc dự án
 
