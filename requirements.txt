@@ -20,5 +20,3 @@ python-multipart>=0.0.5       # xử lý multipart/form-data (file upload FastAP
 click                         # CLI utilities (dùng cho scripts click)
 pydantic>=2.0.0               # validation, BaseSettings (FastAPI)
 pydantic-settings>=2.0.0
-pytest>=7.0.0                 # testing framework
-markdown>=3.0
