@@ -45,9 +45,11 @@ HoanCau AI Resume Processor là hệ thống tự động trích xuất thông t
   ```
 - Chạy lệnh thử tay:
   ```bash
-  python3 -c "from modules.email_fetcher import EmailFetcher; f=EmailFetcher(); f.connect(); print(f.fetch_cv_attachments())"
+  python3 -c "from modules.email_fetcher import EmailFetcher; f=EmailFetcher(); f.connect(); print(f.fetch_cv_attachments()); print(f.last_fetch_info)"
   ```
   Kết quả trả về danh sách đường dẫn file (nếu trống, nghĩa là không tìm thấy attachment trong inbox).
+  Thuộc tính `last_fetch_info` chứa cặp `(path, sent_time)` cho mỗi file mới tải.
+  Khi xử lý bằng `CVProcessor`, cột `Thời gian gửi` trong bảng kết quả sẽ hiển thị giá trị `sent_time` này.
 - Nếu vẫn không có email, kiểm tra folder IMAP mặc định là `INBOX`, hoặc đổi:
   ```python
   f.mail.select('INBOX.Sent Mail')  # hoặc tên folder khác

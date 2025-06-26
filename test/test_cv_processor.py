@@ -76,3 +76,26 @@ def cv_processor_class(mock_pandas, mock_requests, monkeypatch):
 def test_fallback_regex(cv_processor_class, text, expected):
     info = cv_processor_class()._fallback_regex(text)
     assert info == expected
+
+
+def test_process_includes_sent_time(cv_processor_class, tmp_path, monkeypatch):
+    cp_module = importlib.import_module(cv_processor_class.__module__)
+    monkeypatch.setattr(cp_module, 'ATTACHMENT_DIR', tmp_path)
+
+    class DummyFetcher:
+        def fetch_cv_attachments(self, unseen_only=True):
+            p = tmp_path / 'cv.pdf'
+            p.write_text('data')
+            self.last_fetch_info = [(str(p), '2023-09-20T10:15:00Z')]
+            return [str(p)]
+
+    fetcher = DummyFetcher()
+    processor = cp_module.CVProcessor(fetcher)
+    monkeypatch.setattr(processor, 'extract_text', lambda p: '')
+    monkeypatch.setattr(processor, 'extract_info_with_llm', lambda t: {})
+    df = processor.process()
+    if hasattr(df, 'iloc'):
+        value = df['Thời gian gửi'].iloc[0]
+    else:
+        value = df[0]['Thời gian gửi']
+    assert value == '2023-09-20T10:15:00Z'

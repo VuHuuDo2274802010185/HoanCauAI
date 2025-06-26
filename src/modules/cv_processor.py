@@ -200,6 +200,9 @@ class CVProcessor:
         """
         # fetch từ email nếu có fetcher
         files: List[str] = self.fetcher.fetch_cv_attachments() if self.fetcher else []
+        sent_map = {}
+        if self.fetcher:
+            sent_map = dict(getattr(self.fetcher, "last_fetch_info", []))
         if not files:
             logger.info("🔍 Không tìm thấy qua fetcher, dò thư mục attachments...")
             files = [
@@ -218,6 +221,7 @@ class CVProcessor:
             # gom thông tin vào dict
             rows.append({
                 "Nguồn": os.path.basename(path),
+                "Thời gian gửi": sent_map.get(path, ""),
                 "Họ tên": info.get("ten", ""),
                 "Tuổi": info.get("tuoi", ""),
                 "Email": info.get("email", ""),
@@ -230,6 +234,7 @@ class CVProcessor:
 
         df = pd.DataFrame(rows, columns=[
             "Nguồn",
+            "Thời gian gửi",
             "Họ tên",
             "Tuổi",
             "Email",

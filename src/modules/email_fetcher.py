@@ -8,7 +8,8 @@ import re                        # xử lý biểu thức chính quy
 import time                      # sleep and delay functions
 import logging                   # ghi log
 from datetime import date        # dùng để lọc email theo ngày
-from typing import List, Optional
+from typing import List, Optional, Tuple
+from email.utils import parsedate_to_datetime
 
 from .config import ATTACHMENT_DIR, EMAIL_UNSEEN_ONLY  # đường dẫn lưu file đính kèm và chế độ quét
 
@@ -24,6 +25,8 @@ if not logger.handlers:
 class EmailFetcher:
     """
     Lớp để kết nối IMAP, tìm email chứa CV/Resume và tải file đính kèm về máy.
+    Sau mỗi lần gọi ``fetch_cv_attachments()``, thông tin (path, thời gian gửi)
+    của các file mới sẽ được lưu trong ``last_fetch_info``.
     """
 
     def __init__(self, host: str = None, port: int = None, user: str = None, password: str = None):
@@ -38,6 +41,7 @@ class EmailFetcher:
         self.user = user or EMAIL_USER
         self.password = password or EMAIL_PASS
         self.mail = None
+        self.last_fetch_info: List[Tuple[str, str | None]] = []
 
         # Sử dụng logger chung của module (không thêm handler mới)
         self.logger = logger
@@ -101,6 +105,8 @@ class EmailFetcher:
         Quét theo từng đợt ``batch_size`` email mới nhất.
         Nếu ``unseen_only`` được bật (mặc định), chỉ tìm trong các email chưa đọc
         để tránh quét lại những thư đã xử lý.
+        Thông tin path và thời gian gửi của mỗi file tải được
+        sẽ lưu trong ``last_fetch_info``.
         """
         if self.mail is None:
             raise RuntimeError("Chưa kết nối IMAP. Gọi connect() trước.")
@@ -109,6 +115,7 @@ class EmailFetcher:
             keywords = ["CV", "Resume", "Curriculum Vitae"]
 
         new_files: List[str] = []
+        self.last_fetch_info = []
 
         # --- Tìm email với optional SINCE ---
         criteria = ['UNSEEN'] if unseen_only else ['ALL']
@@ -133,6 +140,16 @@ class EmailFetcher:
                     continue
 
                 msg = email.message_from_bytes(msg_data[0][1])
+
+                # Get sent time from Date header
+                sent_time: str | None = None
+                date_hdr = msg.get('Date')
+                if date_hdr:
+                    try:
+                        dt = parsedate_to_datetime(date_hdr)
+                        sent_time = dt.isoformat()
+                    except Exception:
+                        sent_time = None
 
                 # Lấy tiêu đề và nội dung để lọc theo keywords
                 try:
@@ -190,6 +207,7 @@ class EmailFetcher:
                     with open(path, "wb") as f:
                         f.write(part.get_payload(decode=True))
                     new_files.append(path)
+                    self.last_fetch_info.append((path, sent_time))
                     self.logger.info(f"[OK] Lưu đính kèm mới: {path}")
 
                 # Đánh dấu email đã đọc để tránh xử lý lại lần sau

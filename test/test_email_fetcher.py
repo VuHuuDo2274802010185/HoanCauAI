@@ -35,6 +35,7 @@ def test_fetch_cv_attachments(email_fetcher_module, tmp_path):
 
     msg = EmailMessage()
     msg['Subject'] = 'CV Nguyen'
+    msg['Date'] = 'Wed, 20 Sep 2023 10:15:00 -0400'
     msg.set_content('body')
     msg.add_attachment(b'data', maintype='application', subtype='pdf', filename='cv.pdf')
     raw = msg.as_bytes()
@@ -55,3 +56,5 @@ def test_fetch_cv_attachments(email_fetcher_module, tmp_path):
     expected = tmp_path / 'cv.pdf'
     assert files == [str(expected)]
     assert expected.exists()
+    assert fetcher.last_fetch_info == [(str(expected), '2023-09-20T10:15:00-04:00')]
+
