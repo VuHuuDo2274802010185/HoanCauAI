@@ -49,6 +49,19 @@ def render_sidebar(validate_configuration, detect_platform, get_available_models
             emoji = "✅" if status else "❌"
             st.write(f"{emoji} {component.replace('_', ' ').title()}")
 
+    st.sidebar.header("🎨 Theme")
+    theme = st.sidebar.selectbox(
+        "Chọn giao diện",
+        options=["light", "luxury", "dark"],
+        key="theme",
+        format_func=lambda x: {
+            "light": "Sáng",
+            "dark": "Tối",
+            "luxury": "Sang trọng",
+        }.get(x, x),
+    )
+    safe_session_state_set("theme", theme)
+
     st.sidebar.header("⚙️ Cấu hình LLM")
     # Chọn provider (Google hoặc OpenRouter)
     provider = st.sidebar.selectbox(
