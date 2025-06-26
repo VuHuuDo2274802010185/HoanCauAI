@@ -1,5 +1,6 @@
 @echo off
 setlocal enableextensions enabledelayedexpansion
+pushd %~dp0
 
 cls
 echo ======================================================
@@ -22,6 +23,7 @@ python --version >nul 2>&1
 if errorlevel 1 (
     echo [ERROR] Python không được cài đặt hoặc không tìm thấy trong PATH.
     pause
+    popd
     exit /b 1
 )
 echo [OK] Đã có Python.
@@ -52,4 +54,5 @@ echo [MODE] Khởi động Streamlit UI...
 streamlit run "%~dp0src\main_engine\app.py"
 
 :end
+popd
 pause

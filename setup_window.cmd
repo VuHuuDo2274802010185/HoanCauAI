@@ -1,5 +1,6 @@
 @echo off
 setlocal enableextensions enabledelayedexpansion
+pushd %~dp0
 
 cls
 echo ======================================================
@@ -28,6 +29,7 @@ if errorlevel 1 (
         echo Không tìm thấy winget để cài đặt Python tự động.
         echo Vui lòng cài đặt Python thủ công tại https://www.python.org.
         pause
+        popd
         exit /b 1
     )
     winget install --id Python.Python.3.11 --silent --accept-package-agreements --accept-source-agreements
@@ -35,6 +37,7 @@ if errorlevel 1 (
         echo Lỗi cài đặt Python bằng winget.
         echo Vui lòng cài đặt Python thủ công tại https://www.python.org rồi chạy lại script.
         pause
+        popd
         exit /b 1
     )
     echo Hoàn tất cài đặt Python.
@@ -83,4 +86,5 @@ if not exist "%~dp0attachments" (
 )
 
 echo Setup hoàn tất! Nhấn bất kỳ phím nào để thoát.
+popd
 pause
