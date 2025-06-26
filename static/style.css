@@ -1,5 +1,5 @@
 /* static/style.css */
-@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap');
 
 /* Simple theme variables */
 :root[data-theme="light"] {
@@ -20,15 +20,6 @@
   --btn-text-color: #ffffff;
 }
 
-:root[data-theme="luxury"] {
-  --cv-text-color: #f5f5f5;
-  --cv-bg-color: #1a1a1a;
-  --cv-accent-color: #2d2d2d;
-  --btn-gold: #c6a307;
-  --btn-gold-border: #c6a307;
-  --btn-text-color: #ffffff;
-}
-
 img[src*="logo.png"] {
   max-width: 160px;
 }
@@ -43,18 +34,18 @@ body {
 
 /* Button styling for BaseWeb buttons */
 button[data-baseweb="base-button"] {
-  background: linear-gradient(135deg, var(--btn-gold) 0%, var(--btn-gold-border) 100%) !important;
+  background-color: var(--btn-gold) !important;
   color: var(--btn-text-color) !important;
-  border: none !important;
-  border-radius: 6px !important;
+  border: 2px solid var(--btn-gold-border) !important;
+  border-radius: 4px !important;
   font-size: 1rem !important;
   padding: 12px 24px !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
-  transition: transform 0.2s, box-shadow 0.2s !important;
+  transition: background-color 0.2s, color 0.2s !important;
 }
 button[data-baseweb="base-button"]:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4) !important;
+  background-color: var(--cv-bg-color) !important;
+  color: var(--btn-gold) !important;
+  border-color: var(--btn-gold-border) !important;
 }
 
 /* File uploader dashed border */
