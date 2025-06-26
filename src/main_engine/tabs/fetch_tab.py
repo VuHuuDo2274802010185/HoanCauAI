@@ -5,7 +5,12 @@ from typing import List
 from pathlib import Path
 import streamlit as st
 
-from modules.config import ATTACHMENT_DIR, EMAIL_HOST, EMAIL_PORT
+from modules.config import (
+    ATTACHMENT_DIR,
+    EMAIL_HOST,
+    EMAIL_PORT,
+    SENT_TIME_FILE,
+)
 from modules.email_fetcher import EmailFetcher
 
 
@@ -31,7 +36,13 @@ def render(email_user: str, email_pass: str, unseen_only: bool) -> None:
                 st.write(new_files)
             else:
                 st.info("Không có file đính kèm mới.")
-        attachments = sorted(ATTACHMENT_DIR.glob("*"))
+        attachments = sorted(
+            p
+            for p in ATTACHMENT_DIR.glob("*")
+            if p.is_file()
+            and p != SENT_TIME_FILE
+            and p.suffix.lower() in (".pdf", ".docx")
+        )
         if attachments:
             items = "".join(f"<li>{Path(p).name}</li>" for p in attachments)
             list_html = f"<ul>{items}</ul>"
