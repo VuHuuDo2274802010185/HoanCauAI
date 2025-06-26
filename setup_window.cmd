@@ -12,7 +12,7 @@ echo ======================================================
 ::   2) Copy .env từ .env.example nếu chưa có
 ::   3) Tạo và kích hoạt venv
 ::   4) Cài đặt dependencies
-::   5) Tạo thư mục attachments
+::   5) Tạo thư mục attachments, csv, log, static
 :: ======================================================
 
 :: 0) Chuyển console sang UTF-8
@@ -74,12 +74,33 @@ uv pip install --upgrade pip
 uv pip install -r "%~dp0requirements.txt"
 echo Hoàn tất cài đặt dependencies.
 
-:: 6) Tạo thư mục attachments
+:: 6) Tạo thư mục attachments, csv, log, static
 if not exist "%~dp0attachments" (
     mkdir "%~dp0attachments"
     echo Đã tạo thư mục attachments.
 ) else (
     echo Thư mục attachments đã tồn tại.
+)
+
+if not exist "%~dp0csv" (
+    mkdir "%~dp0csv"
+    echo Đã tạo thư mục csv.
+) else (
+    echo Thư mục csv đã tồn tại.
+)
+
+if not exist "%~dp0log" (
+    mkdir "%~dp0log"
+    echo Đã tạo thư mục log.
+) else (
+    echo Thư mục log đã tồn tại.
+)
+
+if not exist "%~dp0static" (
+    mkdir "%~dp0static"
+    echo Đã tạo thư mục static.
+) else (
+    echo Thư mục static đã tồn tại.
 )
 
 echo Setup hoàn tất! Nhấn bất kỳ phím nào để thoát.
