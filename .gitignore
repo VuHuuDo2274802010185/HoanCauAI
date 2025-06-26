@@ -10,6 +10,8 @@ log/*
 *.csv
 !csv/cv_summary.csv
 !csv/.gitkeep
+*.xlsx
+!csv/cv_summary.xlsx
 .venv
 FIX_REPORT.md
 health_check_report.json
