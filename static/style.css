@@ -119,6 +119,13 @@ table.dataframe td {
   max-width: 300px;
 }
 
+/* Scrollable cell for long text */
+.results-table-container .cell-scroll {
+  max-height: 6em;
+  overflow-y: auto;
+  display: block;
+}
+
 /* Sticky header and zebra rows */
 .results-table-container th {
   position: sticky;
