@@ -162,6 +162,18 @@ class StreamlitLogHandler(logging.Handler):
             )
             safe_session_state_set("logs", logs)
 
+            # Cập nhật overlay log realtime nếu có
+            overlay_updater = safe_session_state_get("log_overlay_updater")
+            if callable(overlay_updater):
+                recent_logs = logs[-10:]
+                log_text = "\n".join(
+                    f"[{e.get('timestamp','')}] {e.get('level','')}: {e.get('message','')}" for e in recent_logs
+                )
+                try:
+                    overlay_updater(log_text)
+                except Exception:
+                    pass
+
         except Exception as e:
             # Fallback to standard logging if Streamlit fails
             print(f"StreamlitLogHandler error: {e}")

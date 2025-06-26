@@ -13,7 +13,7 @@ from modules.config import (
     get_model_price,
 )
 from modules.dynamic_llm_client import DynamicLLMClient
-from modules.ui_utils import loading_logs, display_logs
+from modules.ui_utils import loading_logs
 
 
 def render(
@@ -50,9 +50,8 @@ def render(
             llm_client=DynamicLLMClient(provider=provider, model=model, api_key=api_key),
         )
 
-        with loading_logs("Đang xử lý CV...") as log_area:
+        with loading_logs("Đang xử lý CV..."):
             df = processor.process(unseen_only=unseen_only)
-            display_logs(log_area)
 
         if df.empty:
             st.info("Không có CV nào để xử lý.")
