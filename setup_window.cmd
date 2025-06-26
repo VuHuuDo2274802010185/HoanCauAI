@@ -17,6 +17,8 @@ echo ======================================================
 :: ======================================================
 
 :: 0) Chuyển console sang UTF-8
+for /f "tokens=2 delims=:" %%a in ('chcp') do set "ORIG_CP=%%a"
+set "ORIG_CP=%ORIG_CP: =%"
 chcp 65001 >nul
 
 :: 1) Kiểm tra Python
@@ -29,16 +31,14 @@ if errorlevel 1 (
         echo Không tìm thấy winget để cài đặt Python tự động.
         echo Vui lòng cài đặt Python thủ công tại https://www.python.org.
         pause
-        popd
-        exit /b 1
+        call :cleanup 1
     )
     winget install --id Python.Python.3.11 --silent --accept-package-agreements --accept-source-agreements
     if errorlevel 1 (
         echo Lỗi cài đặt Python bằng winget.
         echo Vui lòng cài đặt Python thủ công tại https://www.python.org rồi chạy lại script.
         pause
-        popd
-        exit /b 1
+        call :cleanup 1
     )
     echo Hoàn tất cài đặt Python.
     set "PYTHON_CMD=python"
@@ -119,5 +119,10 @@ if not exist "%SHORTCUT%" (
 )
 
 echo Setup hoàn tất! Nhấn bất kỳ phím nào để thoát.
-popd
 pause
+call :cleanup 0
+
+:cleanup
+chcp %ORIG_CP% >nul
+popd
+exit /b %1
