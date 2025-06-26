@@ -32,6 +32,13 @@ def render() -> None:
         if "Nguồn" in df.columns:
             df["Nguồn"] = df["Nguồn"].apply(make_link)
 
+        # Wrap long text fields with a scrollable container
+        for col in ["Học vấn", "Kinh nghiệm", "Kỹ năng"]:
+            if col in df.columns:
+                df[col] = df[col].apply(
+                    lambda v: f"<div class='cell-scroll'>{v}</div>" if pd.notna(v) else ""
+                )
+
         table_html = df.to_html(escape=False, index=False)
         styled_html = (
             "<div class='results-table-container' style='max-height: 60vh; overflow: auto;'>"
