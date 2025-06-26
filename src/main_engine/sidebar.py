@@ -97,9 +97,9 @@ def render_sidebar(validate_configuration, detect_platform, get_available_models
     models = safe_session_state_get("available_models", get_available_models(provider, api_key))
     if not models:
         st.sidebar.error("❌ Không lấy được models, vui lòng kiểm tra API Key.")
-        models = [LLM_CONFIG.get("model", "gemini-2.0-flash")]
+        models = [LLM_CONFIG.get("model", "gemini-2.5-flash-lite-preview-06-17")]
 
-    default_model = LLM_CONFIG.get("model", "gemini-2.0-flash")
+    default_model = LLM_CONFIG.get("model", "gemini-2.5-flash-lite-preview-06-17")
     if default_model not in models and models:
         default_model = models[0]
     if not safe_session_state_get("selected_model") or safe_session_state_get("selected_model") not in models:
