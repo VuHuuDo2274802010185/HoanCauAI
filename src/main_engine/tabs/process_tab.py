@@ -1,3 +1,5 @@
+"""Tab xử lý hàng loạt file CV."""
+
 import logging
 import streamlit as st
 

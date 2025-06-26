@@ -1,3 +1,5 @@
+"""Tab quản lý MCP server và API key cho client."""
+
 import os
 import subprocess
 import streamlit as st

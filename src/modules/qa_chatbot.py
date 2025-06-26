@@ -1,3 +1,5 @@
+"""Hỗ trợ hỏi đáp dữ liệu CV bằng API LLM."""
+
 import json
 import logging
 import re

@@ -1,3 +1,5 @@
+"""Tab xem và tải kết quả phân tích CV."""
+
 import os
 
 import pandas as pd

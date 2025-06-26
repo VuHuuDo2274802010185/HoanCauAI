@@ -1,3 +1,5 @@
+"""Tab xử lý từng file CV riêng lẻ."""
+
 import logging
 from pathlib import Path
 import streamlit as st

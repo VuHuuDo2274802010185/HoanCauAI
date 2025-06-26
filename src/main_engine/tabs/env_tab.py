@@ -1,3 +1,5 @@
+"""Tab chỉnh sửa file môi trường (.env)."""
+
 from pathlib import Path
 import streamlit as st
 from dotenv import load_dotenv
