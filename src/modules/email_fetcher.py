@@ -7,7 +7,7 @@ import os                        # thao tác hệ thống file và đường d�
 import re                        # xử lý biểu thức chính quy
 import time                      # sleep and delay functions
 import logging                   # ghi log
-from datetime import date        # dùng để lọc email theo ngày
+from datetime import date, datetime, timezone  # dùng để lọc email và tạo timestamp
 from typing import List, Optional, Tuple
 from email.utils import parsedate_to_datetime
 
@@ -135,21 +135,61 @@ class EmailFetcher:
         for start in range(0, len(email_ids), batch_size):
             batch = email_ids[start:start + batch_size]
             for num in batch:
-                typ, msg_data = self.mail.fetch(num, '(RFC822)')
+                # Fetch both message and INTERNALDATE for accurate timestamp
+                typ, msg_data = self.mail.fetch(num, '(RFC822 INTERNALDATE)')
                 if typ != "OK" or not msg_data:
                     continue
 
-                msg = email.message_from_bytes(msg_data[0][1])
+                raw_msg = None
+                internal_date = None
+                for item in msg_data:
+                    if isinstance(item, tuple):
+                        header = item[0] or b''
+                        payload = item[1]
+                        if raw_msg is None and isinstance(payload, (bytes, bytearray)):
+                            raw_msg = payload
+                        if header.strip().upper() == b'INTERNALDATE' and isinstance(payload, (bytes, bytearray)):
+                            internal_date = payload.decode().strip('"')
+                        else:
+                            m = re.search(br'INTERNALDATE "([^"]+)"', header)
+                            if m:
+                                internal_date = m.group(1).decode()
+                            if not internal_date and isinstance(payload, (bytes, bytearray)):
+                                m = re.search(br'INTERNALDATE "([^"]+)"', payload)
+                                if m:
+                                    internal_date = m.group(1).decode()
+                    elif isinstance(item, bytes):
+                        m = re.search(br'INTERNALDATE "([^"]+)"', item)
+                        if m:
+                            internal_date = m.group(1).decode()
 
-                # Get sent time from Date header
+                if raw_msg is None:
+                    continue
+
+                msg = email.message_from_bytes(raw_msg)
+
+                # Determine sent time, prefer INTERNALDATE over Date header
                 sent_time: str | None = ""
-                date_hdr = msg.get('Date')
-                if date_hdr:
+                if internal_date:
                     try:
-                        dt = parsedate_to_datetime(date_hdr)
+                        dt = parsedate_to_datetime(internal_date)
                         sent_time = dt.isoformat()
                     except Exception:
-                        sent_time = ""
+                        try:
+                            tup = imaplib.Internaldate2tuple(f'INTERNALDATE "{internal_date}"'.encode())
+                            if tup:
+                                dt = datetime.fromtimestamp(time.mktime(tup), tz=datetime.timezone.utc)
+                                sent_time = dt.isoformat()
+                        except Exception:
+                            sent_time = ""
+                if not sent_time:
+                    date_hdr = msg.get('Date')
+                    if date_hdr:
+                        try:
+                            dt = parsedate_to_datetime(date_hdr)
+                            sent_time = dt.isoformat()
+                        except Exception:
+                            sent_time = ""
 
                 # Lấy tiêu đề và nội dung để lọc theo keywords
                 try:

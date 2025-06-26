@@ -45,7 +45,11 @@ def test_fetch_cv_attachments(email_fetcher_module, tmp_path):
             return 'OK', [b'1']
 
         def fetch(self, num, query):
-            return 'OK', [(None, raw)]
+            assert query == '(RFC822 INTERNALDATE)'
+            return 'OK', [
+                (None, raw),
+                (b'INTERNALDATE', b'"20-Sep-2023 10:20:00 -0400"'),
+            ]
 
         def store(self, *args, **kwargs):
             pass
@@ -56,5 +60,5 @@ def test_fetch_cv_attachments(email_fetcher_module, tmp_path):
     expected = tmp_path / 'cv.pdf'
     assert files == [str(expected)]
     assert expected.exists()
-    assert fetcher.last_fetch_info == [(str(expected), '2023-09-20T10:15:00-04:00')]
+    assert fetcher.last_fetch_info == [(str(expected), '2023-09-20T10:20:00-04:00')]
 
