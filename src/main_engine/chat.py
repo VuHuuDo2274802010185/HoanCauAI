@@ -248,11 +248,6 @@ def render_enhanced_chat_tab():
     render_chat_input_form()
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        if st.button("🗑️ Xóa lịch sử", help="Xóa toàn bộ lịch sử chat"):
-            st.session_state["conversation_history"] = []
-            st.success("Đã xóa lịch sử chat!")
-            st.rerun()
-    with col2:
         export_data = export_chat_history()
         if export_data:
             st.download_button(
@@ -270,6 +265,11 @@ def render_enhanced_chat_tab():
                 help="Không có lịch sử chat để xuất",
                 use_container_width=True,
             )
+    with col2:
+        if st.button("🗑️ Xóa lịch sử", help="Xóa toàn bộ lịch sử chat"):
+            st.session_state["conversation_history"] = []
+            st.success("Đã xóa lịch sử chat!")
+            st.rerun()
     with col3:
         if st.button("📊 Thống kê", help="Xem thống kê chi tiết"):
             st.session_state["show_chat_stats"] = not st.session_state.get("show_chat_stats", False)
