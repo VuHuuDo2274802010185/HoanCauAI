@@ -250,6 +250,9 @@ def render_chat_help():
             - **Theme:** Tùy chỉnh giao diện theo sở thích
             """
         )
+        if st.button("Đóng hướng dẫn", key="close_chat_help"):
+            st.session_state["show_chat_help"] = False
+            st.rerun()
 
 
 @handle_error
@@ -258,6 +261,8 @@ def render_enhanced_chat_tab():
     st.header("🤖 Chat với AI - Trợ lý thông minh")
     if "conversation_history" not in st.session_state:
         st.session_state["conversation_history"] = []
+    if "show_chat_help" not in st.session_state:
+        st.session_state["show_chat_help"] = False
     dataset_info = load_dataset_for_chat()
     if dataset_info:
         with st.expander("📊 Thông tin dataset hiện tại", expanded=False):
@@ -285,7 +290,9 @@ def render_enhanced_chat_tab():
             st.rerun()
     with col4:
         if st.button("❓ Hướng dẫn", help="Xem hướng dẫn sử dụng"):
-            render_chat_help()
+            st.session_state["show_chat_help"] = not st.session_state["show_chat_help"]
+    if st.session_state["show_chat_help"]:
+        render_chat_help()
 
 __all__ = [
     "render_enhanced_chat_tab",
