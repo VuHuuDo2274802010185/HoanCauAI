@@ -1,6 +1,26 @@
 #!/usr/bin/env bash
 # HoanCau AI - Setup Script for macOS/Linux
+# Usage: ./setup_linux.sh [--dev]
+#   --dev  Also install packages from requirements-dev.txt
 set -e
+
+INSTALL_DEV=false
+for arg in "$@"; do
+    case "$arg" in
+        --dev)
+            INSTALL_DEV=true
+            ;;
+        -h|--help)
+            echo "Usage: $0 [--dev]"
+            echo "  --dev  Also install packages from requirements-dev.txt"
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $arg" >&2
+            exit 1
+            ;;
+    esac
+done
 
 echo "=============================="
 echo " HoanCau AI - Setup Script "
@@ -28,6 +48,10 @@ if ! command -v uv >/dev/null 2>&1; then
 fi
 uv pip install --upgrade pip
 uv pip install -r requirements.txt
+if [ "$INSTALL_DEV" = true ]; then
+    echo "Installing development dependencies..."
+    uv pip install -r requirements-dev.txt
+fi
 
 # 5) Copy .env.example to .env if needed
 if [ ! -f ".env" ]; then
