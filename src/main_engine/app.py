@@ -44,11 +44,11 @@ from dotenv import set_key, load_dotenv
 # Configure logging with better formatting
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler(LOG_FILE, encoding='utf-8')
-    ]
+        logging.FileHandler(LOG_FILE, encoding="utf-8"),
+    ],
 )
 logger = logging.getLogger(__name__)
 
@@ -68,7 +68,7 @@ try:
         EMAIL_UNSEEN_ONLY,
     )
     from modules.auto_fetcher import watch_loop
-    
+
     try:
         from .tabs import fetch_tab, process_tab, single_tab, results_tab
     except ImportError as ie:
@@ -76,9 +76,9 @@ try:
         st.error(f"Lỗi import tabs: {ie}")
         st.stop()
 
-
     try:
         from .tabs import chat_tab  # noqa: F401
+
         HAS_EXTERNAL_CHAT_TAB = True
     except ImportError:
         HAS_EXTERNAL_CHAT_TAB = False
@@ -99,16 +99,17 @@ def validate_configuration() -> Dict[str, bool]:
         "env_file": (ROOT / ".env").exists(),
         "config_module": True,
         "static_files": (ROOT / "static").exists(),
-        "modules": True
+        "modules": True,
     }
-    
+
     # Check if required modules are importable
     try:
         import modules.qa_chatbot  # noqa: F401
+
         config_status["qa_module"] = True
     except ImportError:
         config_status["qa_module"] = False
-        
+
     return config_status
 
 
@@ -128,9 +129,9 @@ def initialize_session_state():
         "app_initialized": False,
         "last_error": None,
         "error_count": 0,
-        "logs": []
+        "logs": [],
     }
-    
+
     for key, value in defaults.items():
         if key not in st.session_state:
             safe_session_state_set(key, value)
@@ -147,19 +148,21 @@ class StreamlitLogHandler(logging.Handler):
 
             msg = self.format(record)
             logs = safe_session_state_get("logs", [])
-            
+
             # Limit log size to prevent memory issues
             if len(logs) > 500:
                 logs = logs[-400:]  # Keep last 400 entries
-                
-            logs.append({
-                "timestamp": datetime.now().strftime("%H:%M:%S"),
-                "level": record.levelname,
-                "message": msg,
-                "module": record.module
-            })
+
+            logs.append(
+                {
+                    "timestamp": datetime.now().strftime("%H:%M:%S"),
+                    "level": record.levelname,
+                    "message": msg,
+                    "module": record.module,
+                }
+            )
             safe_session_state_set("logs", logs)
-            
+
         except Exception as e:
             # Fallback to standard logging if Streamlit fails
             print(f"StreamlitLogHandler error: {e}")
@@ -167,15 +170,23 @@ class StreamlitLogHandler(logging.Handler):
     def _check_streamlit_context(self) -> bool:
         """Check if Streamlit context is available"""
         try:
-            return bool(st.runtime.exists())
+            if hasattr(st, "runtime"):
+                if hasattr(st.runtime, "exists"):
+                    return bool(st.runtime.exists())
+                if hasattr(st.runtime, "scriptrunner"):
+                    get_ctx = getattr(
+                        st.runtime.scriptrunner, "get_script_run_ctx", None
+                    )
+                    if get_ctx:
+                        try:
+                            return get_ctx(suppress_warning=True) is not None
+                        except TypeError:
+                            return get_ctx() is not None
+            from streamlit.script_run_context import get_script_run_ctx
+
+            return get_script_run_ctx() is not None
         except Exception:
-            try:
-                return (
-                    st.runtime.scriptrunner.get_script_run_ctx(suppress_warning=True)
-                    is not None
-                )
-            except Exception:
-                return False
+            return False
 
 
 # Install enhanced logging handler
@@ -192,11 +203,11 @@ def update_log_display(container):
     if not logs:
         container.info("Chưa có log nào.")
         return
-        
+
     # Display recent logs with color coding
     recent_logs = logs[-50:]  # Show last 50 logs
     log_text = ""
-    
+
     for log_entry in recent_logs:
         if isinstance(log_entry, dict):
             timestamp = log_entry.get("timestamp", "")
@@ -205,7 +216,7 @@ def update_log_display(container):
             log_text += f"[{timestamp}] {level}: {message}\n"
         else:
             log_text += f"{log_entry}\n"
-    
+
     container.code(log_text, language="text")
 
 
@@ -224,39 +235,44 @@ def configure_streamlit_page():
     except Exception as e:
         logger.error(f"Failed to configure Streamlit page: {e}")
         # Fallback configuration
-        st.set_page_config(
-            page_title="Hoàn Cầu AI CV Processor",
-            layout="wide"
-        )
+        st.set_page_config(page_title="Hoàn Cầu AI CV Processor", layout="wide")
 
 
 # --- Enhanced platform detection ---
-@handle_error  
+@handle_error
 def detect_platform(api_key: str) -> Optional[str]:
     """Enhanced platform detection with better error handling"""
     if not api_key or not isinstance(api_key, str):
         return None
-        
+
     api_key = api_key.strip()
-    
+
     # Pattern-based detection
     patterns = {
         "openrouter": ["sk-or-", "or-"],
         "google": ["AIza"],
-        "vectorshift": ["vs-", "vectorshift"]
+        "vectorshift": ["vs-", "vectorshift"],
     }
-    
+
     for platform, prefixes in patterns.items():
         if any(api_key.lower().startswith(prefix.lower()) for prefix in prefixes):
             logger.info(f"Detected platform: {platform}")
             return platform
-    
+
     # API-based detection with timeout and retry
     endpoints = [
-        ("openrouter", "https://openrouter.ai/api/v1/models", {"Authorization": f"Bearer {api_key}"}),
-        ("google", f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}", {})
+        (
+            "openrouter",
+            "https://openrouter.ai/api/v1/models",
+            {"Authorization": f"Bearer {api_key}"},
+        ),
+        (
+            "google",
+            f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}",
+            {},
+        ),
     ]
-    
+
     for platform, url, headers in endpoints:
         try:
             response = requests.get(url, headers=headers, timeout=5)
@@ -266,7 +282,7 @@ def detect_platform(api_key: str) -> Optional[str]:
         except requests.RequestException as e:
             logger.debug(f"API check failed for {platform}: {e}")
             continue
-    
+
     logger.warning(f"Could not detect platform for API key: {api_key[:10]}...")
     return None
 
@@ -276,10 +292,10 @@ def detect_platform(api_key: str) -> Optional[str]:
 def load_css():
     """Load CSS with enhanced error handling"""
     css_path = ROOT / "static" / "style.css"
-    
+
     if css_path.exists():
         try:
-            css_content = css_path.read_text(encoding='utf-8')
+            css_content = css_path.read_text(encoding="utf-8")
             st.markdown(f"<style>{css_content}</style>", unsafe_allow_html=True)
             logger.info("Custom CSS loaded successfully")
         except Exception as e:
@@ -295,29 +311,29 @@ def get_available_models(provider: str, api_key: str) -> list:
     """Get available models with caching and error handling"""
     cache_key = f"models_{provider}_{hash(api_key) if api_key else 'none'}"
     cached_models = safe_session_state_get(cache_key, None)
-    
+
     # Use cached models if available and recent
     if cached_models and isinstance(cached_models, dict):
         cache_time = cached_models.get("timestamp", 0)
         if time.time() - cache_time < 300:  # 5 minutes cache
             return cached_models.get("models", [])
-    
+
     try:
         models = get_models_for_provider(provider, api_key)
         if models:
             # Cache the results
-            safe_session_state_set(cache_key, {
-                "models": models,
-                "timestamp": time.time()
-            })
+            safe_session_state_set(
+                cache_key, {"models": models, "timestamp": time.time()}
+            )
             logger.info(f"Retrieved {len(models)} models for {provider}")
             return models
     except Exception as e:
         logger.error(f"Failed to get models for {provider}: {e}")
-    
+
     # Fallback to default model
     default_model = LLM_CONFIG.get("model", "gemini-2.5-flash-lite-preview-06-17")
     return [default_model]
+
 
 initialize_session_state()
 configure_streamlit_page()
@@ -325,8 +341,9 @@ load_css()
 
 st.session_state["accent_color"] = "#d4af37"
 # Sidebar configuration
-provider, api_key, model = render_sidebar(validate_configuration, detect_platform, get_available_models)
-
+provider, api_key, model = render_sidebar(
+    validate_configuration, detect_platform, get_available_models
+)
 
 
 # Render email configuration
@@ -338,8 +355,17 @@ text_color = st.session_state.get("text_color", "#000000")
 accent_color = st.session_state.get("accent_color", "#d4af37")
 secondary_color = st.session_state.get("secondary_color", "#f4e09c")
 font_options = [
-    "Be Vietnam Pro", "Poppins", "Roboto", "Open Sans", "Lato",
-    "Montserrat", "Inter", "Arial", "Verdana", "Times New Roman", "Georgia"
+    "Be Vietnam Pro",
+    "Poppins",
+    "Roboto",
+    "Open Sans",
+    "Lato",
+    "Montserrat",
+    "Inter",
+    "Arial",
+    "Verdana",
+    "Times New Roman",
+    "Georgia",
 ]
 font_family = font_options[st.session_state.get("font_family_index", 0)]
 font_size = st.session_state.get("font_size", 14)
