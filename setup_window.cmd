@@ -41,7 +41,7 @@ if errorlevel 1 (
         exit /b 1
     )
     echo Hoàn tất cài đặt Python.
-    set "PYTHON_CMD=py -3.11"
+    set "PYTHON_CMD=python"
 )
 echo Đã có Python.
 
@@ -73,8 +73,8 @@ echo Đã kích hoạt virtual environment.
 :: 5) Cài đặt dependencies
 echo Đang cài đặt dependencies...
 %PYTHON_CMD% -m pip install --upgrade uv
-uv pip install --upgrade pip
-uv pip install -r "%~dp0requirements.txt"
+%PYTHON_CMD% -m uv pip install --upgrade pip
+%PYTHON_CMD% -m uv pip install -r "%~dp0requirements.txt"
 echo Hoàn tất cài đặt dependencies.
 
 :: 6) Tạo thư mục attachments, csv, log, static
