@@ -5,6 +5,7 @@ import re  # xử lý biểu thức chính quy
 import json  # parse và dump JSON
 import time  # xử lý thời gian và sleep retry
 import logging  # ghi log
+from datetime import datetime  # định dạng thời gian hiển thị
 from typing import List, Dict, Optional  # khai báo kiểu
 
 import pandas as pd  # xử lý DataFrame
@@ -52,6 +53,23 @@ from .config import (
 )
 from .sent_time_store import load_sent_times
 from .prompts import CV_EXTRACTION_PROMPT  # prompt LLM để trích xuất CV
+
+def format_sent_time_display(ts: str) -> str:
+    """Định dạng thời gian ISO sang dạng dễ đọc hơn."""
+    if not ts:
+        return ""
+    try:
+        dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+        dt = dt.astimezone()
+        hour = dt.strftime("%I").lstrip("0") or "0"
+        minute = dt.strftime("%M")
+        ampm = dt.strftime("%p").lower()
+        day = dt.strftime("%d").lstrip("0")
+        month = dt.strftime("%m").lstrip("0")
+        year = dt.strftime("%Y")
+        return f"{hour}:{minute} {ampm} {day}/{month}/{year}"
+    except Exception:
+        return ts
 
 class CVProcessor:
     """
@@ -260,6 +278,8 @@ class CVProcessor:
             "Kinh nghiệm",
             "Kỹ năng",
         ])  # tạo DataFrame từ list dict với thứ tự cột cố định
+        if "Thời gian nhận" in df.columns:
+            df["Thời gian nhận"] = df["Thời gian nhận"].apply(format_sent_time_display)
         return df  # trả về kết quả
 
     def save_to_csv(self, df: pd.DataFrame, output: str = OUTPUT_CSV):

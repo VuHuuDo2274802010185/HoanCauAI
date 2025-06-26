@@ -98,7 +98,8 @@ def test_process_includes_sent_time(cv_processor_class, tmp_path, monkeypatch):
         value = df['Thời gian nhận'].iloc[0]
     else:
         value = df[0]['Thời gian nhận']
-    assert value == '2023-09-20T10:15:00Z'
+    expected = cp_module.format_sent_time_display('2023-09-20T10:15:00Z')
+    assert value == expected
 
 
 def test_process_uses_saved_sent_time(cv_processor_class, tmp_path, monkeypatch):
@@ -123,4 +124,5 @@ def test_process_uses_saved_sent_time(cv_processor_class, tmp_path, monkeypatch)
         value = df['Thời gian nhận'].iloc[0]
     else:
         value = df[0]['Thời gian nhận']
-    assert value == '2023-09-20T12:00:00Z'
+    expected = cp_module.format_sent_time_display('2023-09-20T12:00:00Z')
+    assert value == expected
