@@ -145,7 +145,7 @@ def process_chat_message(user_input: str):
         with loading_overlay("🤖 AI đang suy nghĩ..."):
             from modules.qa_chatbot import QAChatbot
             provider = st.session_state.get("selected_provider", "google")
-            model = st.session_state.get("selected_model", "gemini-2.0-flash")
+            model = st.session_state.get("selected_model", "gemini-2.5-flash-lite-preview-06-17")
             api_key = st.session_state.get(f"{provider}_api_key", "")
             if not api_key:
                 st.error("❌ API Key chưa được cấu hình!")

@@ -316,7 +316,7 @@ def get_available_models(provider: str, api_key: str) -> list:
         logger.error(f"Failed to get models for {provider}: {e}")
     
     # Fallback to default model
-    default_model = LLM_CONFIG.get("model", "gemini-2.0-flash")
+    default_model = LLM_CONFIG.get("model", "gemini-2.5-flash-lite-preview-06-17")
     return [default_model]
 
 initialize_session_state()
