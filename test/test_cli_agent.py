@@ -43,7 +43,8 @@ def cli_module(monkeypatch, tmp_path):
     class DummyProcessor:
         def __init__(self, *a, **k):
             pass
-        def process(self):
+        def process(self, unseen_only=True):
+            calls['process_unseen'] = unseen_only
             return DummyDF(calls.get('df_rows', []))
         def save_to_csv(self, df, path):
             calls['saved'] = path

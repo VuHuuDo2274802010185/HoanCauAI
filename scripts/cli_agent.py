@@ -43,13 +43,11 @@ def watch(interval, host, port, user, password, unseen_only):
 def full_process(unseen_only):
     """Chạy đầy đủ quy trình fetch và xử lý CV"""
     click.echo("Bắt đầu full process...")
-    # Fetch email
+    # Fetch email & process CVs
     fetcher = EmailFetcher(settings.email_host, settings.email_port, settings.email_user, settings.email_pass)
     fetcher.connect()
-    fetcher.fetch_cv_attachments(unseen_only=unseen_only)
-    # Process CVs
     processor = CVProcessor(fetcher, llm_client=LLMClient())
-    df = processor.process()
+    df = processor.process(unseen_only=unseen_only)
     if df.empty:
         click.echo("Không có CV mới để xử lý.")
     else:

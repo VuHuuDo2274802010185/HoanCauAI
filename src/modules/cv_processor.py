@@ -44,7 +44,12 @@ except ImportError:
             _PDF_EX = None  # không có thư viện PDF nào
 
 from .llm_client import LLMClient  # client LLM mặc định
-from .config import ATTACHMENT_DIR, OUTPUT_CSV, OUTPUT_EXCEL  # cấu hình thư mục và file xuất
+from .config import (
+    ATTACHMENT_DIR,
+    OUTPUT_CSV,
+    OUTPUT_EXCEL,
+    EMAIL_UNSEEN_ONLY,
+)
 from .prompts import CV_EXTRACTION_PROMPT  # prompt LLM để trích xuất CV
 
 class CVProcessor:
@@ -194,15 +199,18 @@ class CVProcessor:
             info[k] = m.group(1).strip() if m else ""
         return info
 
-    def process(self) -> pd.DataFrame:
+    def process(self, unseen_only: bool | None = None) -> pd.DataFrame:
         """
         Tìm tất cả file CV (fetcher hoặc thư mục attachments), trích xuất info, trả về DataFrame
         """
         # fetch từ email nếu có fetcher
-        files: List[str] = self.fetcher.fetch_cv_attachments() if self.fetcher else []
-        sent_map = {}
         if self.fetcher:
+            unseen = unseen_only if unseen_only is not None else EMAIL_UNSEEN_ONLY
+            files: List[str] = self.fetcher.fetch_cv_attachments(unseen_only=unseen)
             sent_map = dict(getattr(self.fetcher, "last_fetch_info", []))
+        else:
+            files = []
+            sent_map = {}
         if not files:
             logger.info("🔍 Không tìm thấy qua fetcher, dò thư mục attachments...")
             files = [
