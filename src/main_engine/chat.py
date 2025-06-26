@@ -208,39 +208,17 @@ def export_chat_history() -> str | None:
 
 @handle_error
 def render_chat_help():
-    """Render chat help and usage guide."""
+    """Render suggested prompts for the chat."""
     with st.expander("❓ Hướng dẫn sử dụng Chat AI", expanded=True):
         st.markdown(
             """
-            ### 🎯 Tính năng chính:
-            - **Chat thông minh** với AI về dữ liệu CV
-            - **Lưu lịch sử** cuộc trò chuyện tự động
-            - **Xuất file** lịch sử chat
-            - **Thống kê** chi tiết cuộc trò chuyện
-            - **Giao diện đẹp** với theme tùy chỉnh
-
-            ### 💡 Cách sử dụng:
-            1. **Xử lý CV trước:** Hãy xử lý CV ở tab "Xử lý CV" để có dữ liệu
-            2. **Đặt câu hỏi:** Nhập câu hỏi vào ô bên dưới
-            3. **Gửi tin nhắn:** Nhấn "Gửi" hoặc Ctrl+Enter
-            4. **Theo dõi lịch sử:** Tất cả cuộc trò chuyện được lưu tự động
-
-            ### 🔥 Câu hỏi mẫu:
-            - "Tóm tắt thông tin các ứng viên có kinh nghiệm AI"
-            - "Ứng viên nào có kỹ năng Python tốt nhất?"
+            ### 📋 Prompt gợi ý
+            - "Tóm tắt kinh nghiệm 5 ứng viên hàng đầu cho vị trí Data Scientist"
+            - "Liệt kê những ứng viên có trên 3 năm kinh nghiệm Python"
+            - "So sánh kỹ năng giữa ứng viên A và B"
             - "Phân tích điểm mạnh của từng ứng viên"
-            - "Gợi ý ứng viên phù hợp cho vị trí Senior Developer"
-
-            ### ⚡ Mẹo sử dụng:
-            - **Câu hỏi cụ thể** sẽ cho kết quả tốt hơn
-            - **Sử dụng ngữ cảnh** từ cuộc trò chuyện trước
-            - **Xuất lịch sử** để lưu trữ thông tin quan trọng
-            - **Xóa lịch sử** khi muốn bắt đầu cuộc trò chuyện mới
-
-            ### 🛠️ Cấu hình:
-            - **API Key:** Cấu hình ở sidebar bên trái
-            - **Model:** Chọn model phù hợp (Gemini, GPT, v.v.)
-            - **Theme:** Tùy chỉnh giao diện theo sở thích
+            - "Gợi ý ứng viên phù hợp cho vị trí Machine Learning Engineer"
+            - "Tạo email mời phỏng vấn ứng viên xuất sắc nhất"
             """
         )
         if st.button("Đóng hướng dẫn", key="close_chat_help"):
