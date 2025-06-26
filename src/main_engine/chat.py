@@ -8,7 +8,7 @@ import pandas as pd
 import streamlit as st
 
 from modules.config import OUTPUT_CSV
-from modules.ui_utils import loading_overlay
+from modules.ui_utils import loading_logs, display_logs
 from .utils import handle_error, safe_session_state_get
 
 logger = logging.getLogger(__name__)
@@ -142,7 +142,7 @@ def process_chat_message(user_input: str):
             "content": user_input,
             "timestamp": timestamp,
         })
-        with loading_overlay("🤖 AI đang suy nghĩ..."):
+        with loading_logs("🤖 AI đang suy nghĩ...") as log_area:
             from modules.qa_chatbot import QAChatbot
             provider = st.session_state.get("selected_provider", "google")
             model = st.session_state.get("selected_model", "gemini-2.5-flash-lite-preview-06-17")
@@ -175,6 +175,7 @@ def process_chat_message(user_input: str):
                 st.rerun()
             else:
                 st.error("❌ Không thể lấy phản hồi từ AI. Vui lòng thử lại.")
+            display_logs(log_area)
     except Exception as e:
         st.error(f"❌ Lỗi xử lý chat: {e}")
         logger.error("Chat processing error: %s", e)

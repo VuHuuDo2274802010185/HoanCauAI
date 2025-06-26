@@ -5,7 +5,7 @@ import os
 import pandas as pd
 import streamlit as st
 from typing import cast
-from modules.ui_utils import loading_overlay
+from modules.ui_utils import loading_logs, display_logs
 
 from modules.qa_chatbot import QAChatbot
 from modules.config import OUTPUT_CSV
@@ -37,13 +37,13 @@ def render(provider: str, model: str, api_key: str) -> None:
                 model=cast(str, model),
                 api_key=cast(str, api_key),
             )
-            with loading_overlay("Đang hỏi AI..."):
+            with loading_logs("Đang hỏi AI...") as log_area:
                 try:
                     logging.info("Đang gửi câu hỏi tới AI")
                     answer = chatbot.ask_question(question, df)
-                    # Allow basic HTML in the answer so line breaks and lists
-                    # from the LLM render correctly in Streamlit.
                     st.markdown(answer, unsafe_allow_html=True)
                 except Exception as e:
                     logging.error(f"Lỗi hỏi AI: {e}")
                     st.error(f"Lỗi khi hỏi AI: {e}")
+                finally:
+                    display_logs(log_area)

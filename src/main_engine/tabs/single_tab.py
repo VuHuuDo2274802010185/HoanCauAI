@@ -7,7 +7,7 @@ import streamlit as st
 from modules.cv_processor import CVProcessor
 from modules.config import get_model_price
 from modules.dynamic_llm_client import DynamicLLMClient
-from modules.ui_utils import loading_overlay
+from modules.ui_utils import loading_logs, display_logs
 
 
 def render(provider: str, model: str, api_key: str, root: Path) -> None:
@@ -24,7 +24,9 @@ def render(provider: str, model: str, api_key: str, root: Path) -> None:
     if uploaded:
         tmp_file = root / f"tmp_{uploaded.name}"
         tmp_file.write_bytes(uploaded.getbuffer())
-        with loading_overlay(f"Đang trích xuất & phân tích... (LLM: {provider}/{label})"):
+        with loading_logs(
+            f"Đang trích xuất & phân tích... (LLM: {provider}/{label})"
+        ) as log_area:
             logging.info(f"Xử lý file đơn {uploaded.name}")
             proc = CVProcessor(
                 llm_client=DynamicLLMClient(
@@ -35,5 +37,6 @@ def render(provider: str, model: str, api_key: str, root: Path) -> None:
             )
             text = proc.extract_text(str(tmp_file))
             info = proc.extract_info_with_llm(text)
+            display_logs(log_area)
         st.json(info)
         tmp_file.unlink(missing_ok=True)

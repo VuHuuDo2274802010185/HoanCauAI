@@ -31,7 +31,6 @@ if __package__ is None:
     __package__ = "main_engine"
 
 import streamlit as st
-from modules.ui_utils import loading_overlay
 from .utils import handle_error, safe_session_state_get, safe_session_state_set
 from .chat import render_enhanced_chat_tab
 from .sidebar import render_sidebar, render_email_config
