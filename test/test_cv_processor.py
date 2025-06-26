@@ -99,3 +99,28 @@ def test_process_includes_sent_time(cv_processor_class, tmp_path, monkeypatch):
     else:
         value = df[0]['Thời gian gửi']
     assert value == '2023-09-20T10:15:00Z'
+
+
+def test_process_uses_saved_sent_time(cv_processor_class, tmp_path, monkeypatch):
+    cp_module = importlib.import_module(cv_processor_class.__module__)
+
+    monkeypatch.setattr(cp_module, 'ATTACHMENT_DIR', tmp_path)
+    metadata = tmp_path / 'sent_times.json'
+    monkeypatch.setattr(cp_module, 'SENT_TIME_FILE', metadata, raising=False)
+
+    import modules.sent_time_store as sts
+    monkeypatch.setattr(sts, 'SENT_TIME_FILE', metadata, raising=False)
+
+    p = tmp_path / 'cv.pdf'
+    p.write_text('data')
+    sts.record_sent_time(str(p), '2023-09-20T12:00:00Z')
+
+    processor = cp_module.CVProcessor()
+    monkeypatch.setattr(processor, 'extract_text', lambda p: '')
+    monkeypatch.setattr(processor, 'extract_info_with_llm', lambda t: {})
+    df = processor.process()
+    if hasattr(df, 'iloc'):
+        value = df['Thời gian gửi'].iloc[0]
+    else:
+        value = df[0]['Thời gian gửi']
+    assert value == '2023-09-20T12:00:00Z'
