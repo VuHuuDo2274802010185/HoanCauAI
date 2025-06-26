@@ -2,6 +2,17 @@
 # HoanCau AI - Setup Script for macOS/Linux
 set -e
 
+# Usage: ./setup_linux.sh [--dev]
+#   --dev  Install requirements-dev.txt after requirements.txt
+
+# Parse arguments
+DEV_MODE=0
+for arg in "$@"; do
+    if [ "$arg" = "--dev" ]; then
+        DEV_MODE=1
+    fi
+done
+
 echo "=============================="
 echo " HoanCau AI - Setup Script "
 echo "=============================="
@@ -28,6 +39,13 @@ if ! command -v uv >/dev/null 2>&1; then
 fi
 uv pip install --upgrade pip
 uv pip install -r requirements.txt
+if [ $DEV_MODE -eq 1 ]; then
+    if [ -f "requirements-dev.txt" ]; then
+        uv pip install -r requirements-dev.txt
+    else
+        echo "Warning: requirements-dev.txt not found, skipping dev dependencies." >&2
+    fi
+fi
 
 # 5) Copy .env.example to .env if needed
 if [ ! -f ".env" ]; then

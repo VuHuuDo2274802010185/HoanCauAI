@@ -7,16 +7,23 @@ echo                 RESUME AI - SETUP SCRIPT
 echo ======================================================
 :: ======================================================
 :: Resume AI - Setup Script
+:: Usage: setup_window.cmd [--dev]
+::   --dev  Cài thêm requirements-dev.txt sau khi cài requirements.txt
 :: Mục đích: Tự động thiết lập môi trường dự án
 ::   1) Kiểm tra Python và virtual env
 ::   2) Copy .env từ .env.example nếu chưa có
 ::   3) Tạo và kích hoạt venv
-::   4) Cài đặt dependencies
+::   4) Cài đặt dependencies (thêm --dev để cài requirements-dev.txt)
 ::   5) Tạo thư mục attachments
 :: ======================================================
 
 :: 0) Chuyển console sang UTF-8
 chcp 65001 >nul
+
+set DEV_MODE=0
+for %%i in (%*) do (
+    if /I "%%i"=="--dev" set DEV_MODE=1
+)
 
 :: 1) Kiểm tra Python
 set "PYTHON_CMD=python"
@@ -72,6 +79,13 @@ echo Đang cài đặt dependencies...
 %PYTHON_CMD% -m pip install --upgrade uv
 uv pip install --upgrade pip
 uv pip install -r "%~dp0requirements.txt"
+if %DEV_MODE%==1 (
+    if exist "%~dp0requirements-dev.txt" (
+        uv pip install -r "%~dp0requirements-dev.txt"
+    ) else (
+        echo Không tìm thấy requirements-dev.txt, bỏ qua cài đặt gói phát triển.
+    )
+)
 echo Hoàn tất cài đặt dependencies.
 
 :: 6) Tạo thư mục attachments
