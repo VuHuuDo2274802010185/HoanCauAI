@@ -142,14 +142,14 @@ class EmailFetcher:
                 msg = email.message_from_bytes(msg_data[0][1])
 
                 # Get sent time from Date header
-                sent_time: str | None = None
+                sent_time: str | None = ""
                 date_hdr = msg.get('Date')
                 if date_hdr:
                     try:
                         dt = parsedate_to_datetime(date_hdr)
                         sent_time = dt.isoformat()
                     except Exception:
-                        sent_time = None
+                        sent_time = ""
 
                 # Lấy tiêu đề và nội dung để lọc theo keywords
                 try:

@@ -219,8 +219,10 @@ class CVProcessor:
             txt = self.extract_text(path)  # đọc text file
             info = self.extract_info_with_llm(txt) or {}
             # gom thông tin vào dict
+            sent_time = sent_map.get(path, "")
+            sent_time = sent_time if sent_time is not None else ""
             rows.append({
-                "Thời gian gửi": sent_map.get(path, ""),
+                "Thời gian gửi": sent_time,
                 "Nguồn": os.path.basename(path),
                 "Họ tên": info.get("ten", ""),
                 "Tuổi": info.get("tuoi", ""),
