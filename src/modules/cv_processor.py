@@ -236,7 +236,7 @@ class CVProcessor:
             sent_time = sent_map.get(path, "")
             sent_time = sent_time if sent_time is not None else ""
             rows.append({
-                "Thời gian gửi": sent_time,
+                "Thời gian nhận": sent_time,
                 "Nguồn": os.path.basename(path),
                 "Họ tên": info.get("ten", ""),
                 "Tuổi": info.get("tuoi", ""),
@@ -249,7 +249,7 @@ class CVProcessor:
             })
 
         df = pd.DataFrame(rows, columns=[
-            "Thời gian gửi",
+            "Thời gian nhận",
             "Nguồn",
             "Họ tên",
             "Tuổi",

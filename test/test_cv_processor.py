@@ -95,9 +95,9 @@ def test_process_includes_sent_time(cv_processor_class, tmp_path, monkeypatch):
     monkeypatch.setattr(processor, 'extract_info_with_llm', lambda t: {})
     df = processor.process()
     if hasattr(df, 'iloc'):
-        value = df['Thời gian gửi'].iloc[0]
+        value = df['Thời gian nhận'].iloc[0]
     else:
-        value = df[0]['Thời gian gửi']
+        value = df[0]['Thời gian nhận']
     assert value == '2023-09-20T10:15:00Z'
 
 
@@ -120,7 +120,7 @@ def test_process_uses_saved_sent_time(cv_processor_class, tmp_path, monkeypatch)
     monkeypatch.setattr(processor, 'extract_info_with_llm', lambda t: {})
     df = processor.process()
     if hasattr(df, 'iloc'):
-        value = df['Thời gian gửi'].iloc[0]
+        value = df['Thời gian nhận'].iloc[0]
     else:
-        value = df[0]['Thời gian gửi']
+        value = df[0]['Thời gian nhận']
     assert value == '2023-09-20T12:00:00Z'
