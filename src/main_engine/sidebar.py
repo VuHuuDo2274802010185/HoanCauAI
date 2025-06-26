@@ -1,12 +1,15 @@
 """Sidebar related rendering utilities."""
 
-import logging
-from pathlib import Path
-import threading
+# --- Thư viện chuẩn ---
+import logging  # quản lý log
+from pathlib import Path  # thao tác đường dẫn tệp
+import threading  # chạy tác vụ nền
 
-import streamlit as st
-from dotenv import set_key, load_dotenv
+# --- Thư viện bên thứ ba ---
+import streamlit as st  # giao diện web
+from dotenv import set_key, load_dotenv  # đọc/ghi file .env
 
+# --- Modules nội bộ ---
 from modules.config import (
     LLM_CONFIG,
     get_model_price,
@@ -22,27 +25,32 @@ from modules.auto_fetcher import watch_loop
 from modules.ui_utils import loading_overlay
 from .utils import handle_error, safe_session_state_get, safe_session_state_set
 
+# Logger cho file này
 logger = logging.getLogger(__name__)
-
-
 @handle_error
 def render_sidebar(validate_configuration, detect_platform, get_available_models):
     """Render the sidebar with provider and model selection."""
+    # Đường dẫn tới logo trong thư mục static
     logo_path = Path(__file__).resolve().parents[2] / "static" / "logo.png"
     if logo_path.exists():
         try:
+            # Hiển thị logo ở sidebar
             st.sidebar.image(str(logo_path), use_container_width=True, caption="Logo Hoàn Cầu AI")
         except Exception as e:
+            # Nếu lỗi, ghi log và chỉ hiển thị text thay thế
             logger.warning("Failed to load logo: %s", e)
             st.sidebar.markdown("**🏢 Hoàn Cầu AI CV Processor**")
 
+    # Hiển thị trạng thái cấu hình trong một expander
     with st.sidebar.expander("📊 Trạng thái hệ thống", expanded=False):
         config_status = validate_configuration()
         for component, status in config_status.items():
+            # Dùng emoji để báo trạng thái từng thành phần
             emoji = "✅" if status else "❌"
             st.write(f"{emoji} {component.replace('_', ' ').title()}")
 
     st.sidebar.header("⚙️ Cấu hình LLM")
+    # Chọn provider (Google hoặc OpenRouter)
     provider = st.sidebar.selectbox(
         "🔧 Provider",
         options=["google", "openrouter"],
@@ -50,6 +58,7 @@ def render_sidebar(validate_configuration, detect_platform, get_available_models
         help="Chọn nhà cung cấp LLM",
     )
 
+    # Nhập API key tùy vào provider
     if provider == "google":
         api_key = st.sidebar.text_input(
             "🔑 Google API Key",
@@ -74,8 +83,10 @@ def render_sidebar(validate_configuration, detect_platform, get_available_models
         elif detected_platform == provider:
             st.sidebar.success(f"✅ API key hợp lệ cho {provider}")
 
+    # Hai cột: nút lấy models và xóa cache
     col1, col2 = st.sidebar.columns([2, 1])
     with col1:
+        # Nút gọi API để lấy danh sách model
         if st.button("🔄 Lấy models", help="Lấy danh sách model từ API"):
             if not api_key:
                 st.sidebar.warning("⚠️ Vui lòng nhập API Key trước khi lấy models")
@@ -83,22 +94,26 @@ def render_sidebar(validate_configuration, detect_platform, get_available_models
                 with loading_overlay("Đang lấy danh sách models..."):
                     models = get_available_models(provider, api_key)
                     if models:
+                        # Lưu danh sách models vào session_state
                         safe_session_state_set("available_models", models)
                         st.sidebar.success(f"✅ Đã lấy {len(models)} models")
                     else:
                         st.sidebar.error("❌ Không thể lấy models")
     with col2:
+        # Nút xóa cache models
         if st.button("🗑️", help="Xóa cache models"):
             cache_key = f"models_{provider}_{hash(api_key) if api_key else 'none'}"
             if cache_key in st.session_state:
                 del st.session_state[cache_key]
             st.sidebar.info("Cache đã được xóa")
 
+    # Lấy danh sách models từ cache hoặc API
     models = safe_session_state_get("available_models", get_available_models(provider, api_key))
     if not models:
         st.sidebar.error("❌ Không lấy được models, vui lòng kiểm tra API Key.")
         models = [LLM_CONFIG.get("model", "gemini-2.5-flash-lite-preview-06-17")]
 
+    # Đặt model mặc định nếu model hiện tại không nằm trong danh sách
     default_model = LLM_CONFIG.get("model", "gemini-2.5-flash-lite-preview-06-17")
     if default_model not in models and models:
         default_model = models[0]
@@ -106,6 +121,7 @@ def render_sidebar(validate_configuration, detect_platform, get_available_models
         safe_session_state_set("selected_model", default_model)
 
     def format_model_option(model: str) -> str:
+        """Hiển thị giá model (nếu có) bên cạnh tên"""
         try:
             price = get_model_price(model)
             return f"{model} ({price})" if price != "unknown" else model
@@ -133,6 +149,7 @@ def render_sidebar(validate_configuration, detect_platform, get_available_models
 def render_email_config(root: Path, provider: str, api_key: str):
     """Render email configuration section."""
     st.sidebar.header("📧 Thông tin Email")
+    # Nhập thông tin email để tự động tải CV
     email_user = st.sidebar.text_input(
         "📮 Gmail",
         value=safe_session_state_get("email_user", EMAIL_USER),
@@ -152,6 +169,7 @@ def render_email_config(root: Path, provider: str, api_key: str):
         key="unseen_only",
         help="Nếu bỏ chọn, hệ thống sẽ quét toàn bộ hộp thư",
     )
+    # Lưu thông tin vào file .env khi nhấn nút
     if st.sidebar.button("💾 Lưu mật khẩu", key="save_email_pass"):
         env_path = root / ".env"
         try:
@@ -178,8 +196,11 @@ def render_email_config(root: Path, provider: str, api_key: str):
 @handle_error
 def manage_auto_fetcher(email_user: str, email_pass: str, unseen_only: bool):
     """Manage auto fetcher thread with better error handling."""
+    # Không làm gì nếu thiếu thông tin đăng nhập
     if not (email_user and email_pass):
         return
+
+    # Nếu thread đã chạy, cho phép dừng
     if safe_session_state_get("auto_fetcher_thread"):
         st.sidebar.success("✅ Auto fetcher đang chạy")
         if st.sidebar.button("🛑 Dừng auto fetcher"):
@@ -211,6 +232,7 @@ def manage_auto_fetcher(email_user: str, email_pass: str, unseen_only: bool):
         logger.error("Failed to start auto fetcher: %s", e)
         st.sidebar.error(f"Lỗi khởi động auto fetcher: {e}")
 
+# Các hàm public của module
 __all__ = [
     "render_sidebar",
     "render_email_config",

@@ -1,3 +1,5 @@
+"""Tab hỏi đáp với AI về dữ liệu CV."""
+
 import logging
 import os
 import pandas as pd

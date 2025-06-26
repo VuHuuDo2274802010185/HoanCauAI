@@ -1,3 +1,5 @@
+"""Tab tải file CV từ hộp thư email."""
+
 import logging
 from typing import List
 from pathlib import Path
