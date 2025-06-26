@@ -110,6 +110,24 @@ table.dataframe td {
 .results-table-container table.dataframe {
   width: max-content;
   max-width: 100%;
+  border-collapse: collapse;
+}
+
+/* Sticky header and zebra rows */
+.results-table-container th {
+  position: sticky;
+  top: 0;
+  background-color: var(--btn-gold);
+  color: var(--btn-text-color);
+  z-index: 1;
+}
+
+.results-table-container tbody tr:nth-child(even) {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.results-table-container tbody tr:hover {
+  background-color: rgba(0, 0, 0, 0.08);
 }
 /* Loading overlay styles */
 .loading-overlay {
