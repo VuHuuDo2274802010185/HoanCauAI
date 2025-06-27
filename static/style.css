@@ -174,26 +174,14 @@ table.dataframe td {
   z-index: 9999;
 }
 
-.loading-spinner {
-  display: flex;
-  align-items: flex-end;
-}
-
-.loading-dot {
-  width: 12px;
-  height: 12px;
-  margin: 0 4px;
-  background: var(--btn-gold);
+.loading-ring {
+  width: 48px;
+  height: 48px;
+  border: 6px solid var(--btn-gold);
+  border-color: var(--btn-gold) transparent var(--btn-gold) transparent;
   border-radius: 50%;
-  animation: bounce 1.2s infinite ease-in-out;
-}
-
-.loading-dot:nth-child(2) {
-  animation-delay: -0.3s;
-}
-
-.loading-dot:nth-child(3) {
-  animation-delay: -0.15s;
+  animation: loading-spin 1.2s linear infinite;
+  margin-bottom: 12px;
 }
 
 .loading-text {
@@ -216,7 +204,7 @@ table.dataframe td {
   white-space: pre-wrap;
 }
 
-@keyframes bounce {
-  0%, 80%, 100% { transform: scale(0); }
-  40% { transform: scale(1); }
+@keyframes loading-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
