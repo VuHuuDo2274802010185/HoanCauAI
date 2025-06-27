@@ -95,7 +95,9 @@ tạo các thư mục cần thiết.
    `.gitignore` nên **không commit** lên Git. Nếu gặp lỗi cấu hình, hãy so sánh
    với file mẫu [`.env.example`](./.env.example) để biết các biến cần thiết.
     Bạn có thể tạo sẵn các thư mục `attachments`, `csv`, `log` và `static` (hoặc để
-    script tự tạo) để lưu file tải về và log.
+   script tự tạo) để lưu file tải về và log.
+   Nếu trước đây bạn từng chạy phiên bản cũ sử dụng thư mục `.log` hoặc `logs`,
+   dự án sẽ tự động chuyển toàn bộ nội dung sang `log` khi khởi chạy.
 
 ### 💻 Cài đặt nhanh trên Windows
 
