@@ -12,6 +12,7 @@ from modules.config import (
     SENT_TIME_FILE,
 )
 from modules.email_fetcher import EmailFetcher
+from modules.ui_utils import loading_overlay
 
 
 def render(email_user: str, email_pass: str, unseen_only: bool) -> None:
@@ -28,7 +29,7 @@ def render(email_user: str, email_pass: str, unseen_only: bool) -> None:
         )
         if st.button("Fetch Now", help="Quét email ngay để tải CV"):
             logging.info("Thực hiện fetch email thủ công")
-            with st.spinner("Đang quét email..."):
+            with loading_overlay("Đang quét email..."):
                 fetcher = EmailFetcher(EMAIL_HOST, EMAIL_PORT, email_user, email_pass)
                 fetcher.connect()
                 new_files: List[str] = fetcher.fetch_cv_attachments(unseen_only=unseen_only)
