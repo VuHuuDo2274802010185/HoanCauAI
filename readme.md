@@ -160,6 +160,7 @@ Khi chạy `setup_window.cmd` hoặc `start_window.cmd` lần đầu, SmartScree
 - Trích xuất thông tin qua LLM (Google Gemini/OpenRouter) với cơ chế fallback.
 - Lưu kết quả sang CSV và Excel.
 - Hỏi đáp thông tin tuyển dụng dựa trên dữ liệu đã xử lý.
+- Chat bằng giọng nói trực tiếp trong tab Hỏi AI.
 - Chạy lệnh CLI, web UI hoặc FastAPI server.
 - Cung cấp API MCP server để tích hợp hệ thống khác.
 - Lưu log cuộc trò chuyện của tính năng Hỏi AI.
@@ -205,6 +206,7 @@ Truy cập `http://localhost:8501` để:
 - Nhập API key và email.
 - Theo dõi tự động fetch.
 - Xử lý batch, xử lý đơn, xem CSV và chat với AI.
+- Gửi câu hỏi và nghe trả lời bằng giọng nói ngay trong tab **Hỏi AI**.
 - Trong tab **MCP Server**, nhập API key (Google/OpenRouter/VectorShift) và nhấn
   "Khởi động" để server tự nhận diện platform.
 - Tab **Chỉnh .env** cho phép xem và lưu nội dung file cấu hình ngay trên giao diện.

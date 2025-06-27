@@ -20,3 +20,9 @@ python-multipart>=0.0.5       # xử lý multipart/form-data (file upload FastAP
 click                         # CLI utilities (dùng cho scripts click)
 pydantic>=2.0.0               # validation, BaseSettings (FastAPI)
 pydantic-settings>=2.0.0
+
+# Voice chat dependencies
+speechrecognition>=3.14.0     # nhận diện giọng nói
+pyttsx3>=2.98                 # chuyển văn bản thành giọng nói
+streamlit-audiorecorder>=0.0.6 # thu âm từ micro trong Streamlit
+gTTS>=2.5.0                 # chuyển văn bản thành giọng nói qua Google
