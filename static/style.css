@@ -158,6 +158,30 @@ table.dataframe td {
 .results-table-container tbody tr:hover {
   background-color: rgba(0, 0, 0, 0.08);
 }
+
+/* Attachment table styling */
+.attachments-table-container {
+  overflow: auto;
+  max-height: 400px;
+}
+.attachments-table-container table.dataframe {
+  width: 100%;
+  table-layout: auto;
+  border-collapse: collapse;
+}
+.attachments-table-container th {
+  position: sticky;
+  top: 0;
+  background-color: var(--btn-gold);
+  color: var(--btn-text-color);
+  z-index: 1;
+}
+.attachments-table-container tbody tr:nth-child(even) {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+.attachments-table-container tbody tr:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+}
 /* Loading overlay styles */
 .loading-overlay {
   position: fixed;
