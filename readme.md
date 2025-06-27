@@ -160,7 +160,7 @@ Khi chạy `setup_window.cmd` hoặc `start_window.cmd` lần đầu, SmartScree
 - Trích xuất thông tin qua LLM (Google Gemini/OpenRouter) với cơ chế fallback.
 - Lưu kết quả sang CSV và Excel.
 - Hỏi đáp thông tin tuyển dụng dựa trên dữ liệu đã xử lý.
-- Chat bằng giọng nói trực tiếp trong tab Hỏi AI.
+- Chat bằng giọng nói trực tiếp trong tab Hỏi AI (có thể tải file âm thanh nếu không dùng được micro).
 - Chạy lệnh CLI, web UI hoặc FastAPI server.
 - Cung cấp API MCP server để tích hợp hệ thống khác.
 - Lưu log cuộc trò chuyện của tính năng Hỏi AI.
