@@ -201,8 +201,9 @@ def answer_question(question: str, df: pd.DataFrame, provider: str, model: str, 
         
         answer = answer.strip()
         
-        # Post-process answer
+        # Post-process answer and attach CV links to candidate names
         answer = _post_process_answer(answer)
+        answer = _link_names_to_cv(answer, df)
         
         # Log the interaction
         _log_chat(question, answer)
@@ -245,6 +246,29 @@ def _post_process_answer(answer: str) -> str:
         return _make_file_link(fname)
 
     answer = file_pattern.sub(repl, answer)
+
+    return answer
+
+
+def _link_names_to_cv(answer: str, df: pd.DataFrame) -> str:
+    """Attach CV file links next to candidate names mentioned in the answer."""
+    if not {'Họ tên', 'Nguồn'} <= set(df.columns):
+        return answer
+
+    name_to_file = (
+        df[['Họ tên', 'Nguồn']]
+        .dropna()
+        .astype(str)
+        .apply(lambda x: (x['Họ tên'].strip(), x['Nguồn'].strip()), axis=1)
+        .tolist()
+    )
+
+    for name, fname in name_to_file:
+        if not name or not fname or name not in answer:
+            continue
+        link = _make_file_link(fname)
+        pattern = re.compile(rf"\b{re.escape(name)}\b")
+        answer = pattern.sub(f"{name} ({link})", answer, count=1)
 
     return answer
 
