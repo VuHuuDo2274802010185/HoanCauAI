@@ -4,8 +4,8 @@
 /* Simple theme variables */
 :root[data-theme="light"] {
   --cv-text-color: #222222;
-  --cv-bg-color: #faf9f6;
-  --cv-accent-color: #f6f1d6;
+  --cv-bg-color: #fff7e6;
+  --cv-accent-color: #ffeacc;
   --btn-gold: #d4af37;
   --btn-gold-border: #d4af37;
   --btn-text-color: #222222;
