@@ -18,11 +18,7 @@ def loading_overlay(message: str = "Đang xử lý..."):
     # HTML của overlay hiển thị spinner và thông báo
     overlay_html = f"""
     <div class='loading-overlay'>
-        <div class='loading-spinner'>
-            <div class='loading-dot'></div>
-            <div class='loading-dot'></div>
-            <div class='loading-dot'></div>
-        </div>
+        <div class='loading-ring'></div>
         <div class='loading-text'>{message}</div>
     </div>
     """
@@ -64,11 +60,7 @@ def loading_logs(message: str = "Đang xử lý..."):
     def render(log_text: str = "") -> None:
         overlay_html = f"""
         <div class='loading-overlay'>
-            <div class='loading-spinner'>
-                <div class='loading-dot'></div>
-                <div class='loading-dot'></div>
-                <div class='loading-dot'></div>
-            </div>
+            <div class='loading-ring'></div>
             <div class='loading-text'>{message}</div>
             <pre class='loading-log'>{log_text}</pre>
         </div>
