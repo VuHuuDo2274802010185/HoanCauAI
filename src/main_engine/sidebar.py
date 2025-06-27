@@ -35,7 +35,7 @@ def render_sidebar(validate_configuration, detect_platform, get_available_models
     if logo_path.exists():
         try:
             # Hiển thị logo ở sidebar
-            st.sidebar.image(str(logo_path), use_container_width=True, caption="Logo Hoàn Cầu AI")
+            st.sidebar.image(str(logo_path), use_container_width=True, caption="Hoàn Cầu AI CV Processor")
         except Exception as e:
             # Nếu lỗi, ghi log và chỉ hiển thị text thay thế
             logger.warning("Failed to load logo: %s", e)
