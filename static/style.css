@@ -201,13 +201,30 @@ table.dataframe td {
 }
 
 .loading-ring {
+  position: relative;
+  box-sizing: border-box;
   width: 48px;
   height: 48px;
-  border: 6px solid var(--btn-gold);
-  border-color: var(--btn-gold) transparent var(--btn-gold) transparent;
+  border: 6px solid transparent;
+  border-top-color: var(--btn-gold);
+  border-left-color: var(--btn-gold);
   border-radius: 50%;
-  animation: loading-spin 1.2s linear infinite;
+  animation: loading-spin 1s linear infinite;
   margin-bottom: 12px;
+}
+
+.loading-ring::after {
+  content: "";
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  right: 6px;
+  bottom: 6px;
+  border: 6px solid transparent;
+  border-bottom-color: var(--btn-text-color);
+  border-right-color: var(--btn-text-color);
+  border-radius: 50%;
+  animation: loading-spin 0.8s linear infinite reverse;
 }
 
 .loading-text {
