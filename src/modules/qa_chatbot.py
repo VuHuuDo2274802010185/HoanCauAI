@@ -8,7 +8,8 @@ import pandas as pd
 from pathlib import Path
 from typing import Optional, Dict, Any
 from .dynamic_llm_client import DynamicLLMClient
-from .config import CHAT_LOG_FILE
+from .config import CHAT_LOG_FILE, ATTACHMENT_DIR
+import base64
 
 
 class QAChatbot:
@@ -38,6 +39,20 @@ class QAChatbot:
 # Enhanced logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+
+
+def _make_file_link(fname: str) -> str:
+    """Return an HTML download link for a CV file if it exists."""
+    path = (ATTACHMENT_DIR / fname).resolve()
+    if not path.exists():
+        return fname
+    data = base64.b64encode(path.read_bytes()).decode()
+    mime = (
+        "application/pdf"
+        if path.suffix.lower() == ".pdf"
+        else "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
+    return f'<a download="{fname}" href="data:{mime};base64,{data}">{fname}</a>'
 
 
 def _log_chat(question: str, answer: str, log_file: Path = CHAT_LOG_FILE) -> None:
@@ -214,14 +229,23 @@ def _post_process_answer(answer: str) -> str:
     
     # Ensure proper bullet point formatting
     answer = re.sub(r'^\s*[-*+]\s*', '• ', answer, flags=re.MULTILINE)
-    
+
     # Add emoji if not present and answer is positive
     if not re.search(r'[😀-🙏]', answer) and len(answer) > 50:
         if any(word in answer.lower() for word in ['tìm thấy', 'có', 'thành công', 'được']):
             answer = "✅ " + answer
         elif any(word in answer.lower() for word in ['không', 'chưa', 'thiếu']):
             answer = "ℹ️ " + answer
-    
+
+    # Replace file names with download links
+    file_pattern = re.compile(r'([\w\s.-]+\.(?:pdf|docx?))', re.IGNORECASE)
+
+    def repl(match: re.Match) -> str:
+        fname = match.group(1).strip()
+        return _make_file_link(fname)
+
+    answer = file_pattern.sub(repl, answer)
+
     return answer
 
 

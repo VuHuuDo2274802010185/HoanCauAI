@@ -3,6 +3,8 @@
 import logging
 from typing import List
 from pathlib import Path
+import base64
+import pandas as pd
 import streamlit as st
 
 from modules.config import (
@@ -13,6 +15,8 @@ from modules.config import (
 )
 from modules.email_fetcher import EmailFetcher
 from modules.ui_utils import loading_overlay
+from modules.sent_time_store import load_sent_times
+from modules.cv_processor import format_sent_time_display
 
 
 def render(email_user: str, email_pass: str, unseen_only: bool) -> None:
@@ -46,11 +50,34 @@ def render(email_user: str, email_pass: str, unseen_only: bool) -> None:
             and p.suffix.lower() in (".pdf", ".docx")
         )
         if attachments:
-            items = "".join(f"<li>{Path(p).name}</li>" for p in attachments)
-            list_html = f"<ul>{items}</ul>"
+            sent_map = load_sent_times()
+
+            def make_link(path: Path) -> str:
+                data = base64.b64encode(path.read_bytes()).decode()
+                mime = (
+                    "application/pdf"
+                    if path.suffix.lower() == ".pdf"
+                    else "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                )
+                return (
+                    f'<a download="{path.name}" href="data:{mime};base64,{data}">{path.name}</a>'
+                )
+
+            rows = []
+            for p in attachments:
+                sent = format_sent_time_display(sent_map.get(p.name, ""))
+                size_kb = p.stat().st_size / 1024
+                rows.append({
+                    "File": make_link(p),
+                    "Dung lượng": f"{size_kb:.1f} KB",
+                    "Gửi lúc": sent,
+                })
+
+            df = pd.DataFrame(rows, columns=["File", "Dung lượng", "Gửi lúc"])
+            table_html = df.to_html(escape=False, index=False)
             styled_html = (
-                "<div style='max-height: 400px; overflow-y: auto; overflow-x: auto;'>"
-                f"{list_html}"
+                "<div class='attachments-table-container' style='max-height: 400px; overflow:auto;'>"
+                f"{table_html}"
                 "</div>"
             )
             st.markdown(styled_html, unsafe_allow_html=True)
