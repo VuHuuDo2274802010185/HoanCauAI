@@ -3,14 +3,6 @@
 import logging
 from pathlib import Path
 from datetime import datetime
-from io import BytesIO
-
-try:
-    from audiorecorder import audiorecorder
-except Exception:  # pragma: no cover - fallback if dependency missing
-    audiorecorder = None
-import speech_recognition as sr
-from gtts import gTTS
 
 import pandas as pd
 import streamlit as st
@@ -133,55 +125,9 @@ def render_chat_input_form():
                 height=100,
                 help="Nhấn Ctrl+Enter để gửi nhanh",
             )
-            audio = audiorecorder("🎤 Bấm để thu âm", "⏹ Dừng") if audiorecorder else None
-            if not audiorecorder:
-                st.warning(
-                    "Không tìm thấy thành phần ghi âm. Hãy kiểm tra cài đặt hoặc tải file âm thanh."
-                )
-            audio_file = st.file_uploader(
-                "🎵 Hoặc tải lên file âm thanh", type=["wav", "mp3"], label_visibility="collapsed"
-            )
         with col2:
             st.markdown("<br>", unsafe_allow_html=True)
-            submit_button = st.form_submit_button(
-                "📨 Gửi",
-                help="Gửi câu hỏi cho AI",
-                use_container_width=True,
-            )
-
-    if audio and len(audio.raw_data) > 0:
-        wav_bytes = BytesIO()
-        audio.export(wav_bytes, format="wav")
-        wav_bytes.seek(0)
-        st.audio(wav_bytes.read(), format="audio/wav")
-        wav_bytes.seek(0)
-        recognizer = sr.Recognizer()
-        with sr.AudioFile(wav_bytes) as source:
-            audio_data = recognizer.record(source)
-        try:
-            text = recognizer.recognize_google(audio_data, language="vi-VN")
-            st.info(f"Bạn nói: {text}")
-            process_chat_message(text)
-        except Exception as e:
-            st.error(f"Không nhận dạng được giọng nói: {e}")
-    elif audio_file is not None:
-        file_bytes = BytesIO(audio_file.read())
-        file_bytes.seek(0)
-        st.audio(
-            file_bytes.read(),
-            format="audio/wav" if audio_file.type == "audio/wav" else "audio/mp3",
-        )
-        file_bytes.seek(0)
-        recognizer = sr.Recognizer()
-        with sr.AudioFile(file_bytes) as source:
-            audio_data = recognizer.record(source)
-        try:
-            text = recognizer.recognize_google(audio_data, language="vi-VN")
-            st.info(f"Bạn nói: {text}")
-            process_chat_message(text)
-        except Exception as e:
-            st.error(f"Không nhận dạng được giọng nói: {e}")
-
+            submit_button = st.form_submit_button("📨 Gửi", help="Gửi câu hỏi cho AI", use_container_width=True)
     if submit_button and user_input.strip():
         process_chat_message(user_input.strip())
 
@@ -222,13 +168,6 @@ def process_chat_message(user_input: str):
                     "content": response,
                     "timestamp": datetime.now().isoformat(),
                 })
-                try:
-                    audio_fp = BytesIO()
-                    gTTS(text=response, lang="vi").write_to_fp(audio_fp)
-                    audio_fp.seek(0)
-                    st.audio(audio_fp.read(), format="audio/mp3")
-                except Exception as e:
-                    logger.error("TTS error: %s", e)
                 logger.info(
                     "Chat processed successfully. History length: %s",
                     len(st.session_state.get("conversation_history", [])),
