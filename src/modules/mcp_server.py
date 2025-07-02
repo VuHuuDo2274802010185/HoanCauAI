@@ -5,7 +5,7 @@ import logging                   # ghi log hoạt động ứng dụng
 from pathlib import Path         # thao tác đường dẫn hướng đối tượng
 
 from fastapi import FastAPI, UploadFile, File, HTTPException  # framework API và xử lý upload
-from datetime import date
+from datetime import date, datetime
 from fastapi.responses import FileResponse    # trả về file như response
 from pydantic_settings import BaseSettings, SettingsConfigDict      # sử dụng BaseSettings với cấu hình cho Pydantic v2
 
@@ -87,8 +87,12 @@ async def run_full(from_date: str | None = None, to_date: str | None = None):
     )
     fetcher.connect()
 
-    since = date.fromisoformat(from_date) if from_date else None
-    before = date.fromisoformat(to_date) if to_date else None
+    since = (
+        datetime.strptime(from_date, "%d/%m/%Y").date() if from_date else None
+    )
+    before = (
+        datetime.strptime(to_date, "%d/%m/%Y").date() if to_date else None
+    )
 
     # Xử lý CV từ fetcher
     processor = CVProcessor(fetcher, llm_client=LLMClient())
