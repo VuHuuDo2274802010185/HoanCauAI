@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 import pandas as pd
 import streamlit as st
-from datetime import date
+from datetime import date, datetime
 
 # Ensure the project's `src` directory is on sys.path so that the local
 # `modules` package can be imported when running this script directly.
@@ -61,9 +61,9 @@ email_pass = st.text_input(
 unseen_only = st.checkbox("Chỉ quét email chưa đọc", value=True)
 col1, col2 = st.columns(2)
 with col1:
-    from_date_str = st.text_input("From (YYYY-MM-DD)", value="")
+    from_date_str = st.text_input("From (DD/MM/YYYY)", value="")
 with col2:
-    to_date_str = st.text_input("To (YYYY-MM-DD)", value="")
+    to_date_str = st.text_input("To (DD/MM/YYYY)", value="")
 
 if st.button("Fetch CV"):
     if not email_user or not email_pass:
@@ -71,8 +71,16 @@ if st.button("Fetch CV"):
     else:
         fetcher = EmailFetcher(EMAIL_HOST, EMAIL_PORT, email_user, email_pass)
         fetcher.connect()
-        since = date.fromisoformat(from_date_str) if from_date_str else None
-        before = date.fromisoformat(to_date_str) if to_date_str else None
+        since = (
+            datetime.strptime(from_date_str, "%d/%m/%Y").date()
+            if from_date_str
+            else None
+        )
+        before = (
+            datetime.strptime(to_date_str, "%d/%m/%Y").date()
+            if to_date_str
+            else None
+        )
         files = fetcher.fetch_cv_attachments(
             since=since,
             before=before,

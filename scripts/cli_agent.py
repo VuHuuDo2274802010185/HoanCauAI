@@ -32,8 +32,8 @@ def cli():
 @click.option('--port', default=lambda: settings.email_port, type=int, help='IMAP port')
 @click.option('--user', default=lambda: settings.email_user, help='Email user')
 @click.option('--password', default=lambda: settings.email_pass, help='Email password')
-@click.option('--from-date', type=click.DateTime(formats=['%Y-%m-%d']), help='Chỉ lấy email từ ngày này (YYYY-MM-DD)')
-@click.option('--to-date', type=click.DateTime(formats=['%Y-%m-%d']), help='Chỉ lấy email trước ngày này (YYYY-MM-DD)')
+@click.option('--from-date', type=click.DateTime(formats=['%d/%m/%Y']), help='Chỉ lấy email từ ngày này (DD/MM/YYYY)')
+@click.option('--to-date', type=click.DateTime(formats=['%d/%m/%Y']), help='Chỉ lấy email trước ngày này (DD/MM/YYYY)')
 @click.option('--unseen/--all', 'unseen_only', default=settings.email_unseen_only, show_default=True, help='Chỉ quét email chưa đọc')
 def watch(interval, host, port, user, password, from_date, to_date, unseen_only):
     """Tự động fetch CV từ email liên tục"""
@@ -50,8 +50,8 @@ def watch(interval, host, port, user, password, from_date, to_date, unseen_only)
     )
 
 @cli.command()
-@click.option('--from-date', type=click.DateTime(formats=['%Y-%m-%d']), help='Chỉ lấy email từ ngày này (YYYY-MM-DD)')
-@click.option('--to-date', type=click.DateTime(formats=['%Y-%m-%d']), help='Chỉ lấy email trước ngày này (YYYY-MM-DD)')
+@click.option('--from-date', type=click.DateTime(formats=['%d/%m/%Y']), help='Chỉ lấy email từ ngày này (DD/MM/YYYY)')
+@click.option('--to-date', type=click.DateTime(formats=['%d/%m/%Y']), help='Chỉ lấy email trước ngày này (DD/MM/YYYY)')
 @click.option('--unseen/--all', 'unseen_only', default=settings.email_unseen_only, show_default=True, help='Chỉ quét email chưa đọc')
 def full_process(from_date, to_date, unseen_only):
     """Chạy đầy đủ quy trình fetch và xử lý CV"""

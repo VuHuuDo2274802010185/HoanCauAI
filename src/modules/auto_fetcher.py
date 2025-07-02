@@ -5,7 +5,7 @@ import time
 import logging
 import argparse
 import imaplib
-from datetime import date
+from datetime import date, datetime
 
 from .config import EMAIL_UNSEEN_ONLY
 
@@ -68,13 +68,13 @@ def main():
     parser.add_argument("--password")
     parser.add_argument(
         "--from-date",
-        type=lambda s: date.fromisoformat(s),
-        help="Chỉ lấy email từ ngày này (YYYY-MM-DD)",
+        type=lambda s: datetime.strptime(s, "%d/%m/%Y").date(),
+        help="Chỉ lấy email từ ngày này (DD/MM/YYYY)",
     )
     parser.add_argument(
         "--to-date",
-        type=lambda s: date.fromisoformat(s),
-        help="Chỉ lấy email trước ngày này (YYYY-MM-DD)",
+        type=lambda s: datetime.strptime(s, "%d/%m/%Y").date(),
+        help="Chỉ lấy email trước ngày này (DD/MM/YYYY)",
     )
     parser.add_argument(
         "--all",
