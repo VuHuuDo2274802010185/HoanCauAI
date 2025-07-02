@@ -28,7 +28,7 @@ class DummyFetcher:
 class DummyProcessor:
     def __init__(self, *a, **k):
         pass
-    def process(self):
+    def process(self, unseen_only=True, since=None, before=None):
         return pd.DataFrame([{"a": 1}])
     def save_to_csv(self, df, path):
         self.saved = path
