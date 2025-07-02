@@ -3,6 +3,7 @@ import os
 import types
 import importlib
 import pytest
+import datetime
 
 
 class DummyStreamlit:
@@ -126,3 +127,30 @@ def test_process_uses_saved_sent_time(cv_processor_class, tmp_path, monkeypatch)
         value = df[0]['Thời gian nhận']
     expected = cp_module.format_sent_time_display('2023-09-20T12:00:00Z')
     assert value == expected
+
+
+def test_process_filters_by_time(cv_processor_class, tmp_path, monkeypatch):
+    cp_module = importlib.import_module(cv_processor_class.__module__)
+
+    monkeypatch.setattr(cp_module, 'ATTACHMENT_DIR', tmp_path)
+    metadata = tmp_path / 'sent_times.json'
+    monkeypatch.setattr(cp_module, 'SENT_TIME_FILE', metadata, raising=False)
+
+    import modules.sent_time_store as sts
+    monkeypatch.setattr(sts, 'SENT_TIME_FILE', metadata, raising=False)
+
+    p1 = tmp_path / 'cv1.pdf'
+    p2 = tmp_path / 'cv2.pdf'
+    p1.write_text('data')
+    p2.write_text('data')
+    sts.record_sent_time(str(p1), '2023-09-20T12:00:00Z')
+    sts.record_sent_time(str(p2), '2023-10-01T12:00:00Z')
+
+    processor = cp_module.CVProcessor()
+    monkeypatch.setattr(processor, 'extract_text', lambda p: '')
+    monkeypatch.setattr(processor, 'extract_info_with_llm', lambda t: {})
+
+    start = datetime.datetime(2023, 9, 19, tzinfo=datetime.timezone.utc)
+    end = datetime.datetime(2023, 9, 21, tzinfo=datetime.timezone.utc)
+    df = processor.process(from_time=start, to_time=end)
+    assert len(df) == 1

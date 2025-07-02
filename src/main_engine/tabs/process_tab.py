@@ -1,6 +1,7 @@
 """Tab xử lý hàng loạt file CV."""
 
 import logging
+from datetime import datetime, time
 import streamlit as st
 
 from modules.cv_processor import CVProcessor
@@ -30,6 +31,12 @@ def render(
     label = f"{model} ({price})" if price != "unknown" else model
     st.markdown(f"**LLM:** `{provider}` / `{label}`")
 
+    col1, col2 = st.columns(2)
+    with col1:
+        from_date = st.date_input("From date", value=None, key="cv_from")
+    with col2:
+        to_date = st.date_input("To date", value=None, key="cv_to")
+
     if st.button(
         "Bắt đầu xử lý CV",
         help="Phân tích CV trong attachments hoặc fetch từ email nếu có thông tin",
@@ -50,8 +57,23 @@ def render(
             llm_client=DynamicLLMClient(provider=provider, model=model, api_key=api_key),
         )
 
+        from_dt = (
+            datetime.combine(from_date, time.min)
+            if from_date
+            else None
+        )
+        to_dt = (
+            datetime.combine(to_date, time.max)
+            if to_date
+            else None
+        )
+
         with loading_logs("Đang xử lý CV..."):
-            df = processor.process(unseen_only=unseen_only)
+            df = processor.process(
+                unseen_only=unseen_only,
+                from_time=from_dt,
+                to_time=to_dt,
+            )
 
         if df.empty:
             st.info("Không có CV nào để xử lý.")
