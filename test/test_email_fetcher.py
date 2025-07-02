@@ -69,3 +69,34 @@ def test_fetch_cv_attachments(email_fetcher_module, tmp_path):
     assert fetcher.last_fetch_info == [(str(expected), '2023-09-20T10:20:00-04:00')]
     assert 'BEFORE' in imap.last_criteria
 
+
+def test_ignore_non_cv_files(email_fetcher_module, tmp_path):
+    email_fetcher = email_fetcher_module
+    EmailFetcher = email_fetcher.EmailFetcher
+
+    msg = EmailMessage()
+    msg['Subject'] = 'Profile'
+    msg['Date'] = 'Wed, 20 Sep 2023 10:15:00 -0400'
+    msg.set_content('body')
+    msg.add_attachment(b'data', maintype='application', subtype='pdf', filename='profile.pdf')
+    raw = msg.as_bytes()
+
+    class FakeIMAP:
+        def search(self, charset, *criteria):
+            return 'OK', [b'1']
+
+        def fetch(self, num, query):
+            return 'OK', [
+                (None, raw),
+                (b'INTERNALDATE', b'"20-Sep-2023 10:20:00 -0400"'),
+            ]
+
+        def store(self, *args, **kwargs):
+            pass
+
+    fetcher = EmailFetcher()
+    imap = FakeIMAP()
+    fetcher.mail = imap
+    files = fetcher.fetch_cv_attachments()
+    assert files == []
+
