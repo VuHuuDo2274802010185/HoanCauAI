@@ -3,6 +3,7 @@
 import logging
 from typing import List
 from pathlib import Path
+from datetime import datetime
 import base64
 import pandas as pd
 import streamlit as st
@@ -42,15 +43,26 @@ def render(email_user: str, email_pass: str, unseen_only: bool) -> None:
                 st.write(new_files)
             else:
                 st.info("Không có file đính kèm mới.")
-        attachments = sorted(
+        attachments = [
             p
             for p in ATTACHMENT_DIR.glob("*")
             if p.is_file()
             and p != SENT_TIME_FILE
             and p.suffix.lower() in (".pdf", ".docx")
-        )
+        ]
         if attachments:
             sent_map = load_sent_times()
+
+            def sort_key(p: Path) -> float:
+                ts = sent_map.get(p.name)
+                if ts:
+                    try:
+                        return datetime.fromisoformat(ts.replace("Z", "+00:00")).timestamp()
+                    except Exception:
+                        pass
+                return p.stat().st_mtime
+
+            attachments.sort(key=sort_key, reverse=True)
 
             def make_link(path: Path) -> str:
                 data = base64.b64encode(path.read_bytes()).decode()
