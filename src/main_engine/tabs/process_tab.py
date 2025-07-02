@@ -33,9 +33,9 @@ def render(
 
     col1, col2 = st.columns(2)
     with col1:
-        from_date = st.date_input("From date", value=None, key="cv_from")
+        from_date_str = st.text_input("From date (DD/MM/YYYY)", value="", key="cv_from")
     with col2:
-        to_date = st.date_input("To date", value=None, key="cv_to")
+        to_date_str = st.text_input("To date (DD/MM/YYYY)", value="", key="cv_to")
 
     if st.button(
         "Bắt đầu xử lý CV",
@@ -58,13 +58,13 @@ def render(
         )
 
         from_dt = (
-            datetime.combine(from_date, time.min)
-            if from_date
+            datetime.combine(datetime.strptime(from_date_str, "%d/%m/%Y"), time.min)
+            if from_date_str
             else None
         )
         to_dt = (
-            datetime.combine(to_date, time.max)
-            if to_date
+            datetime.combine(datetime.strptime(to_date_str, "%d/%m/%Y"), time.max)
+            if to_date_str
             else None
         )
 

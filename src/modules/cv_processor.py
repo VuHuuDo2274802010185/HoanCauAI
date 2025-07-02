@@ -224,6 +224,9 @@ class CVProcessor:
 
         since: date | None = None,
         before: date | None = None,
+
+        from_time: datetime | None = None,
+        to_time: datetime | None = None,
     ) -> pd.DataFrame:
         """
         Tìm tất cả file CV (fetcher hoặc thư mục attachments), trích xuất info, trả về DataFrame

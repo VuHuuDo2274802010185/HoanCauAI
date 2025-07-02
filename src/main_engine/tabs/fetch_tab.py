@@ -34,17 +34,27 @@ def render(email_user: str, email_pass: str, unseen_only: bool) -> None:
         )
         col1, col2 = st.columns(2)
         with col1:
-            from_date = st.date_input("From", value=None)
+            from_date_str = st.text_input("From (DD/MM/YYYY)", value="")
         with col2:
-            to_date = st.date_input("To", value=None)
+            to_date_str = st.text_input("To (DD/MM/YYYY)", value="")
         if st.button("Fetch Now", help="Quét email ngay để tải CV"):
             logging.info("Thực hiện fetch email thủ công")
             with loading_logs("Đang quét email..."):
                 fetcher = EmailFetcher(EMAIL_HOST, EMAIL_PORT, email_user, email_pass)
                 fetcher.connect()
+                since = (
+                    datetime.strptime(from_date_str, "%d/%m/%Y").date()
+                    if from_date_str
+                    else None
+                )
+                before = (
+                    datetime.strptime(to_date_str, "%d/%m/%Y").date()
+                    if to_date_str
+                    else None
+                )
                 new_files: List[str] = fetcher.fetch_cv_attachments(
-                    since=from_date,
-                    before=to_date,
+                    since=since,
+                    before=before,
                     unseen_only=unseen_only,
                 )
             if new_files:
