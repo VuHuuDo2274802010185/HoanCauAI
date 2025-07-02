@@ -5,6 +5,7 @@ import time
 import logging
 import argparse
 import imaplib
+from datetime import date
 
 from .config import EMAIL_UNSEEN_ONLY
 
@@ -18,6 +19,8 @@ def watch_loop(
     user: str | None = None,
     password: str | None = None,
     unseen_only: bool = EMAIL_UNSEEN_ONLY,
+    since: date | None = None,
+    before: date | None = None,
 ) -> None:
     """Kết nối IMAP và gọi fetch_cv_attachments() liên tục."""
     fetcher = EmailFetcher(host, port, user, password)
@@ -27,7 +30,11 @@ def watch_loop(
     try:
         while True:
             try:
-                fetcher.fetch_cv_attachments(unseen_only=unseen_only)
+                fetcher.fetch_cv_attachments(
+                    since=since,
+                    before=before,
+                    unseen_only=unseen_only,
+                )
             except imaplib.IMAP4.abort:
                 logging.warning("Mất kết nối IMAP, thử kết nối lại...")
                 try:
@@ -60,6 +67,16 @@ def main():
     parser.add_argument("--user")
     parser.add_argument("--password")
     parser.add_argument(
+        "--from-date",
+        type=lambda s: date.fromisoformat(s),
+        help="Chỉ lấy email từ ngày này (YYYY-MM-DD)",
+    )
+    parser.add_argument(
+        "--to-date",
+        type=lambda s: date.fromisoformat(s),
+        help="Chỉ lấy email trước ngày này (YYYY-MM-DD)",
+    )
+    parser.add_argument(
         "--all",
         action="store_true",
         help="Quét tất cả email thay vì chỉ UNSEEN",
@@ -72,6 +89,8 @@ def main():
         user=args.user,
         password=args.password,
         unseen_only=not args.all,
+        since=args.from_date,
+        before=args.to_date,
     )
 
 

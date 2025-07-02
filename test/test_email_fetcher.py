@@ -2,6 +2,7 @@ import sys
 import os
 import types
 from email.message import EmailMessage
+from datetime import date
 
 import importlib
 import pytest
@@ -41,7 +42,11 @@ def test_fetch_cv_attachments(email_fetcher_module, tmp_path):
     raw = msg.as_bytes()
 
     class FakeIMAP:
+        def __init__(self):
+            self.last_criteria = None
+
         def search(self, charset, *criteria):
+            self.last_criteria = criteria
             return 'OK', [b'1']
 
         def fetch(self, num, query):
@@ -55,10 +60,12 @@ def test_fetch_cv_attachments(email_fetcher_module, tmp_path):
             pass
 
     fetcher = EmailFetcher()
-    fetcher.mail = FakeIMAP()
-    files = fetcher.fetch_cv_attachments()
+    imap = FakeIMAP()
+    fetcher.mail = imap
+    files = fetcher.fetch_cv_attachments(before=date(2023, 9, 21))
     expected = tmp_path / 'cv.pdf'
     assert files == [str(expected)]
     assert expected.exists()
     assert fetcher.last_fetch_info == [(str(expected), '2023-09-20T10:20:00-04:00')]
+    assert 'BEFORE' in imap.last_criteria
 

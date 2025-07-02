@@ -96,13 +96,15 @@ class EmailFetcher:
         self,
         keywords: Optional[List[str]] = None,
         since: Optional[date] = None,
+        before: Optional[date] = None,
         batch_size: int = 100,
         unseen_only: bool = EMAIL_UNSEEN_ONLY,
     ) -> List[str]:
         """
         Tìm và tải xuống file đính kèm PDF/DOCX từ các email thoả mãn:
         - Tiêu đề hoặc nội dung chứa bất kỳ từ khoá nào trong ``keywords``.
-        - Ngày gửi >= ``since`` nếu được cung cấp.
+        - Ngày gửi >= ``since`` và < ``before`` nếu được cung cấp
+          (``before`` được hiểu là mốc kết thúc, không bao gồm ngày này).
         Quét theo từng đợt ``batch_size`` email mới nhất.
         Nếu ``unseen_only`` được bật (mặc định), chỉ tìm trong các email chưa đọc
         để tránh quét lại những thư đã xử lý.
@@ -122,6 +124,8 @@ class EmailFetcher:
         criteria = ['UNSEEN'] if unseen_only else ['ALL']
         if since:
             criteria += ['SINCE', since.strftime('%d-%b-%Y')]
+        if before:
+            criteria += ['BEFORE', before.strftime('%d-%b-%Y')]
 
         typ, data = self.mail.search(None, *criteria)
         if typ != 'OK':

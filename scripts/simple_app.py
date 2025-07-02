@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 import pandas as pd
 import streamlit as st
+from datetime import date
 
 # Ensure the project's `src` directory is on sys.path so that the local
 # `modules` package can be imported when running this script directly.
@@ -58,6 +59,11 @@ email_pass = st.text_input(
     "Mật khẩu", type="password", help="Mật khẩu hoặc App Password"
 )
 unseen_only = st.checkbox("Chỉ quét email chưa đọc", value=True)
+col1, col2 = st.columns(2)
+with col1:
+    from_date_str = st.text_input("From (YYYY-MM-DD)", value="")
+with col2:
+    to_date_str = st.text_input("To (YYYY-MM-DD)", value="")
 
 if st.button("Fetch CV"):
     if not email_user or not email_pass:
@@ -65,7 +71,13 @@ if st.button("Fetch CV"):
     else:
         fetcher = EmailFetcher(EMAIL_HOST, EMAIL_PORT, email_user, email_pass)
         fetcher.connect()
-        files = fetcher.fetch_cv_attachments(unseen_only=unseen_only)
+        since = date.fromisoformat(from_date_str) if from_date_str else None
+        before = date.fromisoformat(to_date_str) if to_date_str else None
+        files = fetcher.fetch_cv_attachments(
+            since=since,
+            before=before,
+            unseen_only=unseen_only,
+        )
         if files:
             st.success(f"Đã tải {len(files)} file: {files}")
         else:
