@@ -7,7 +7,7 @@ import os                        # thao tác hệ thống file và đường d�
 import re                        # xử lý biểu thức chính quy
 import time                      # sleep and delay functions
 import logging                   # ghi log
-from datetime import date, datetime, timezone  # dùng để lọc email và tạo timestamp
+from datetime import date, datetime, timezone, timedelta  # dùng để lọc email và tạo timestamp
 from typing import List, Optional, Tuple
 from email.utils import parsedate_to_datetime
 
@@ -125,7 +125,10 @@ class EmailFetcher:
         if since:
             criteria += ['SINCE', since.strftime('%d-%b-%Y')]
         if before:
-            criteria += ['BEFORE', before.strftime('%d-%b-%Y')]
+            # "BEFORE" của IMAP là mốc không bao gồm ngày chỉ định,
+            # nên cần cộng thêm 1 ngày để bao gồm toàn bộ ``before``
+            next_day = before + timedelta(days=1)
+            criteria += ['BEFORE', next_day.strftime('%d-%b-%Y')]
 
         typ, data = self.mail.search(None, *criteria)
         if typ != 'OK':
