@@ -5,7 +5,7 @@ import re  # xử lý biểu thức chính quy
 import json  # parse và dump JSON
 import time  # xử lý thời gian và sleep retry
 import logging  # ghi log
-from datetime import datetime  # định dạng thời gian hiển thị
+from datetime import datetime, date  # định dạng thời gian hiển thị và lọc
 from typing import List, Dict, Optional  # khai báo kiểu
 
 import pandas as pd  # xử lý DataFrame
@@ -218,14 +218,23 @@ class CVProcessor:
             info[k] = m.group(1).strip() if m else ""
         return info
 
-    def process(self, unseen_only: bool | None = None) -> pd.DataFrame:
+    def process(
+        self,
+        unseen_only: bool | None = None,
+        since: date | None = None,
+        before: date | None = None,
+    ) -> pd.DataFrame:
         """
         Tìm tất cả file CV (fetcher hoặc thư mục attachments), trích xuất info, trả về DataFrame
         """
         # fetch từ email nếu có fetcher
         if self.fetcher:
             unseen = unseen_only if unseen_only is not None else EMAIL_UNSEEN_ONLY
-            files: List[str] = self.fetcher.fetch_cv_attachments(unseen_only=unseen)
+            files: List[str] = self.fetcher.fetch_cv_attachments(
+                since=since,
+                before=before,
+                unseen_only=unseen,
+            )
         else:
             files = []
 

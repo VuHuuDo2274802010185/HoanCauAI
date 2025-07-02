@@ -5,6 +5,7 @@ import logging                   # ghi log hoạt động ứng dụng
 from pathlib import Path         # thao tác đường dẫn hướng đối tượng
 
 from fastapi import FastAPI, UploadFile, File, HTTPException  # framework API và xử lý upload
+from datetime import date
 from fastapi.responses import FileResponse    # trả về file như response
 from pydantic_settings import BaseSettings, SettingsConfigDict      # sử dụng BaseSettings với cấu hình cho Pydantic v2
 
@@ -63,7 +64,7 @@ async def health():
 
 
 @app.post("/run-full-process", summary="Run full CV extraction process")
-async def run_full():
+async def run_full(from_date: str | None = None, to_date: str | None = None):
     """
     Thực hiện quy trình:
     1. Kết nối IMAP, tải CV mới
@@ -86,9 +87,12 @@ async def run_full():
     )
     fetcher.connect()
 
+    since = date.fromisoformat(from_date) if from_date else None
+    before = date.fromisoformat(to_date) if to_date else None
+
     # Xử lý CV từ fetcher
     processor = CVProcessor(fetcher, llm_client=LLMClient())
-    df = processor.process()
+    df = processor.process(since=since, before=before)
 
     # Nếu không có CV mới, trả về số bản ghi đã xử lý = 0
     if df.empty:

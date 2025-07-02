@@ -83,7 +83,7 @@ def test_process_includes_sent_time(cv_processor_class, tmp_path, monkeypatch):
     monkeypatch.setattr(cp_module, 'ATTACHMENT_DIR', tmp_path)
 
     class DummyFetcher:
-        def fetch_cv_attachments(self, unseen_only=True):
+        def fetch_cv_attachments(self, unseen_only=True, since=None, before=None):
             p = tmp_path / 'cv.pdf'
             p.write_text('data')
             self.last_fetch_info = [(str(p), '2023-09-20T10:15:00Z')]

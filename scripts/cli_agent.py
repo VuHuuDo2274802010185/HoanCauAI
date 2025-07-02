@@ -32,22 +32,39 @@ def cli():
 @click.option('--port', default=lambda: settings.email_port, type=int, help='IMAP port')
 @click.option('--user', default=lambda: settings.email_user, help='Email user')
 @click.option('--password', default=lambda: settings.email_pass, help='Email password')
+@click.option('--from-date', type=click.DateTime(formats=['%Y-%m-%d']), help='Chỉ lấy email từ ngày này (YYYY-MM-DD)')
+@click.option('--to-date', type=click.DateTime(formats=['%Y-%m-%d']), help='Chỉ lấy email trước ngày này (YYYY-MM-DD)')
 @click.option('--unseen/--all', 'unseen_only', default=settings.email_unseen_only, show_default=True, help='Chỉ quét email chưa đọc')
-def watch(interval, host, port, user, password, unseen_only):
+def watch(interval, host, port, user, password, from_date, to_date, unseen_only):
     """Tự động fetch CV từ email liên tục"""
     click.echo(f"Bắt đầu auto fetch với interval={interval}s...")
-    watch_loop(interval, host=host, port=port, user=user, password=password, unseen_only=unseen_only)
+    watch_loop(
+        interval,
+        host=host,
+        port=port,
+        user=user,
+        password=password,
+        unseen_only=unseen_only,
+        since=from_date.date() if from_date else None,
+        before=to_date.date() if to_date else None,
+    )
 
 @cli.command()
+@click.option('--from-date', type=click.DateTime(formats=['%Y-%m-%d']), help='Chỉ lấy email từ ngày này (YYYY-MM-DD)')
+@click.option('--to-date', type=click.DateTime(formats=['%Y-%m-%d']), help='Chỉ lấy email trước ngày này (YYYY-MM-DD)')
 @click.option('--unseen/--all', 'unseen_only', default=settings.email_unseen_only, show_default=True, help='Chỉ quét email chưa đọc')
-def full_process(unseen_only):
+def full_process(from_date, to_date, unseen_only):
     """Chạy đầy đủ quy trình fetch và xử lý CV"""
     click.echo("Bắt đầu full process...")
     # Fetch email & process CVs
     fetcher = EmailFetcher(settings.email_host, settings.email_port, settings.email_user, settings.email_pass)
     fetcher.connect()
     processor = CVProcessor(fetcher, llm_client=LLMClient())
-    df = processor.process(unseen_only=unseen_only)
+    df = processor.process(
+        unseen_only=unseen_only,
+        since=from_date.date() if from_date else None,
+        before=to_date.date() if to_date else None,
+    )
     if df.empty:
         click.echo("Không có CV mới để xử lý.")
     else:
