@@ -221,6 +221,7 @@ class CVProcessor:
     def process(
         self,
         unseen_only: bool | None = None,
+
         since: date | None = None,
         before: date | None = None,
     ) -> pd.DataFrame:
@@ -251,6 +252,24 @@ class CVProcessor:
                 for f in os.listdir(ATTACHMENT_DIR)
                 if f.lower().endswith((".pdf", ".docx"))
             ]
+
+        if from_time or to_time:
+            def _in_range(p: str) -> bool:
+                ts = sent_map.get(p, "")
+                if not ts:
+                    return False
+                try:
+                    dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+                except Exception:
+                    return False
+                if from_time and dt < from_time:
+                    return False
+                if to_time and dt > to_time:
+                    return False
+                return True
+
+            files = [f for f in files if _in_range(f)]
+
         if not files:
             logger.info("ℹ️ Không có file CV nào trong thư mục.")
             return pd.DataFrame()  # trả về DataFrame rỗng nếu không có file
