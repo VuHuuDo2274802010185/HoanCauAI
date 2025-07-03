@@ -5,7 +5,6 @@ from pathlib import Path
 import logging
 import traceback
 import time
-import types
 from typing import Optional, Dict, Any
 
 # Đưa thư mục gốc (chứa `modules/`) vào sys.path để import modules
@@ -73,19 +72,7 @@ try:
     except ImportError as ie:
         logger.error(f"Failed to import core tabs: {ie}")
         st.error(f"Lỗi import tabs: {ie}")
-        update_tab = types.SimpleNamespace(render=lambda *a, **k: None)
-
-    try:
-        from .tabs import update_tab  # Optional tab
-    except ImportError:
-        update_tab = types.SimpleNamespace(render=lambda *a, **k: None)
-        logger.info("update_tab not available")
-
-    try:
-        from .tabs import cv_viewer_tab  # Optional tab
-    except ImportError:
-        cv_viewer_tab = types.SimpleNamespace(render=lambda *a, **k: None)
-        logger.info("cv_viewer_tab not available")
+        st.stop()
 
     try:
         from .tabs import chat_tab  # noqa: F401
@@ -193,17 +180,21 @@ class StreamlitLogHandler(logging.Handler):
     def _check_streamlit_context(self) -> bool:
         """Check if Streamlit context is available"""
         try:
-            # Try different ways to check Streamlit context
-            try:
-                from streamlit.runtime.scriptrunner import get_script_run_ctx
-                return get_script_run_ctx() is not None
-            except ImportError:
-                try:
-                    from streamlit.scriptrunner.script_run_context import get_script_run_ctx
-                    return get_script_run_ctx() is not None
-                except ImportError:
-                    # Fallback to checking session state
-                    return hasattr(st, 'session_state')
+            if hasattr(st, "runtime"):
+                if hasattr(st.runtime, "exists"):
+                    return bool(st.runtime.exists())
+                if hasattr(st.runtime, "scriptrunner"):
+                    get_ctx = getattr(
+                        st.runtime.scriptrunner, "get_script_run_ctx", None
+                    )
+                    if get_ctx:
+                        try:
+                            return get_ctx(suppress_warning=True) is not None
+                        except TypeError:
+                            return get_ctx() is not None
+            from streamlit.script_run_context import get_script_run_ctx
+
+            return get_script_run_ctx() is not None
         except Exception:
             return False
 
@@ -548,14 +539,12 @@ custom_css = f"""
 st.markdown(custom_css, unsafe_allow_html=True)
 
 # --- Main UI Tabs ---
-tab_main, tab_single, tab_results, tab_viewer, tab_chat, tab_update = st.tabs(
+tab_main, tab_single, tab_results, tab_chat = st.tabs(
     [
         "Lấy & Xử lý CV",
         "Single File",
         "Kết quả",
-        "Xem CV",
         "Hỏi AI",
-        "Cập nhật hệ thống",
     ]
 )
 
@@ -574,14 +563,8 @@ with tab_single:
 with tab_results:
     results_tab.render()
 
-with tab_viewer:
-    cv_viewer_tab.render()
-
 with tab_chat:
     render_enhanced_chat_tab()
-
-with tab_update:
-    update_tab.render()
 
 
 # --- Footer ---

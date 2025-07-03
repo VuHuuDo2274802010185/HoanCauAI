@@ -22,6 +22,7 @@ from modules.config import (
 from modules.email_fetcher import EmailFetcher
 from modules.cv_processor import CVProcessor, format_sent_time_display
 from modules.dynamic_llm_client import DynamicLLMClient
+from modules.ui_utils import loading_logs
 from modules.sent_time_store import load_sent_times
 from ..utils import safe_session_state_get
 
@@ -42,8 +43,8 @@ def render(
         st.warning("Cần nhập Gmail và mật khẩu trong sidebar để fetch CV.")
         fetcher = None
     else:
-        # Chỉ tạo đối tượng EmailFetcher, kết nối khi người dùng bắt đầu fetch
         fetcher = EmailFetcher(EMAIL_HOST, EMAIL_PORT, email_user, email_pass)
+        fetcher.connect()
 
     col1, col2 = st.columns(2)
     today_str = date.today().strftime("%d/%m/%Y")
@@ -61,10 +62,6 @@ def render(
 
     if st.button("Fetch & Process", help="Tải email và phân tích CV"):
         logging.info("Bắt đầu fetch & process CV")
-        if fetcher is None:
-            st.error("Cần nhập Gmail và mật khẩu trong sidebar để fetch CV.")
-            return
-
         from_dt = (
             datetime.combine(
                 datetime.strptime(from_date_str, "%d/%m/%Y"),
@@ -85,34 +82,7 @@ def render(
         )
         since = from_dt.date() if from_dt else None
         before = to_dt.date() if to_dt else None
-        
-        # Tạo progress bar và status text
-        progress_bar = st.progress(0)
-        status_text = st.empty()
-        status_text.text("🔌 Đang kết nối IMAP...")
-
-        try:
-            fetcher.connect()
-        except Exception as e:
-            progress_bar.empty()
-            status_text.empty()
-            st.error(f"Không thể kết nối IMAP: {e}")
-            return
-
-        status_text.text("🚀 Chuẩn bị khởi động...")
-        
-        def progress_callback(current, total, message):
-            if total > 0:
-                progress_value = min(current / total, 1.0)
-                progress_bar.progress(progress_value)
-                status_text.text(f"{message} ({current}/{total} - {progress_value:.1%})")
-            else:
-                status_text.text(message)
-        
-        try:
-            import time as time_module
-            time_module.sleep(0.5)  # Đảm bảo UI được render
-            
+        with loading_logs("Đang thực hiện..."):
             processor = CVProcessor(
                 fetcher=fetcher,
                 llm_client=DynamicLLMClient(provider=provider, model=model, api_key=api_key),
@@ -123,25 +93,7 @@ def render(
                 before=before,
                 from_time=from_dt,
                 to_time=to_dt,
-                progress_callback=progress_callback,
             )
-            
-            # Hiển thị hoàn thành trước khi ẩn
-            progress_bar.progress(1.0)
-            status_text.text("✅ Hoàn thành xử lý!")
-            time_module.sleep(1.0)  # Cho người dùng thấy kết quả
-            
-            # Ẩn progress bar và status
-            progress_bar.empty()
-            status_text.empty()
-            
-        except Exception as e:
-            progress_bar.empty()
-            status_text.empty()
-            st.error(f"Lỗi khi xử lý: {e}")
-            import traceback
-            st.error(f"Chi tiết lỗi: {traceback.format_exc()}")
-            return
 
         new_files = [Path(p) for p, _ in getattr(fetcher, "last_fetch_info", [])] if fetcher else []
         if new_files:
