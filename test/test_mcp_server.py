@@ -19,16 +19,10 @@ os.environ.setdefault("OUTPUT_EXCEL", "excel/out.xlsx")
 import modules.mcp_server as mcp
 
 
-class DummyFetcher:
-    def __init__(self, *a, **k):
-        pass
-    def connect(self):
-        pass
-
 class DummyProcessor:
     def __init__(self, *a, **k):
         pass
-    def process(self, unseen_only=True, since=None, before=None):
+    def process(self, from_time=None, to_time=None):
         return pd.DataFrame([{"a": 1}])
     def save_to_csv(self, df, path):
         self.saved = path
@@ -41,7 +35,6 @@ class DummyProcessor:
 
 
 def setup_app(monkeypatch, tmp_path):
-    monkeypatch.setattr(mcp, "EmailFetcher", DummyFetcher)
     monkeypatch.setattr(mcp, "CVProcessor", DummyProcessor)
     monkeypatch.setattr(mcp, "LLMClient", lambda: None)
     monkeypatch.setattr(mcp.settings, "attachment_dir", tmp_path)
@@ -56,17 +49,7 @@ def test_health_endpoint():
     assert res.json() == {"status": "ok"}
 
 
-def test_run_full_missing_credentials(monkeypatch, tmp_path):
-    monkeypatch.setattr(mcp.settings, "email_user", "")
-    monkeypatch.setattr(mcp.settings, "email_pass", "")
-    client = setup_app(monkeypatch, tmp_path)
-    res = client.post("/run-full-process")
-    assert res.status_code == 400
-
-
-def test_run_full_success(monkeypatch, tmp_path):
-    monkeypatch.setattr(mcp.settings, "email_user", "u")
-    monkeypatch.setattr(mcp.settings, "email_pass", "p")
+def test_run_full_process(monkeypatch, tmp_path):
     client = setup_app(monkeypatch, tmp_path)
     res = client.post("/run-full-process")
     assert res.status_code == 200

@@ -65,38 +65,14 @@ async def health():
 
 @app.post("/run-full-process", summary="Run full CV extraction process")
 async def run_full(from_date: str | None = None, to_date: str | None = None):
-    """
-    Thực hiện quy trình:
-    1. Kết nối IMAP, tải CV mới
-    2. Trích xuất thông tin từ CV qua LLM hoặc regex fallback
-    3. Lưu kết quả vào file CSV
-    """
-    # Kiểm tra xác thực email
-    if not settings.email_user or not settings.email_pass:
-        raise HTTPException(
-            status_code=400, 
-            detail="Email credentials not set"
-        )
+    """Process all CV files in attachments and save results."""
 
-    # Khởi tạo fetcher và kết nối tới IMAP
-    fetcher = EmailFetcher(
-        settings.email_host,
-        settings.email_port,
-        settings.email_user,
-        settings.email_pass
-    )
-    fetcher.connect()
+    # Chuyển đổi chuỗi ngày (nếu có) sang datetime để lọc
+    from_dt = datetime.strptime(from_date, "%d/%m/%Y") if from_date else None
+    to_dt = datetime.strptime(to_date, "%d/%m/%Y") if to_date else None
 
-    since = (
-        datetime.strptime(from_date, "%d/%m/%Y").date() if from_date else None
-    )
-    before = (
-        datetime.strptime(to_date, "%d/%m/%Y").date() if to_date else None
-    )
-
-    # Xử lý CV từ fetcher
-    processor = CVProcessor(fetcher, llm_client=LLMClient())
-    df = processor.process(since=since, before=before)
+    processor = CVProcessor(llm_client=LLMClient())
+    df = processor.process(from_time=from_dt, to_time=to_dt)
 
     # Nếu không có CV mới, trả về số bản ghi đã xử lý = 0
     if df.empty:
