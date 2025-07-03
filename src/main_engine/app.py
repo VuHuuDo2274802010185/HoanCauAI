@@ -5,6 +5,7 @@ from pathlib import Path
 import logging
 import traceback
 import time
+import types
 from typing import Optional, Dict, Any
 
 # Đưa thư mục gốc (chứa `modules/`) vào sys.path để import modules
@@ -72,7 +73,7 @@ try:
     except ImportError as ie:
         logger.error(f"Failed to import core tabs: {ie}")
         st.error(f"Lỗi import tabs: {ie}")
-        st.stop()
+        update_tab = types.SimpleNamespace(render=lambda *a, **k: None)
 
     try:
         from .tabs import chat_tab  # noqa: F401

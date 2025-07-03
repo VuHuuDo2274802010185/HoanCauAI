@@ -8,7 +8,7 @@ import re                        # xử lý biểu thức chính quy
 import time                      # sleep and delay functions
 import logging                   # ghi log
 from datetime import date, datetime, timezone, timedelta  # dùng để lọc email và tạo timestamp
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict
 from email.utils import parsedate_to_datetime
 
 from .config import ATTACHMENT_DIR, EMAIL_UNSEEN_ONLY
@@ -93,6 +93,69 @@ class EmailFetcher:
             self.logger.error(f"Unexpected connection error: {e}")
             raise
 
+    # ------------------------------------------------------------------
+    def _fetch_headers_batch(self, uids: List[bytes]) -> List[Dict[str, str]]:
+        """Fetch headers and bodystructure for a batch of UIDs."""
+        uid_str = ",".join(uid.decode() if isinstance(uid, bytes) else str(uid) for uid in uids)
+        if hasattr(self.mail, 'uid'):
+            typ, data = self.mail.uid('fetch', uid_str, '(BODY.PEEK[HEADER] BODYSTRUCTURE UID INTERNALDATE)')
+        else:
+            typ, data = self.mail.fetch(uid_str, '(BODY.PEEK[HEADER] BODYSTRUCTURE UID INTERNALDATE)')
+        if typ != 'OK' or not data:
+            return []
+
+        messages: List[Dict[str, str]] = []
+        i = 0
+        current: Dict[str, str] = {}
+        while i < len(data):
+            item = data[i]
+            if isinstance(item, tuple) and b'BODY[HEADER]' in item[0]:
+                if current:
+                    messages.append(current)
+                    current = {}
+                header_meta = item[0]
+                header_bytes = item[1] or b''
+                uid_match = re.search(br'UID (\d+)', header_meta)
+                uid_val = uid_match.group(1).decode() if uid_match else header_meta.split()[0].decode()
+                date_match = re.search(br'INTERNALDATE "([^"]+)"', header_meta)
+                internal_date = date_match.group(1).decode() if date_match else ''
+                current = {
+                    'uid': uid_val,
+                    'header': header_bytes,
+                    'internaldate': internal_date,
+                    'bodystructure': ''
+                }
+            elif isinstance(item, tuple) and b'BODYSTRUCTURE' in item[0]:
+                if not current:
+                    current = {'uid': '', 'header': b'', 'internaldate': '', 'bodystructure': ''}
+                current['bodystructure'] += item[0].decode()
+                date_match = re.search(r'INTERNALDATE "([^"]+)"', item[0].decode())
+                if date_match:
+                    current['internaldate'] = date_match.group(1)
+                uid_match = re.search(r'UID (\d+)', item[0].decode())
+                if uid_match:
+                    current['uid'] = uid_match.group(1)
+            elif isinstance(item, bytes):
+                if current and current.get('bodystructure') and item.strip() not in {b'', b')'}:
+                    current['bodystructure'] += item.decode()
+                elif current and not current.get('bodystructure') and item.strip() not in {b'', b')'}:
+                    current['header'] += item
+            i += 1
+        if current:
+            messages.append(current)
+        return messages
+
+    @staticmethod
+    def _has_cv_attachment(bodystructure: str) -> bool:
+        """Check BODYSTRUCTURE for CV attachment."""
+        if not bodystructure:
+            return False
+        m = re.search(r'"(?:name|filename)" "([^\"]*\.(?:pdf|docx))"', bodystructure, re.IGNORECASE)
+        if not m:
+            return False
+        fname = m.group(1)
+        return bool(re.search(r'(cv|resume)', fname, re.IGNORECASE))
+
     def fetch_cv_attachments(
         self,
         keywords: Optional[List[str]] = None,
@@ -101,6 +164,7 @@ class EmailFetcher:
         batch_size: int = 100,
         unseen_only: bool = EMAIL_UNSEEN_ONLY,
         progress_callback=None,
+        fast_mode: bool = False,
     ) -> List[str]:
         """
         Tìm và tải xuống file đính kèm PDF/DOCX từ các email thoả mãn:
@@ -155,14 +219,15 @@ class EmailFetcher:
         if progress_callback:
             progress_callback(0, total_emails, "Bắt đầu quét email...")
 
-        max_uid_seen = 0
-        processed_count = 0
-        for start in range(0, len(email_ids), batch_size):
-            batch = email_ids[start:start + batch_size]
-            for num in batch:
-                processed_count += 1
-                if progress_callback:
-                    progress_callback(processed_count, total_emails, f"Đang xử lý email {processed_count}/{total_emails}")
+        if not fast_mode:
+            max_uid_seen = 0
+            processed_count = 0
+            for start in range(0, len(email_ids), batch_size):
+                batch = email_ids[start:start + batch_size]
+                for num in batch:
+                    processed_count += 1
+                    if progress_callback:
+                        progress_callback(processed_count, total_emails, f"Đang xử lý email {processed_count}/{total_emails}")
                 
                 # Fetch both message and INTERNALDATE for accurate timestamp
                 # Fetch both message and INTERNALDATE for accurate timestamp
@@ -303,17 +368,169 @@ class EmailFetcher:
                 except Exception:
                     pass
 
-        if not new_files:
-            if not progress_callback:
-                self.logger.info("[INFO] Không tìm thấy đính kèm mới.")
-        
-        if progress_callback:
-            progress_callback(total_emails, total_emails, f"Hoàn thành! Tìm thấy {len(new_files)} file mới.")
+            if not new_files:
+                if not progress_callback:
+                    self.logger.info("[INFO] Không tìm thấy đính kèm mới.")
 
-        if max_uid_seen:
-            try:
-                save_last_uid(max_uid_seen)
-            except Exception as e:
-                self.logger.warning(f"Could not save last UID: {e}")
+            if progress_callback:
+                progress_callback(total_emails, total_emails, f"Hoàn thành! Tìm thấy {len(new_files)} file mới.")
 
-        return new_files
+            if max_uid_seen:
+                try:
+                    save_last_uid(max_uid_seen)
+                except Exception as e:
+                    self.logger.warning(f"Could not save last UID: {e}")
+
+            return new_files
+
+        else:
+            # Optimized mode: fetch headers in batch first
+            max_uid_seen = 0
+            processed_count = 0
+            for start in range(0, len(email_ids), batch_size):
+                batch = email_ids[start:start + batch_size]
+                infos = self._fetch_headers_batch(batch)
+                for info in infos:
+                    processed_count += 1
+                    if progress_callback:
+                        progress_callback(processed_count, total_emails, f"Đang xử lý email {processed_count}/{total_emails}")
+
+                    uid = info.get('uid')
+                    if not uid:
+                        continue
+                    uid_int = int(uid)
+                    if uid_int > max_uid_seen:
+                        max_uid_seen = uid_int
+
+                    internal_date = info.get('internaldate', '')
+                    header_bytes = info.get('header', b'')
+                    bodystructure = info.get('bodystructure', '')
+
+                    msg_header = email.message_from_bytes(header_bytes)
+                    try:
+                        subj_hdr = msg_header.get('Subject', '')
+                        subj = ''.join(
+                            p.decode(enc or 'utf-8', errors='ignore') if isinstance(p, bytes) else p
+                            for p, enc in decode_header(subj_hdr)
+                        )
+                    except Exception:
+                        subj = ''
+
+                    if not any(kw.lower() in subj.lower() for kw in keywords):
+                        continue
+                    if not self._has_cv_attachment(bodystructure):
+                        continue
+
+                    if hasattr(self.mail, 'uid'):
+                        typ, full_data = self.mail.uid('fetch', uid, '(RFC822)')
+                    else:
+                        typ, full_data = self.mail.fetch(uid, '(RFC822)')
+                    if typ != 'OK' or not full_data:
+                        continue
+                    raw_msg = None
+                    for it in full_data:
+                        if isinstance(it, tuple) and isinstance(it[1], (bytes, bytearray)):
+                            raw_msg = it[1]
+                            break
+                    if raw_msg is None:
+                        continue
+
+                    msg = email.message_from_bytes(raw_msg)
+
+                    sent_time: str | None = ""
+                    if internal_date:
+                        try:
+                            dt = parsedate_to_datetime(internal_date)
+                            sent_time = dt.isoformat()
+                        except Exception:
+                            try:
+                                tup = imaplib.Internaldate2tuple(f'INTERNALDATE "{internal_date}"'.encode())
+                                if tup:
+                                    dt = datetime.fromtimestamp(time.mktime(tup), tz=timezone.utc)
+                                    sent_time = dt.isoformat()
+                            except Exception:
+                                sent_time = ""
+                    if not sent_time:
+                        date_hdr = msg.get('Date')
+                        if date_hdr:
+                            try:
+                                dt = parsedate_to_datetime(date_hdr)
+                                sent_time = dt.isoformat()
+                            except Exception:
+                                sent_time = ""
+
+                    body_text = ''
+                    for part in msg.walk():
+                        if part.get_content_type() == 'text/plain' and not part.get_filename():
+                            charset = part.get_content_charset() or 'utf-8'
+                            try:
+                                body_text += part.get_payload(decode=True).decode(charset, errors='ignore')
+                            except Exception:
+                                pass
+
+                    all_text = f"{subj}\n{body_text}".lower()
+                    if not any(kw.lower() in all_text for kw in keywords):
+                        continue
+
+                    if not progress_callback:
+                        self.logger.info(f"[DEBUG] Email ID {uid}: {subj}")
+
+                    for part in msg.walk():
+                        raw_name = part.get_filename()
+                        if not raw_name:
+                            continue
+
+                        decoded_parts = decode_header(raw_name)
+                        filename = ''.join(
+                            (p.decode(enc or 'utf-8') if isinstance(p, bytes) else p)
+                            for p, enc in decoded_parts
+                        )
+
+                        name, ext = os.path.splitext(filename)
+                        if ext.lower() not in ['.pdf', '.docx']:
+                            continue
+                        if not re.search(r"(cv|resume)", name, re.IGNORECASE):
+                            continue
+                        safe_name = re.sub(r'[^\w\-\_ ]', '_', name)
+                        safe = safe_name + ext
+
+                        path = os.path.join(ATTACHMENT_DIR, safe)
+
+                        if os.path.exists(path):
+                            if not progress_callback:
+                                self.logger.info(f"[INFO] Đã tồn tại: {path}")
+                            continue
+
+                        with open(path, "wb") as f:
+                            f.write(part.get_payload(decode=True))
+                        new_files.append(path)
+                        self.last_fetch_info.append((path, sent_time))
+                        try:
+                            record_sent_time(path, sent_time)
+                        except Exception as e:
+                            self.logger.warning(f"Could not record sent time for {path}: {e}")
+                        if not progress_callback:
+                            self.logger.info(f"[OK] Lưu đính kèm mới: {path}")
+
+                    try:
+                        if hasattr(self.mail, 'uid'):
+                            self.mail.uid('store', uid, "+FLAGS", "\\Seen")
+                        else:
+                            self.mail.store(uid, "+FLAGS", "\\Seen")
+                    except Exception:
+                        pass
+
+            if not new_files:
+                if not progress_callback:
+                    self.logger.info("[INFO] Không tìm thấy đính kèm mới.")
+
+            if progress_callback:
+                progress_callback(total_emails, total_emails, f"Hoàn thành! Tìm thấy {len(new_files)} file mới.")
+
+            if max_uid_seen:
+                try:
+                    save_last_uid(max_uid_seen)
+                except Exception as e:
+                    self.logger.warning(f"Could not save last UID: {e}")
+
+            return new_files
