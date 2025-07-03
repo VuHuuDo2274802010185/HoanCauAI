@@ -156,8 +156,9 @@ Khi chạy `setup_window.cmd` hoặc `start_window.cmd` lần đầu, SmartScree
 
 ## 🌟 Tính năng
 
+- **Thanh tiến trình trực quan** cho quá trình fetch email và phân tích CV
 - Tự động quét email IMAP, tải file đính kèm và xử lý batch.
-- Xử lý một file CV đơn lẻ.
+- Xử lý một file CV đơn lẻ với thanh tiến trình theo thời gian thực.
 - Trích xuất thông tin qua LLM (Google Gemini/OpenRouter) với cơ chế fallback.
 - Lưu kết quả sang CSV và Excel.
 - Hỏi đáp thông tin tuyển dụng dựa trên dữ liệu đã xử lý.
@@ -203,8 +204,9 @@ streamlit run src/main_engine/app.py
 ```
 Truy cập `http://localhost:8501` để:
 - Nhập API key và email.
-- Theo dõi tự động fetch.
+- Theo dõi tự động fetch với **thanh tiến trình trực quan**.
 - Xử lý batch, xử lý đơn, xem CSV và chat với AI.
+- **Thanh tiến trình theo thời gian thực** hiển thị tiến độ fetch email và phân tích CV.
 - Trong tab **MCP Server**, nhập API key (Google/OpenRouter/VectorShift) và nhấn
   "Khởi động" để server tự nhận diện platform.
 - Tab **Chỉnh .env** cho phép xem và lưu nội dung file cấu hình ngay trên giao diện.

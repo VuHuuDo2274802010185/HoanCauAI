@@ -50,8 +50,8 @@ def render(provider: str, model: str, api_key: str, root: Path) -> None:
             status_text.text("✅ Hoàn thành phân tích!")
             
             # Ẩn progress bar và status sau một chút
-            import time
-            time.sleep(0.5)
+            import time as time_module
+            time_module.sleep(0.5)
             progress_bar.empty()
             status_text.empty()
             

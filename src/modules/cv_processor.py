@@ -242,6 +242,9 @@ class CVProcessor:
                 if progress_callback:
                     progress_callback(current, total * 2, f"📧 {message}")  # Nhân 2 vì có 2 giai đoạn
             
+            if progress_callback:
+                progress_callback(0, 100, "📧 Kết nối email...")
+            
             files: List[str] = self.fetcher.fetch_cv_attachments(
                 since=since,
                 before=before,
@@ -250,6 +253,8 @@ class CVProcessor:
             )
         else:
             files = []
+            if progress_callback:
+                progress_callback(0, 100, "📁 Không có fetcher, chỉ xử lý file local...")
 
         sent_map = {
             os.path.join(ATTACHMENT_DIR, fname): ts
@@ -258,6 +263,8 @@ class CVProcessor:
         if self.fetcher:
             sent_map.update(dict(getattr(self.fetcher, "last_fetch_info", [])))
         if not files:
+            if progress_callback:
+                progress_callback(25, 100, "🔍 Quét thư mục attachments...")
             logger.info("🔍 dò thư mục attachments...")
             files = [
                 os.path.join(ATTACHMENT_DIR, f)

@@ -85,14 +85,20 @@ def render(
         # Tạo progress bar và status text
         progress_bar = st.progress(0)
         status_text = st.empty()
+        status_text.text("🚀 Chuẩn bị khởi động...")
         
         def progress_callback(current, total, message):
             if total > 0:
                 progress_value = min(current / total, 1.0)
                 progress_bar.progress(progress_value)
-            status_text.text(message)
+                status_text.text(f"{message} ({current}/{total} - {progress_value:.1%})")
+            else:
+                status_text.text(message)
         
         try:
+            import time as time_module
+            time_module.sleep(0.5)  # Đảm bảo UI được render
+            
             processor = CVProcessor(
                 fetcher=fetcher,
                 llm_client=DynamicLLMClient(provider=provider, model=model, api_key=api_key),
@@ -106,7 +112,12 @@ def render(
                 progress_callback=progress_callback,
             )
             
-            # Hoàn thành - ẩn progress bar và status
+            # Hiển thị hoàn thành trước khi ẩn
+            progress_bar.progress(1.0)
+            status_text.text("✅ Hoàn thành xử lý!")
+            time_module.sleep(1.0)  # Cho người dùng thấy kết quả
+            
+            # Ẩn progress bar và status
             progress_bar.empty()
             status_text.empty()
             
@@ -114,6 +125,8 @@ def render(
             progress_bar.empty()
             status_text.empty()
             st.error(f"Lỗi khi xử lý: {e}")
+            import traceback
+            st.error(f"Chi tiết lỗi: {traceback.format_exc()}")
             return
 
         new_files = [Path(p) for p, _ in getattr(fetcher, "last_fetch_info", [])] if fetcher else []
