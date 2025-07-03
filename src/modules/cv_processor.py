@@ -249,7 +249,7 @@ class CVProcessor:
         if self.fetcher:
             sent_map.update(dict(getattr(self.fetcher, "last_fetch_info", [])))
         if not files:
-            logger.info("🔍 Không tìm thấy qua fetcher, dò thư mục attachments...")
+            logger.info("🔍 dò thư mục attachments...")
             files = [
                 os.path.join(ATTACHMENT_DIR, f)
                 for f in os.listdir(ATTACHMENT_DIR)
