@@ -42,21 +42,10 @@ def render(
 
     if st.button(
         "Bắt đầu xử lý CV",
-        help="Phân tích CV trong attachments hoặc fetch từ email nếu có thông tin",
+        help="Phân tích CV trong thư mục attachments (không kết nối IMAP)",
     ):
         logging.info("Bắt đầu xử lý batch CV")
-        fetcher = None
-        if email_user and email_pass:
-            try:
-                fetcher = EmailFetcher(EMAIL_HOST, EMAIL_PORT, email_user, email_pass)
-                fetcher.connect()
-            except Exception as e:
-                st.error(f"Không thể kết nối email: {e}")
-                logging.error("Email connection failed: %s", e)
-                fetcher = None
-
         processor = CVProcessor(
-            fetcher,
             llm_client=DynamicLLMClient(provider=provider, model=model, api_key=api_key),
         )
 
