@@ -287,6 +287,7 @@ class CVProcessor:
             rows.append({
                 "Thời gian nhận": sent_time,
                 "Nguồn": os.path.basename(path),
+                "Vị trí": info.get("vi_tri", ""),
                 "Họ tên": info.get("ten", ""),
                 "Tuổi": info.get("tuoi", ""),
                 "Email": info.get("email", ""),
@@ -300,6 +301,7 @@ class CVProcessor:
         df = pd.DataFrame(rows, columns=[
             "Thời gian nhận",
             "Nguồn",
+            "Vị trí",
             "Họ tên",
             "Tuổi",
             "Email",
@@ -310,6 +312,7 @@ class CVProcessor:
             "Kỹ năng",
         ])  # tạo DataFrame từ list dict với thứ tự cột cố định
         if "Thời gian nhận" in df.columns:
+            df.sort_values("Thời gian nhận", ascending=False, inplace=True)
             df["Thời gian nhận"] = df["Thời gian nhận"].apply(format_sent_time_display)
         return df  # trả về kết quả
 
