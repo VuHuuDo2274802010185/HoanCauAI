@@ -100,6 +100,7 @@ class EmailFetcher:
         before: Optional[date] = None,
         batch_size: int = 100,
         unseen_only: bool = EMAIL_UNSEEN_ONLY,
+        progress_callback=None,
     ) -> List[str]:
         """
         Tìm và tải xuống file đính kèm PDF/DOCX từ các email thoả mãn:
@@ -111,6 +112,8 @@ class EmailFetcher:
         để tránh quét lại những thư đã xử lý.
         Thông tin path và thời gian gửi của mỗi file tải được
         sẽ lưu trong ``last_fetch_info``.
+        Args:
+            progress_callback: Hàm callback để báo cáo tiến trình (current, total, message)
         """
         if self.mail is None:
             raise RuntimeError("Chưa kết nối IMAP. Gọi connect() trước.")
@@ -146,12 +149,22 @@ class EmailFetcher:
         email_ids = data[0].split() if data and data[0] else []
         # Sắp xếp ID giảm dần để lấy email mới trước
         email_ids.sort(key=lambda x: int(x), reverse=True)
-        self.logger.info(f"[INFO] Đã tìm thấy {len(email_ids)} email trong hộp thư.")
+        total_emails = len(email_ids)
+        self.logger.info(f"[INFO] Đã tìm thấy {total_emails} email trong hộp thư.")
+        
+        if progress_callback:
+            progress_callback(0, total_emails, "Bắt đầu quét email...")
 
         max_uid_seen = 0
+        processed_count = 0
         for start in range(0, len(email_ids), batch_size):
             batch = email_ids[start:start + batch_size]
             for num in batch:
+                processed_count += 1
+                if progress_callback:
+                    progress_callback(processed_count, total_emails, f"Đang xử lý email {processed_count}/{total_emails}")
+                
+                # Fetch both message and INTERNALDATE for accurate timestamp
                 # Fetch both message and INTERNALDATE for accurate timestamp
                 if hasattr(self.mail, 'uid'):
                     typ, msg_data = self.mail.uid('fetch', num, '(RFC822 INTERNALDATE)')
@@ -238,7 +251,9 @@ class EmailFetcher:
                 if not any(kw.lower() in all_text for kw in keywords):
                     continue
 
-                self.logger.info(f"[DEBUG] Email ID {num.decode()}: {subj}")
+                # Chỉ log debug nếu không có progress_callback
+                if not progress_callback:
+                    self.logger.info(f"[DEBUG] Email ID {num.decode()}: {subj}")
 
                 # Xử lý phần đính kèm mọi email: mỗi part có filename và đuôi PDF/DOCX
                 for part in msg.walk():
@@ -266,7 +281,8 @@ class EmailFetcher:
 
                     # 3) Bỏ qua nếu file đã tồn tại
                     if os.path.exists(path):
-                        self.logger.info(f"[INFO] Đã tồn tại: {path}")
+                        if not progress_callback:
+                            self.logger.info(f"[INFO] Đã tồn tại: {path}")
                         continue
 
                     # 4) Ghi file nhị phân
@@ -278,7 +294,8 @@ class EmailFetcher:
                         record_sent_time(path, sent_time)
                     except Exception as e:
                         self.logger.warning(f"Could not record sent time for {path}: {e}")
-                    self.logger.info(f"[OK] Lưu đính kèm mới: {path}")
+                    if not progress_callback:
+                        self.logger.info(f"[OK] Lưu đính kèm mới: {path}")
 
                 # Đánh dấu email đã đọc để tránh xử lý lại lần sau
                 try:
@@ -287,7 +304,11 @@ class EmailFetcher:
                     pass
 
         if not new_files:
-            self.logger.info("[INFO] Không tìm thấy đính kèm mới.")
+            if not progress_callback:
+                self.logger.info("[INFO] Không tìm thấy đính kèm mới.")
+        
+        if progress_callback:
+            progress_callback(total_emails, total_emails, f"Hoàn thành! Tìm thấy {len(new_files)} file mới.")
 
         if max_uid_seen:
             try:

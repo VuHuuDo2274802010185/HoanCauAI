@@ -227,17 +227,26 @@ class CVProcessor:
 
         from_time: datetime | None = None,
         to_time: datetime | None = None,
+        progress_callback=None,
     ) -> pd.DataFrame:
         """
         Tìm tất cả file CV (fetcher hoặc thư mục attachments), trích xuất info, trả về DataFrame
+        Args:
+            progress_callback: Hàm callback để báo cáo tiến trình (current, total, message)
         """
         # fetch từ email nếu có fetcher
         if self.fetcher:
             unseen = unseen_only if unseen_only is not None else EMAIL_UNSEEN_ONLY
+            
+            def email_progress_callback(current, total, message):
+                if progress_callback:
+                    progress_callback(current, total * 2, f"📧 {message}")  # Nhân 2 vì có 2 giai đoạn
+            
             files: List[str] = self.fetcher.fetch_cv_attachments(
                 since=since,
                 before=before,
                 unseen_only=unseen,
+                progress_callback=email_progress_callback,
             )
         else:
             files = []
@@ -275,10 +284,20 @@ class CVProcessor:
 
         if not files:
             logger.info("ℹ️ Không có file CV nào trong thư mục.")
+            if progress_callback:
+                progress_callback(1, 1, "Không có file CV nào để xử lý")
             return pd.DataFrame()  # trả về DataFrame rỗng nếu không có file
 
         rows: List[Dict[str, str]] = []
-        for path in files:
+        total_files = len(files)
+        
+        for i, path in enumerate(files, 1):
+            if progress_callback:
+                base_progress = total_files if self.fetcher else 0  # Nếu có fetcher thì đã có tiến trình email
+                current_progress = base_progress + i
+                total_progress = (total_files * 2) if self.fetcher else total_files
+                progress_callback(current_progress, total_progress, f"🔍 Phân tích CV {i}/{total_files}: {os.path.basename(path)}")
+            
             txt = self.extract_text(path)  # đọc text file
             info = self.extract_info_with_llm(txt) or {}
             # gom thông tin vào dict
@@ -314,6 +333,11 @@ class CVProcessor:
         if "Thời gian nhận" in df.columns:
             df.sort_values("Thời gian nhận", ascending=False, inplace=True)
             df["Thời gian nhận"] = df["Thời gian nhận"].apply(format_sent_time_display)
+        
+        if progress_callback:
+            total_progress = (total_files * 2) if self.fetcher else total_files
+            progress_callback(total_progress, total_progress, f"✅ Hoàn thành phân tích {len(df)} CV!")
+        
         return df  # trả về kết quả
 
     def save_to_csv(self, df: pd.DataFrame, output: str = OUTPUT_CSV):

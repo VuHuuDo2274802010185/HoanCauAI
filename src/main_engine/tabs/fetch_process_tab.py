@@ -22,7 +22,6 @@ from modules.config import (
 from modules.email_fetcher import EmailFetcher
 from modules.cv_processor import CVProcessor, format_sent_time_display
 from modules.dynamic_llm_client import DynamicLLMClient
-from modules.ui_utils import loading_logs
 from modules.sent_time_store import load_sent_times
 from ..utils import safe_session_state_get
 
@@ -82,7 +81,18 @@ def render(
         )
         since = from_dt.date() if from_dt else None
         before = to_dt.date() if to_dt else None
-        with loading_logs("Đang thực hiện..."):
+        
+        # Tạo progress bar và status text
+        progress_bar = st.progress(0)
+        status_text = st.empty()
+        
+        def progress_callback(current, total, message):
+            if total > 0:
+                progress_value = min(current / total, 1.0)
+                progress_bar.progress(progress_value)
+            status_text.text(message)
+        
+        try:
             processor = CVProcessor(
                 fetcher=fetcher,
                 llm_client=DynamicLLMClient(provider=provider, model=model, api_key=api_key),
@@ -93,7 +103,18 @@ def render(
                 before=before,
                 from_time=from_dt,
                 to_time=to_dt,
+                progress_callback=progress_callback,
             )
+            
+            # Hoàn thành - ẩn progress bar và status
+            progress_bar.empty()
+            status_text.empty()
+            
+        except Exception as e:
+            progress_bar.empty()
+            status_text.empty()
+            st.error(f"Lỗi khi xử lý: {e}")
+            return
 
         new_files = [Path(p) for p, _ in getattr(fetcher, "last_fetch_info", [])] if fetcher else []
         if new_files:
