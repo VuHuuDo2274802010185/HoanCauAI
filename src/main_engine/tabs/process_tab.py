@@ -1,7 +1,7 @@
 """Tab xử lý hàng loạt file CV."""
 
 import logging
-from datetime import datetime, time
+from datetime import datetime, time, timezone
 import streamlit as st
 
 from modules.cv_processor import CVProcessor
@@ -58,19 +58,32 @@ def render(
         )
 
         from_dt = (
-            datetime.combine(datetime.strptime(from_date_str, "%d/%m/%Y"), time.min)
+            datetime.combine(
+                datetime.strptime(from_date_str, "%d/%m/%Y"),
+                time.min,
+                tzinfo=datetime.timezone.utc,
+            )
             if from_date_str
             else None
         )
         to_dt = (
-            datetime.combine(datetime.strptime(to_date_str, "%d/%m/%Y"), time.max)
+            datetime.combine(
+                datetime.strptime(to_date_str, "%d/%m/%Y"),
+                time.max,
+                tzinfo=datetime.timezone.utc,
+            )
             if to_date_str
             else None
         )
 
+        since = from_dt.date() if from_dt else None
+        before = to_dt.date() if to_dt else None
+
         with loading_logs("Đang xử lý CV..."):
             df = processor.process(
                 unseen_only=unseen_only,
+                since=since,
+                before=before,
                 from_time=from_dt,
                 to_time=to_dt,
             )
