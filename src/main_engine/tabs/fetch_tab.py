@@ -3,7 +3,7 @@
 import logging
 from typing import List
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, date
 import base64
 import pandas as pd
 import streamlit as st
@@ -33,10 +33,13 @@ def render(email_user: str, email_pass: str, unseen_only: bool) -> None:
             "Auto fetch đang chạy ngầm. Bạn có thể nhấn 'Fetch Now' để kiểm tra ngay."
         )
         col1, col2 = st.columns(2)
+        today_str = date.today().strftime("%d/%m/%Y")
         with col1:
             from_date_str = st.text_input("From (DD/MM/YYYY)", value="")
         with col2:
-            to_date_str = st.text_input("To (DD/MM/YYYY)", value="")
+            to_date_str = st.text_input(
+                "To (DD/MM/YYYY)", value="", placeholder=today_str
+            )
         if st.button("Fetch Now", help="Quét email ngay để tải CV"):
             logging.info("Thực hiện fetch email thủ công")
             with loading_logs("Đang quét email..."):
