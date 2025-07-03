@@ -97,6 +97,11 @@ SENT_TIME_FILE = _clean_path(
     "SENT_TIME_FILE",
     str(ATTACHMENT_DIR / "sent_times.json")
 )
+# File lưu UID email đã xử lý cuối cùng
+LAST_UID_FILE = _clean_path(
+    "LAST_UID_FILE",
+    str(ATTACHMENT_DIR / "last_uid.txt")
+)
 # File lưu log hội thoại chat
 CHAT_LOG_FILE = _clean_path("CHAT_LOG_FILE", str(LOG_DIR / "chat_log.json"))
 # tạo thư mục nếu chưa tồn tại
@@ -245,6 +250,7 @@ def ensure_directories():
         LOG_DIR,
         CHAT_LOG_FILE.parent,
         LOG_FILE.parent,
+        LAST_UID_FILE.parent,
     ]
     for directory in directories:
         try:
