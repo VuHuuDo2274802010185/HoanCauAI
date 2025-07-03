@@ -3,7 +3,6 @@
 # --- Thư viện chuẩn ---
 import logging  # quản lý log
 from pathlib import Path  # thao tác đường dẫn tệp
-import threading  # chạy tác vụ nền
 
 # --- Thư viện bên thứ ba ---
 import streamlit as st  # giao diện web
@@ -21,7 +20,6 @@ from modules.config import (
     EMAIL_PASS,
     EMAIL_UNSEEN_ONLY,
 )
-from modules.auto_fetcher import watch_loop
 from modules.ui_utils import loading_logs
 from .utils import handle_error, safe_session_state_get, safe_session_state_set
 
@@ -162,12 +160,6 @@ def render_email_config(root: Path, provider: str, api_key: str):
         key="email_pass",
         help="Mật khẩu hoặc App Password của Gmail",
     )
-    unseen_only = st.sidebar.checkbox(
-        "👁️ Chỉ quét email chưa đọc",
-        value=safe_session_state_get("unseen_only", EMAIL_UNSEEN_ONLY),
-        key="unseen_only",
-        help="Nếu bỏ chọn, hệ thống sẽ quét toàn bộ hộp thư",
-    )
     # Lưu thông tin vào file .env khi nhấn nút
     if st.sidebar.button("💾 Lưu mật khẩu", key="save_email_pass"):
         env_path = root / ".env"
@@ -188,52 +180,11 @@ def render_email_config(root: Path, provider: str, api_key: str):
     if email_user and "@" not in email_user:
         st.sidebar.warning("⚠️ Địa chỉ email không hợp lệ")
 
-    manage_auto_fetcher(email_user, email_pass, unseen_only)
-    return email_user, email_pass, unseen_only
+    return email_user, email_pass
 
-
-@handle_error
-def manage_auto_fetcher(email_user: str, email_pass: str, unseen_only: bool):
-    """Manage auto fetcher thread with better error handling."""
-    # Không làm gì nếu thiếu thông tin đăng nhập
-    if not (email_user and email_pass):
-        return
-
-    # Nếu thread đã chạy, cho phép dừng
-    if safe_session_state_get("auto_fetcher_thread"):
-        st.sidebar.success("✅ Auto fetcher đang chạy")
-        if st.sidebar.button("🛑 Dừng auto fetcher"):
-            safe_session_state_set("auto_fetcher_thread", None)
-            st.sidebar.info("Auto fetcher đã được dừng")
-            st.rerun()
-        return
-    try:
-        def auto_fetch_worker():
-            try:
-                logger.info("Starting auto fetcher thread")
-                watch_loop(
-                    600,
-                    host=EMAIL_HOST,
-                    port=EMAIL_PORT,
-                    user=email_user,
-                    password=email_pass,
-                    unseen_only=unseen_only,
-                )
-            except Exception as e:
-                logger.error("Auto fetcher error: %s", e)
-                safe_session_state_set("auto_fetcher_error", str(e))
-        thread = threading.Thread(target=auto_fetch_worker, daemon=True)
-        thread.start()
-        safe_session_state_set("auto_fetcher_thread", thread)
-        logger.info("Auto fetcher started successfully")
-        st.sidebar.info("🔄 Đang tự động lấy CV từ email...")
-    except Exception as e:
-        logger.error("Failed to start auto fetcher: %s", e)
-        st.sidebar.error(f"Lỗi khởi động auto fetcher: {e}")
 
 # Các hàm public của module
 __all__ = [
     "render_sidebar",
     "render_email_config",
-    "manage_auto_fetcher",
 ]

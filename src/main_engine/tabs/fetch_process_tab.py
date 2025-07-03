@@ -16,6 +16,7 @@ from modules.config import (
     OUTPUT_CSV,
     OUTPUT_EXCEL,
     SENT_TIME_FILE,
+    EMAIL_UNSEEN_ONLY,
     get_model_price,
 )
 from modules.email_fetcher import EmailFetcher
@@ -23,6 +24,7 @@ from modules.cv_processor import CVProcessor, format_sent_time_display
 from modules.dynamic_llm_client import DynamicLLMClient
 from modules.ui_utils import loading_logs
 from modules.sent_time_store import load_sent_times
+from ..utils import safe_session_state_get
 
 
 def render(
@@ -31,7 +33,6 @@ def render(
     api_key: str,
     email_user: str = "",
     email_pass: str = "",
-    unseen_only: bool = True,
 ) -> None:
     """Render UI for fetching and processing CVs."""
     st.subheader("Lấy & Xử lý CV")
@@ -51,6 +52,13 @@ def render(
         from_date_str = st.text_input("From (DD/MM/YYYY)", value="")
     with col2:
         to_date_str = st.text_input("To (DD/MM/YYYY)", value="", placeholder=today_str)
+
+    unseen_only = st.checkbox(
+        "👁️ Chỉ quét email chưa đọc",
+        value=safe_session_state_get("unseen_only", EMAIL_UNSEEN_ONLY),
+        key="unseen_only",
+        help="Nếu bỏ chọn, hệ thống sẽ quét toàn bộ hộp thư",
+    )
 
     if st.button("Fetch & Process", help="Tải email và phân tích CV"):
         logging.info("Bắt đầu fetch & process CV")
