@@ -20,6 +20,7 @@ from .data import PillDataset, PillDataLoader
 from .training import PillTrainer
 from .inference import PillPredictor
 from .ocr import OCRExtractor
+from .config import PillRecognitionConfig
 
 __all__ = [
     "MultimodalPillTransformer",
@@ -27,5 +28,6 @@ __all__ = [
     "PillDataLoader",
     "PillTrainer",
     "PillPredictor",
-    "OCRExtractor"
+    "OCRExtractor",
+    "PillRecognitionConfig"
 ]
