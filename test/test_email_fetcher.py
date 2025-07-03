@@ -26,7 +26,9 @@ def email_fetcher_module(mock_requests, monkeypatch, tmp_path):
     sys.modules['google.generativeai'] = fake
     import modules.email_fetcher as email_fetcher
     importlib.reload(email_fetcher)
+    import modules.uid_store as uid_store
     monkeypatch.setattr(email_fetcher, 'ATTACHMENT_DIR', tmp_path)
+    monkeypatch.setattr(uid_store, 'LAST_UID_FILE', tmp_path / 'last_uid.txt')
     return email_fetcher
 
 
@@ -45,16 +47,21 @@ def test_fetch_cv_attachments(email_fetcher_module, tmp_path):
         def __init__(self):
             self.last_criteria = None
 
-        def search(self, charset, *criteria):
-            self.last_criteria = criteria
-            return 'OK', [b'1']
-
-        def fetch(self, num, query):
-            assert query == '(RFC822 INTERNALDATE)'
-            return 'OK', [
-                (None, raw),
-                (b'INTERNALDATE', b'"20-Sep-2023 10:20:00 -0400"'),
-            ]
+        def uid(self, cmd, *args):
+            if cmd.lower() == 'search':
+                charset = args[0]
+                criteria = args[1:]
+                self.last_criteria = criteria
+                return 'OK', [b'1']
+            if cmd.lower() == 'fetch':
+                num = args[0]
+                query = args[1]
+                assert query == '(RFC822 INTERNALDATE)'
+                return 'OK', [
+                    (None, raw),
+                    (b'INTERNALDATE', b'"20-Sep-2023 10:20:00 -0400"'),
+                ]
+            return 'NO', []
 
         def store(self, *args, **kwargs):
             pass
@@ -82,14 +89,15 @@ def test_ignore_non_cv_files(email_fetcher_module, tmp_path):
     raw = msg.as_bytes()
 
     class FakeIMAP:
-        def search(self, charset, *criteria):
-            return 'OK', [b'1']
-
-        def fetch(self, num, query):
-            return 'OK', [
-                (None, raw),
-                (b'INTERNALDATE', b'"20-Sep-2023 10:20:00 -0400"'),
-            ]
+        def uid(self, cmd, *args):
+            if cmd.lower() == 'search':
+                return 'OK', [b'1']
+            if cmd.lower() == 'fetch':
+                return 'OK', [
+                    (None, raw),
+                    (b'INTERNALDATE', b'"20-Sep-2023 10:20:00 -0400"'),
+                ]
+            return 'NO', []
 
         def store(self, *args, **kwargs):
             pass

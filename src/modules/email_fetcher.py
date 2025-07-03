@@ -11,8 +11,9 @@ from datetime import date, datetime, timezone, timedelta  # dùng để lọc em
 from typing import List, Optional, Tuple
 from email.utils import parsedate_to_datetime
 
-from .config import ATTACHMENT_DIR, EMAIL_UNSEEN_ONLY  # đường dẫn lưu file đính kèm và chế độ quét
+from .config import ATTACHMENT_DIR, EMAIL_UNSEEN_ONLY
 from .sent_time_store import record_sent_time
+from .uid_store import load_last_uid, save_last_uid
 
 # --- Logger của module (tránh nhân đôi handler khi tạo nhiều instance) ---
 logger = logging.getLogger(__name__)
@@ -120,7 +121,7 @@ class EmailFetcher:
         new_files: List[str] = []
         self.last_fetch_info = []
 
-        # --- Tìm email với optional SINCE ---
+        # --- Tìm email với optional SINCE và UID range ---
         criteria = ['UNSEEN'] if unseen_only else ['ALL']
         if since:
             criteria += ['SINCE', since.strftime('%d-%b-%Y')]
@@ -130,7 +131,14 @@ class EmailFetcher:
             next_day = before + timedelta(days=1)
             criteria += ['BEFORE', next_day.strftime('%d-%b-%Y')]
 
-        typ, data = self.mail.search(None, *criteria)
+        last_uid = load_last_uid()
+        if last_uid:
+            criteria = ['UID', f'{last_uid + 1}:*'] + criteria
+
+        if hasattr(self.mail, 'uid'):
+            typ, data = self.mail.uid('search', None, *criteria)
+        else:
+            typ, data = self.mail.search(None, *criteria)
         if typ != 'OK':
             self.logger.error(f"[ERR] Lỗi tìm email: {typ}")
             return []
@@ -140,13 +148,21 @@ class EmailFetcher:
         email_ids.sort(key=lambda x: int(x), reverse=True)
         self.logger.info(f"[INFO] Đã tìm thấy {len(email_ids)} email trong hộp thư.")
 
+        max_uid_seen = 0
         for start in range(0, len(email_ids), batch_size):
             batch = email_ids[start:start + batch_size]
             for num in batch:
                 # Fetch both message and INTERNALDATE for accurate timestamp
-                typ, msg_data = self.mail.fetch(num, '(RFC822 INTERNALDATE)')
+                if hasattr(self.mail, 'uid'):
+                    typ, msg_data = self.mail.uid('fetch', num, '(RFC822 INTERNALDATE)')
+                    uid_int = int(num)
+                else:
+                    typ, msg_data = self.mail.fetch(num, '(RFC822 INTERNALDATE)')
+                    uid_int = int(num)
                 if typ != "OK" or not msg_data:
                     continue
+                if uid_int > max_uid_seen:
+                    max_uid_seen = uid_int
 
                 raw_msg = None
                 internal_date = None
@@ -272,5 +288,11 @@ class EmailFetcher:
 
         if not new_files:
             self.logger.info("[INFO] Không tìm thấy đính kèm mới.")
+
+        if max_uid_seen:
+            try:
+                save_last_uid(max_uid_seen)
+            except Exception as e:
+                self.logger.warning(f"Could not save last UID: {e}")
 
         return new_files
