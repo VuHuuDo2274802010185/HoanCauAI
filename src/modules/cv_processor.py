@@ -210,9 +210,10 @@ class CVProcessor:
             "tuoi": r"(?:(?:Tuổi|Age)[:\-\s]+)(\d{1,3})",
             "email": r"([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)",
             "dien_thoai": r"(\+?\d[\d\-\s]{7,}\d)",
+            "dia_chi": r"(?:(?:Địa chỉ|Address)[:\-\s]+)([^\n]+)",
+            "vi_tri": r"(?:(?:Vị trí|Position|Ứng tuyển)[:\-\s]+)([^\n]+)",
             "hoc_van": r"(?:(?:Học vấn|Education)[:\-\s]+)([^\n]+)",
             "kinh_nghiem": r"(?:(?:Kinh nghiệm|Experience)[:\-\s]+)([^\n]+)",
-            "dia_chi": r"(?:(?:Địa chỉ|Address)[:\-\s]+)([^\n]+)",
             "ky_nang": r"(?:(?:Kỹ năng|Skills?)[:\-\s]+)([^\n]+)",
         }
         info: Dict[str, str] = {}
