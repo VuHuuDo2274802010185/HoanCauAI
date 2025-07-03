@@ -42,8 +42,8 @@ def render(
         st.warning("Cần nhập Gmail và mật khẩu trong sidebar để fetch CV.")
         fetcher = None
     else:
+        # Chỉ tạo đối tượng EmailFetcher, kết nối khi người dùng bắt đầu fetch
         fetcher = EmailFetcher(EMAIL_HOST, EMAIL_PORT, email_user, email_pass)
-        fetcher.connect()
 
     col1, col2 = st.columns(2)
     today_str = date.today().strftime("%d/%m/%Y")
@@ -61,6 +61,10 @@ def render(
 
     if st.button("Fetch & Process", help="Tải email và phân tích CV"):
         logging.info("Bắt đầu fetch & process CV")
+        if fetcher is None:
+            st.error("Cần nhập Gmail và mật khẩu trong sidebar để fetch CV.")
+            return
+
         from_dt = (
             datetime.combine(
                 datetime.strptime(from_date_str, "%d/%m/%Y"),
@@ -85,6 +89,16 @@ def render(
         # Tạo progress bar và status text
         progress_bar = st.progress(0)
         status_text = st.empty()
+        status_text.text("🔌 Đang kết nối IMAP...")
+
+        try:
+            fetcher.connect()
+        except Exception as e:
+            progress_bar.empty()
+            status_text.empty()
+            st.error(f"Không thể kết nối IMAP: {e}")
+            return
+
         status_text.text("🚀 Chuẩn bị khởi động...")
         
         def progress_callback(current, total, message):

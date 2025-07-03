@@ -5,6 +5,7 @@ from pathlib import Path
 import logging
 import traceback
 import time
+import types
 from typing import Optional, Dict, Any
 
 # Đưa thư mục gốc (chứa `modules/`) vào sys.path để import modules
@@ -68,11 +69,23 @@ try:
     )
 
     try:
-        from .tabs import fetch_process_tab, single_tab, results_tab, update_tab, cv_viewer_tab
+        from .tabs import fetch_process_tab, single_tab, results_tab
     except ImportError as ie:
         logger.error(f"Failed to import core tabs: {ie}")
         st.error(f"Lỗi import tabs: {ie}")
         st.stop()
+
+    try:
+        from .tabs import update_tab  # Optional tab
+    except ImportError:
+        update_tab = types.SimpleNamespace(render=lambda *a, **k: None)
+        logger.info("update_tab not available")
+
+    try:
+        from .tabs import cv_viewer_tab  # Optional tab
+    except ImportError:
+        cv_viewer_tab = types.SimpleNamespace(render=lambda *a, **k: None)
+        logger.info("cv_viewer_tab not available")
 
     try:
         from .tabs import chat_tab  # noqa: F401
