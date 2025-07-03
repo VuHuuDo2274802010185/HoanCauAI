@@ -1,7 +1,7 @@
 """Tab xử lý hàng loạt file CV."""
 
 import logging
-from datetime import datetime, time, timezone
+from datetime import datetime, time, timezone, date
 import streamlit as st
 
 from modules.cv_processor import CVProcessor
@@ -32,10 +32,13 @@ def render(
     st.markdown(f"**LLM:** `{provider}` / `{label}`")
 
     col1, col2 = st.columns(2)
+    today_str = date.today().strftime("%d/%m/%Y")
     with col1:
         from_date_str = st.text_input("From date (DD/MM/YYYY)", value="", key="cv_from")
     with col2:
-        to_date_str = st.text_input("To date (DD/MM/YYYY)", value="", key="cv_to")
+        to_date_str = st.text_input(
+            "To date (DD/MM/YYYY)", value="", key="cv_to", placeholder=today_str
+        )
 
     if st.button(
         "Bắt đầu xử lý CV",
