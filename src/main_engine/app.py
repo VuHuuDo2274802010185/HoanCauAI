@@ -68,7 +68,7 @@ try:
     )
 
     try:
-        from .tabs import fetch_process_tab, single_tab, results_tab
+        from .tabs import fetch_process_tab, single_tab, results_tab, update_tab
     except ImportError as ie:
         logger.error(f"Failed to import core tabs: {ie}")
         st.error(f"Lỗi import tabs: {ie}")
@@ -539,12 +539,13 @@ custom_css = f"""
 st.markdown(custom_css, unsafe_allow_html=True)
 
 # --- Main UI Tabs ---
-tab_main, tab_single, tab_results, tab_chat = st.tabs(
+tab_main, tab_single, tab_results, tab_chat, tab_update = st.tabs(
     [
         "Lấy & Xử lý CV",
         "Single File",
         "Kết quả",
         "Hỏi AI",
+        "Cập nhật hệ thống",
     ]
 )
 
@@ -565,6 +566,9 @@ with tab_results:
 
 with tab_chat:
     render_enhanced_chat_tab()
+
+with tab_update:
+    update_tab.render()
 
 
 # --- Footer ---

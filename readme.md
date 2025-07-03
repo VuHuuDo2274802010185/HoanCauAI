@@ -166,6 +166,8 @@ Khi chạy `setup_window.cmd` hoặc `start_window.cmd` lần đầu, SmartScree
 - Cung cấp API MCP server để tích hợp hệ thống khác.
 - Lưu log cuộc trò chuyện của tính năng Hỏi AI.
 - Không gây cảnh báo Streamlit khi chạy CLI: `DynamicLLMClient` tự kiểm tra session context.
+- **Hệ thống cập nhật tự động** với backup và rollback
+- **Quản lý backup** cho phiên bản hiện tại trước khi cập nhật
 
 ## ⚙️ Sử dụng CLI Agent
 
@@ -275,3 +277,50 @@ python3 scripts/health_check.py
 ## 📜 License
 
 Distributed under the MIT License. Xem `LICENSE` chi tiết.
+
+## 🔄 Cập nhật & Backup
+
+HoanCau AI hỗ trợ hệ thống cập nhật tự động và quản lý backup để đảm bảo an toàn khi nâng cấp.
+
+### 🌐 Qua giao diện Streamlit
+
+Trong tab **"Cập nhật hệ thống"**:
+
+1. **Kiểm tra cập nhật**: Kiểm tra phiên bản mới từ repository
+2. **Tạo backup**: Backup phiên bản hiện tại trước khi cập nhật
+3. **Cập nhật tự động**: Tải và cài đặt phiên bản mới với thanh tiến trình
+4. **Khôi phục**: Rollback về phiên bản trước nếu có vấn đề
+
+### 🖥️ Qua CLI
+
+```bash
+# Kiểm tra cập nhật
+python scripts/update_manager.py check
+
+# Tạo backup
+python scripts/update_manager.py backup --name "my_backup"
+
+# Cập nhật tự động (với backup)
+python scripts/update_manager.py update
+
+# Cập nhật force (không hỏi xác nhận)
+python scripts/update_manager.py update --force
+
+# Liệt kê backup
+python scripts/update_manager.py list
+
+# Khôi phục từ backup
+python scripts/update_manager.py restore backup_20250703_120000
+
+# Xóa backup cũ
+python scripts/update_manager.py cleanup --keep 5
+```
+
+### 🔧 Tính năng nâng cao
+
+- **Backup tự động**: Tạo backup trước mỗi lần cập nhật
+- **Rollback an toàn**: Khôi phục nhanh nếu cập nhật thất bại
+- **Quản lý phiên bản**: Theo dõi changelog và thông tin phiên bản
+- **Cleanup tự động**: Dọn dẹp backup cũ để tiết kiệm dung lượng
+
+⚠️ **Lưu ý**: File `.env` và dữ liệu trong `attachments/`, `csv/` được bảo toàn khi cập nhật.
