@@ -49,13 +49,13 @@ def test_update_system():
             print(f"⚠️ CLI có vấn đề: {result.stderr}")
         
         print("\n🎉 Tất cả test passed! Update system sẵn sàng sử dụng.")
-        return True
+        assert True
         
     except Exception as e:
         print(f"❌ Test failed: {e}")
         import traceback
         traceback.print_exc()
-        return False
+        assert False, str(e)
 
 if __name__ == "__main__":
     test_update_system()
