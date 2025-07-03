@@ -97,8 +97,8 @@ def mock_model_checkpoint(config):
     return checkpoint
 
 
-# Skip tests if PyTorch not available
+# Skip tests if PyTorch not available - remove CUDA requirement for basic testing
 pytestmark = pytest.mark.skipif(
-    not torch.cuda.is_available(),
+    False,  # Always run tests - remove CUDA requirement
     reason="PyTorch CUDA not available"
 )

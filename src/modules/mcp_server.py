@@ -139,3 +139,146 @@ async def get_results():
         media_type="text/csv",
         filename=settings.output_csv.name
     )
+
+
+# === PILL RECOGNITION ENDPOINTS ===
+
+# Import pill recognition integration
+try:
+    from .pill_recognition_integration import pill_recognition
+    import io
+    
+    @app.get("/pill-recognition/status", summary="Check pill recognition system status")
+    async def pill_recognition_status():
+        """Check if pill recognition system is available."""
+        return {
+            "available": pill_recognition.is_available(),
+            "status": "ready" if pill_recognition.is_available() else "not_available"
+        }
+    
+    @app.post("/pill-recognition/predict", summary="Predict pill from single image")
+    async def predict_pill(file: UploadFile = File(...), text: str = None):
+        """
+        Predict pill type from uploaded image.
+        
+        Args:
+            file: Image file (jpg, png, etc.)
+            text: Optional text input (if not provided, OCR will be used)
+            
+        Returns:
+            Prediction results with confidence scores
+        """
+        if not pill_recognition.is_available():
+            raise HTTPException(status_code=503, detail="Pill recognition system not available")
+        
+        # Validate file type
+        if not file.content_type.startswith('image/'):
+            raise HTTPException(status_code=400, detail="File must be an image")
+        
+        try:
+            # Read image data
+            image_data = await file.read()
+            
+            # Make prediction
+            result = pill_recognition.predict_pill(image_data, text)
+            
+            return {
+                "filename": file.filename,
+                "result": result
+            }
+            
+        except Exception as e:
+            logging.error(f"Pill prediction failed: {e}")
+            raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
+    
+    @app.post("/pill-recognition/batch-predict", summary="Predict pills from multiple images")
+    async def predict_pills_batch(files: list[UploadFile] = File(...)):
+        """
+        Predict pill types from multiple uploaded images.
+        
+        Args:
+            files: List of image files
+            
+        Returns:
+            List of prediction results
+        """
+        if not pill_recognition.is_available():
+            raise HTTPException(status_code=503, detail="Pill recognition system not available")
+        
+        if len(files) > 20:  # Limit batch size
+            raise HTTPException(status_code=400, detail="Maximum 20 files allowed per batch")
+        
+        try:
+            # Read all image data
+            image_data_list = []
+            filenames = []
+            
+            for file in files:
+                if not file.content_type.startswith('image/'):
+                    raise HTTPException(status_code=400, detail=f"File {file.filename} must be an image")
+                
+                image_data = await file.read()
+                image_data_list.append(image_data)
+                filenames.append(file.filename)
+            
+            # Make batch predictions
+            results = pill_recognition.predict_pill_batch(image_data_list)
+            
+            # Add filenames to results
+            for i, result in enumerate(results):
+                result["filename"] = filenames[i]
+            
+            return {
+                "batch_size": len(files),
+                "results": results
+            }
+            
+        except Exception as e:
+            logging.error(f"Batch pill prediction failed: {e}")
+            raise HTTPException(status_code=500, detail=f"Batch prediction failed: {str(e)}")
+    
+    @app.post("/pill-recognition/extract-text", summary="Extract text from pill image using OCR")
+    async def extract_pill_text(file: UploadFile = File(...)):
+        """
+        Extract text from pill image using OCR.
+        
+        Args:
+            file: Image file (jpg, png, etc.)
+            
+        Returns:
+            Extracted text with confidence
+        """
+        if not pill_recognition.is_available():
+            raise HTTPException(status_code=503, detail="Pill recognition system not available")
+        
+        # Validate file type
+        if not file.content_type.startswith('image/'):
+            raise HTTPException(status_code=400, detail="File must be an image")
+        
+        try:
+            # Read image data
+            image_data = await file.read()
+            
+            # Extract text
+            result = pill_recognition.extract_text_from_pill(image_data)
+            
+            return {
+                "filename": file.filename,
+                "result": result
+            }
+            
+        except Exception as e:
+            logging.error(f"Text extraction failed: {e}")
+            raise HTTPException(status_code=500, detail=f"Text extraction failed: {str(e)}")
+
+except ImportError:
+    logging.warning("Pill recognition integration not available")
+    
+    @app.get("/pill-recognition/status", summary="Check pill recognition system status")
+    async def pill_recognition_status():
+        """Check if pill recognition system is available."""
+        return {
+            "available": False,
+            "status": "not_installed",
+            "message": "Pill recognition modules not installed"
+        }
