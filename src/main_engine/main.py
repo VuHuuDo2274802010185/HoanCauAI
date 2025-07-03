@@ -44,13 +44,8 @@ def main(batch: bool, watch: bool, interval: int, file):
         return
 
     if batch:
-        # Chạy batch, cần credentials email
-        if not EMAIL_USER or not EMAIL_PASS:
-            click.echo("EMAIL_USER và EMAIL_PASS phải được thiết lập trong .env")
-            return
-        fetcher = EmailFetcher(EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASS)
-        fetcher.connect()
-        processor = CVProcessor(fetcher, llm_client=llm_client)
+        # Chạy batch nhưng bỏ qua bước kết nối email/fetch IMAP
+        processor = CVProcessor(llm_client=llm_client)
         df = processor.process()
         if not df.empty:
             processor.save_to_csv(df, OUTPUT_CSV)
