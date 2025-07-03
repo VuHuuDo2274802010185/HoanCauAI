@@ -30,27 +30,14 @@ def cli_module(monkeypatch, tmp_path):
         calls['watch'] = {'interval': interval, **kw}
     monkeypatch.setitem(sys.modules, 'modules.auto_fetcher', types.SimpleNamespace(watch_loop=fake_watch_loop))
 
-    # dummy email fetcher
-    class DummyFetcher:
-        def __init__(self, *a, **k):
-            pass
-        def connect(self):
-            calls['connect'] = True
-        def fetch_cv_attachments(self, since=None, before=None, unseen_only=True):
-            calls['fetch_cv'] = {
-                'since': since,
-                'before': before,
-                'unseen': unseen_only,
-            }
-    monkeypatch.setitem(sys.modules, 'modules.email_fetcher', types.SimpleNamespace(EmailFetcher=DummyFetcher))
+
 
     # dummy processor
     class DummyProcessor:
         def __init__(self, *a, **k):
             pass
-        def process(self, unseen_only=True, since=None, before=None):
-            calls['process_unseen'] = unseen_only
-            calls['process_range'] = {'since': since, 'before': before}
+        def process(self, from_time=None, to_time=None):
+            calls['process_range'] = {'from': from_time, 'to': to_time}
             return DummyDF(calls.get('df_rows', []))
         def save_to_csv(self, df, path):
             calls['saved'] = path
@@ -125,8 +112,8 @@ def test_full_process_empty(cli_module):
     assert "Bắt đầu full process" in res.output
     assert "Không có CV mới" in res.output
     assert 'saved' not in calls
-    assert calls['process_range']['since'] is None
-    assert calls['process_range']['before'] is None
+    assert calls['process_range']['from'] is None
+    assert calls['process_range']['to'] is None
 
 
 def test_full_process_with_data(cli_module):
@@ -137,8 +124,8 @@ def test_full_process_with_data(cli_module):
     assert res.exit_code == 0
     assert f"Đã xử lý 2 CV" in res.output
     assert calls['saved'] == str(settings.output_csv)
-    assert calls['process_range']['since'] is None
-    assert calls['process_range']['before'] is None
+    assert calls['process_range']['from'] is None
+    assert calls['process_range']['to'] is None
 
 
 def test_single_missing_argument(cli_module):

@@ -15,7 +15,6 @@ for path in (ROOT, SRC_DIR):
 from modules.config import LLM_CONFIG
 
 from modules.auto_fetcher import watch_loop
-from modules.email_fetcher import EmailFetcher
 from modules.cv_processor import CVProcessor
 from modules.llm_client import LLMClient
 from modules.qa_chatbot import QAChatbot
@@ -50,20 +49,15 @@ def watch(interval, host, port, user, password, from_date, to_date, unseen_only)
     )
 
 @cli.command()
-@click.option('--from-date', type=click.DateTime(formats=['%d/%m/%Y']), help='Chỉ lấy email từ ngày này (DD/MM/YYYY)')
-@click.option('--to-date', type=click.DateTime(formats=['%d/%m/%Y']), help='Chỉ lấy email trước ngày này (DD/MM/YYYY)')
-@click.option('--unseen/--all', 'unseen_only', default=settings.email_unseen_only, show_default=True, help='Chỉ quét email chưa đọc')
-def full_process(from_date, to_date, unseen_only):
-    """Chạy đầy đủ quy trình fetch và xử lý CV"""
+@click.option('--from-date', type=click.DateTime(formats=['%d/%m/%Y']), help='Chỉ xử lý các file sau ngày này (DD/MM/YYYY)')
+@click.option('--to-date', type=click.DateTime(formats=['%d/%m/%Y']), help='Chỉ xử lý các file trước ngày này (DD/MM/YYYY)')
+def full_process(from_date, to_date):
+    """Xử lý toàn bộ CV trong thư mục attachments"""
     click.echo("Bắt đầu full process...")
-    # Fetch email & process CVs
-    fetcher = EmailFetcher(settings.email_host, settings.email_port, settings.email_user, settings.email_pass)
-    fetcher.connect()
-    processor = CVProcessor(fetcher, llm_client=LLMClient())
+    processor = CVProcessor(llm_client=LLMClient())
     df = processor.process(
-        unseen_only=unseen_only,
-        since=from_date.date() if from_date else None,
-        before=to_date.date() if to_date else None,
+        from_time=from_date,
+        to_time=to_date,
     )
     if df.empty:
         click.echo("Không có CV mới để xử lý.")

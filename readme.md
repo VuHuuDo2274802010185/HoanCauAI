@@ -179,9 +179,8 @@ python3 scripts/cli_agent.py --help
 cli-agent watch --interval 600     # chỉ quét UNSEEN
 cli-agent watch --all             # quét toàn bộ email
 
-# Chạy full process: fetch + xử lý batch
-cli-agent full-process            # chỉ quét UNSEEN
-cli-agent full-process --all      # quét toàn bộ
+# Chạy full process: xử lý batch trong attachments
+cli-agent full-process
 
 # Xử lý một file CV đơn lẻ
 cli-agent single path/to/cv.pdf
