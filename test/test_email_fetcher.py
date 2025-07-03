@@ -55,11 +55,12 @@ def test_fetch_cv_attachments(email_fetcher_module, tmp_path):
                 self.last_criteria = criteria
                 return 'OK', [b'1']
             if cmd.lower() == 'fetch':
-                num = args[0]
+                id_set = args[0]
                 query = args[1]
                 self.fetch_queries.append(query)
                 if query == '(BODY.PEEK[HEADER.FIELDS (SUBJECT)])':
-                    return 'OK', [(None, b'Subject: CV Nguyen\r\n')]
+                    ids = id_set.split(b',') if isinstance(id_set, bytes) else [id_set]
+                    return 'OK', [(b'UID %s' % i, b'Subject: CV Nguyen\r\n') for i in ids]
                 return 'OK', [
                     (None, raw),
                     (b'INTERNALDATE', b'"20-Sep-2023 10:20:00 -0400"'),
@@ -101,10 +102,12 @@ def test_profile_file_processed(email_fetcher_module, tmp_path):
             if cmd.lower() == 'search':
                 return 'OK', [b'1']
             if cmd.lower() == 'fetch':
+                id_set = args[0]
                 query = args[1]
                 self.fetch_queries.append(query)
                 if query == '(BODY.PEEK[HEADER.FIELDS (SUBJECT)])':
-                    return 'OK', [(None, b'Subject: Profile\r\n')]
+                    ids = id_set.split(b',') if isinstance(id_set, bytes) else [id_set]
+                    return 'OK', [(b'UID %s' % i, b'Subject: Profile\r\n') for i in ids]
                 return 'OK', [
                     (None, raw),
                     (b'INTERNALDATE', b'"20-Sep-2023 10:20:00 -0400"'),

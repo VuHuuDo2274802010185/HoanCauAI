@@ -11,8 +11,8 @@ from datetime import date, datetime, timezone, timedelta  # dùng để lọc em
 from typing import List, Optional, Tuple
 from email.utils import parsedate_to_datetime
 
-from .config import ATTACHMENT_DIR, EMAIL_UNSEEN_ONLY
-from .sent_time_store import record_sent_time
+from .config import ATTACHMENT_DIR, EMAIL_UNSEEN_ONLY, EMAIL_SEARCH_DAYS
+from .sent_time_store import record_sent_time, record_sent_times_bulk
 from .uid_store import load_last_uid, save_last_uid
 
 # --- Logger của module (tránh nhân đôi handler khi tạo nhiều instance) ---
@@ -122,9 +122,12 @@ class EmailFetcher:
 
         new_files: List[str] = []
         self.last_fetch_info = []
+        sent_time_updates: dict[str, str | None] = {}
 
         # --- Tìm email với optional SINCE và UID range ---
         criteria = ['UNSEEN'] if unseen_only else ['ALL']
+        if since is None and EMAIL_SEARCH_DAYS > 0:
+            since = date.today() - timedelta(days=EMAIL_SEARCH_DAYS)
         if since:
             criteria += ['SINCE', since.strftime('%d-%b-%Y')]
         if before:
@@ -154,28 +157,50 @@ class EmailFetcher:
         lower_keywords = [kw.lower() for kw in keywords]
         for start in range(0, len(email_ids), batch_size):
             batch = email_ids[start:start + batch_size]
+            id_set = b','.join(batch)
+            # Fetch subject headers for the whole batch
+            if hasattr(self.mail, 'uid'):
+                h_typ, h_data = self.mail.uid('fetch', id_set, '(BODY.PEEK[HEADER.FIELDS (SUBJECT)])')
+            else:
+                h_typ, h_data = self.mail.fetch(id_set, '(BODY.PEEK[HEADER.FIELDS (SUBJECT)])')
+            if h_typ != 'OK' or not h_data:
+                continue
+
+            header_map: dict[str, str] = {}
+            for part in h_data:
+                if isinstance(part, tuple) and isinstance(part[1], (bytes, bytearray)):
+                    uid_match = re.search(br'UID\s+(\d+)', part[0] or b'') or re.search(br'^(\d+)', part[0] or b'')
+                    if not uid_match:
+                        continue
+                    uid = uid_match.group(1).decode()
+                    try:
+                        hdr = email.message_from_bytes(part[1])
+                        subj_hdr = hdr.get('Subject', '')
+                        subj = ''.join(
+                            p.decode(enc or 'utf-8', errors='ignore') if isinstance(p, bytes) else p
+                            for p, enc in decode_header(subj_hdr)
+                        )
+                    except Exception:
+                        subj = ''
+                    header_map[uid] = subj
+
             for num in batch:
-                # Fetch subject header first for quick filtering
-                if hasattr(self.mail, 'uid'):
-                    h_typ, h_data = self.mail.uid('fetch', num, '(BODY.PEEK[HEADER.FIELDS (SUBJECT)])')
-                else:
-                    h_typ, h_data = self.mail.fetch(num, '(BODY.PEEK[HEADER.FIELDS (SUBJECT)])')
-                if h_typ != 'OK' or not h_data:
-                    continue
-                subj = ''
-                for item in h_data:
-                    if isinstance(item, tuple) and isinstance(item[1], (bytes, bytearray)):
-                        try:
-                            hdr = email.message_from_bytes(item[1])
-                            subj_hdr = hdr.get('Subject', '')
-                            subj = ''.join(
-                                p.decode(enc or 'utf-8', errors='ignore') if isinstance(p, bytes) else p
-                                for p, enc in decode_header(subj_hdr)
-                            )
-                        except Exception:
-                            subj = ''
+                uid_str = num.decode() if isinstance(num, bytes) else str(num)
+                subj = header_map.get(uid_str, '')
                 if not any(kw in subj.lower() for kw in lower_keywords):
                     continue
+
+                # Fetch full message and INTERNALDATE only when subject matches
+                if hasattr(self.mail, 'uid'):
+                    typ, msg_data = self.mail.uid('fetch', num, '(RFC822 INTERNALDATE)')
+                    uid_int = int(num)
+                else:
+                    typ, msg_data = self.mail.fetch(num, '(RFC822 INTERNALDATE)')
+                    uid_int = int(num)
+                if typ != "OK" or not msg_data:
+                    continue
+                if uid_int > max_uid_seen:
+                    max_uid_seen = uid_int
 
                 # Fetch full message and INTERNALDATE only when subject matches
                 if hasattr(self.mail, 'uid'):
@@ -299,10 +324,7 @@ class EmailFetcher:
                         f.write(part.get_payload(decode=True))
                     new_files.append(path)
                     self.last_fetch_info.append((path, sent_time))
-                    try:
-                        record_sent_time(path, sent_time)
-                    except Exception as e:
-                        self.logger.warning(f"Could not record sent time for {path}: {e}")
+                    sent_time_updates[path] = sent_time
                     self.logger.info(f"[OK] Lưu đính kèm mới: {path}")
 
                 # Đánh dấu email đã đọc để tránh xử lý lại lần sau
@@ -313,6 +335,12 @@ class EmailFetcher:
 
         if not new_files:
             self.logger.info("[INFO] Không tìm thấy đính kèm mới.")
+
+        if sent_time_updates:
+            try:
+                record_sent_times_bulk(sent_time_updates)
+            except Exception as e:
+                self.logger.warning(f"Could not record sent times: {e}")
 
         if max_uid_seen:
             try:

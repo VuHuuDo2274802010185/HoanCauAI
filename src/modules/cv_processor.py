@@ -252,6 +252,10 @@ class CVProcessor:
             for fname, ts in load_sent_times().items()
         }
 
+        if self.fetcher and getattr(self.fetcher, "last_fetch_info", None):
+            for path, ts in self.fetcher.last_fetch_info:
+                sent_map[path] = ts or sent_map.get(path, "")
+
         # Lấy tất cả file trong thư mục attachment
         all_files = set(files)  # từ email
         if ATTACHMENT_DIR.exists():
@@ -319,14 +323,12 @@ class CVProcessor:
                 text = self.extract_text(file_path)
                 if not text.strip():
                     logger.warning(f"⚠️ No text extracted from {fname}")
-                    failed_count += 1
-                    continue
-
-                # Extract info using LLM
-                info = self.extract_info_with_llm(text)
-                if not info:
-                    logger.warning(f"⚠️ No info extracted from {fname}")
-                    info = self._fallback_regex(text)  # fallback
+                    info = {}
+                else:
+                    info = self.extract_info_with_llm(text)
+                    if not info:
+                        logger.warning(f"⚠️ No info extracted from {fname}")
+                        info = self._fallback_regex(text)  # fallback
 
                 # Prepare record
                 sent_time_str = sent_map.get(file_path, "")
@@ -347,6 +349,11 @@ class CVProcessor:
 
         # Create DataFrame
         df = pd.DataFrame(processed_data)
+        rename_map = {
+            "file_name": "Tên file",
+            "sent_time_display": "Thời gian nhận",
+        }
+        df = df.rename(columns=rename_map)
         
         # Log summary
         elapsed = time.time() - start_time
