@@ -88,6 +88,18 @@ try:
         logger.info("cv_viewer_tab not available")
 
     try:
+        from .tabs import update_tab  # Optional tab
+    except ImportError:
+        update_tab = types.SimpleNamespace(render=lambda *a, **k: None)
+        logger.info("update_tab not available")
+
+    try:
+        from .tabs import cv_viewer_tab  # Optional tab
+    except ImportError:
+        cv_viewer_tab = types.SimpleNamespace(render=lambda *a, **k: None)
+        logger.info("cv_viewer_tab not available")
+
+    try:
         from .tabs import chat_tab  # noqa: F401
 
         HAS_EXTERNAL_CHAT_TAB = True
