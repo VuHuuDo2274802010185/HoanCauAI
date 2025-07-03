@@ -68,7 +68,7 @@ try:
     )
 
     try:
-        from .tabs import fetch_process_tab, single_tab, results_tab, update_tab
+        from .tabs import fetch_process_tab, single_tab, results_tab, update_tab, cv_viewer_tab
     except ImportError as ie:
         logger.error(f"Failed to import core tabs: {ie}")
         st.error(f"Lỗi import tabs: {ie}")
@@ -180,21 +180,17 @@ class StreamlitLogHandler(logging.Handler):
     def _check_streamlit_context(self) -> bool:
         """Check if Streamlit context is available"""
         try:
-            if hasattr(st, "runtime"):
-                if hasattr(st.runtime, "exists"):
-                    return bool(st.runtime.exists())
-                if hasattr(st.runtime, "scriptrunner"):
-                    get_ctx = getattr(
-                        st.runtime.scriptrunner, "get_script_run_ctx", None
-                    )
-                    if get_ctx:
-                        try:
-                            return get_ctx(suppress_warning=True) is not None
-                        except TypeError:
-                            return get_ctx() is not None
-            from streamlit.script_run_context import get_script_run_ctx
-
-            return get_script_run_ctx() is not None
+            # Try different ways to check Streamlit context
+            try:
+                from streamlit.runtime.scriptrunner import get_script_run_ctx
+                return get_script_run_ctx() is not None
+            except ImportError:
+                try:
+                    from streamlit.scriptrunner.script_run_context import get_script_run_ctx
+                    return get_script_run_ctx() is not None
+                except ImportError:
+                    # Fallback to checking session state
+                    return hasattr(st, 'session_state')
         except Exception:
             return False
 
@@ -539,11 +535,12 @@ custom_css = f"""
 st.markdown(custom_css, unsafe_allow_html=True)
 
 # --- Main UI Tabs ---
-tab_main, tab_single, tab_results, tab_chat, tab_update = st.tabs(
+tab_main, tab_single, tab_results, tab_viewer, tab_chat, tab_update = st.tabs(
     [
         "Lấy & Xử lý CV",
         "Single File",
         "Kết quả",
+        "Xem CV",
         "Hỏi AI",
         "Cập nhật hệ thống",
     ]
@@ -563,6 +560,9 @@ with tab_single:
 
 with tab_results:
     results_tab.render()
+
+with tab_viewer:
+    cv_viewer_tab.render()
 
 with tab_chat:
     render_enhanced_chat_tab()
