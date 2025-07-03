@@ -3,12 +3,14 @@
 import logging
 from pathlib import Path
 from datetime import datetime
+import threading
+import time
 
 import pandas as pd
 import streamlit as st
 
 from modules.config import OUTPUT_CSV
-from modules.ui_utils import loading_logs
+
 from .utils import handle_error, safe_session_state_get
 
 logger = logging.getLogger(__name__)
@@ -115,20 +117,12 @@ def render_chat_history():
 
 @handle_error
 def render_chat_input_form():
-    """Render chat input form."""
-    with st.form("chat_form", clear_on_submit=True):
-        col1, col2 = st.columns([4, 1])
-        with col1:
-            user_input = st.text_area(
-                "💬 Nhập câu hỏi của bạn:",
-                placeholder="Ví dụ: Tóm tắt thông tin các ứng viên có kinh nghiệm AI...",
-                height=100,
-                help="Nhấn Ctrl+Enter để gửi nhanh",
-            )
-        with col2:
-            st.markdown("<br>", unsafe_allow_html=True)
-            submit_button = st.form_submit_button("📨 Gửi", help="Gửi câu hỏi cho AI", use_container_width=True)
-    if submit_button and user_input.strip():
+    """Render chat input using chat-style box."""
+    user_input = st.chat_input(
+        "💬 Nhập câu hỏi của bạn:",
+        key="chat_input_box",
+    )
+    if user_input and user_input.strip():
         process_chat_message(user_input.strip())
 
 
@@ -142,17 +136,23 @@ def process_chat_message(user_input: str):
             "content": user_input,
             "timestamp": timestamp,
         })
-        with loading_logs("🤖 AI đang suy nghĩ..."):
+        progress_bar = st.progress(0.0)
+        status_text = st.empty()
+        status_text.text("🤖 AI đang suy nghĩ...")
+
+        result: dict[str, str | None] = {"response": None, "error": None}
+
+        def worker() -> None:
             from modules.qa_chatbot import QAChatbot
             provider = st.session_state.get("selected_provider", "google")
             model = st.session_state.get("selected_model", "gemini-2.5-flash-lite-preview-06-17")
             api_key = st.session_state.get(f"{provider}_api_key", "")
             if not api_key:
-                st.error("❌ API Key chưa được cấu hình!")
+                result["error"] = "❌ API Key chưa được cấu hình!"
                 return
             dataset_info = load_dataset_for_chat()
             if not dataset_info or dataset_info.get("data") is None:
-                st.error("❌ Chưa có dataset CV để chat. Hãy xử lý CV trước.")
+                result["error"] = "❌ Chưa có dataset CV để chat. Hãy xử lý CV trước."
                 return
             df = dataset_info["data"]
             chatbot = QAChatbot(provider=provider, model=model, api_key=api_key)
@@ -161,20 +161,40 @@ def process_chat_message(user_input: str):
             for msg in recent_history[:-1]:
                 conversation_context.append({"role": msg["role"], "content": msg["content"]})
             context = {"history": conversation_context} if conversation_context else None
-            response = chatbot.ask_question(user_input, df, context=context)
-            if response:
-                st.session_state.setdefault("conversation_history", []).append({
-                    "role": "assistant",
-                    "content": response,
-                    "timestamp": datetime.now().isoformat(),
-                })
-                logger.info(
-                    "Chat processed successfully. History length: %s",
-                    len(st.session_state.get("conversation_history", [])),
-                )
-                st.rerun()
-            else:
-                st.error("❌ Không thể lấy phản hồi từ AI. Vui lòng thử lại.")
+            result["response"] = chatbot.ask_question(user_input, df, context=context)
+
+        thread = threading.Thread(target=worker)
+        thread.start()
+        i = 0
+        while thread.is_alive():
+            progress_bar.progress((i % 100) / 100.0)
+            time.sleep(0.1)
+            i += 1
+        thread.join()
+        progress_bar.progress(1.0)
+        status_text.text("✅ Hoàn thành!")
+        time.sleep(0.5)
+        progress_bar.empty()
+        status_text.empty()
+
+        if result.get("error"):
+            st.error(result["error"])
+            return
+
+        response = result.get("response")
+        if response:
+            st.session_state.setdefault("conversation_history", []).append({
+                "role": "assistant",
+                "content": response,
+                "timestamp": datetime.now().isoformat(),
+            })
+            logger.info(
+                "Chat processed successfully. History length: %s",
+                len(st.session_state.get("conversation_history", [])),
+            )
+            st.rerun()
+        else:
+            st.error("❌ Không thể lấy phản hồi từ AI. Vui lòng thử lại.")
     except Exception as e:
         st.error(f"❌ Lỗi xử lý chat: {e}")
         logger.error("Chat processing error: %s", e)
