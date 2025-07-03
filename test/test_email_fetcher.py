@@ -46,6 +46,7 @@ def test_fetch_cv_attachments(email_fetcher_module, tmp_path):
     class FakeIMAP:
         def __init__(self):
             self.last_criteria = None
+            self.fetch_queries = []
 
         def uid(self, cmd, *args):
             if cmd.lower() == 'search':
@@ -56,7 +57,9 @@ def test_fetch_cv_attachments(email_fetcher_module, tmp_path):
             if cmd.lower() == 'fetch':
                 num = args[0]
                 query = args[1]
-                assert query == '(RFC822 INTERNALDATE)'
+                self.fetch_queries.append(query)
+                if query == '(BODY.PEEK[HEADER.FIELDS (SUBJECT)])':
+                    return 'OK', [(None, b'Subject: CV Nguyen\r\n')]
                 return 'OK', [
                     (None, raw),
                     (b'INTERNALDATE', b'"20-Sep-2023 10:20:00 -0400"'),
@@ -75,9 +78,11 @@ def test_fetch_cv_attachments(email_fetcher_module, tmp_path):
     assert expected.exists()
     assert fetcher.last_fetch_info == [(str(expected), '2023-09-20T10:20:00-04:00')]
     assert 'BEFORE' in imap.last_criteria
+    assert '(BODY.PEEK[HEADER.FIELDS (SUBJECT)])' in imap.fetch_queries
+    assert '(RFC822 INTERNALDATE)' in imap.fetch_queries
 
 
-def test_ignore_non_cv_files(email_fetcher_module, tmp_path):
+def test_profile_file_processed(email_fetcher_module, tmp_path):
     email_fetcher = email_fetcher_module
     EmailFetcher = email_fetcher.EmailFetcher
 
@@ -89,10 +94,17 @@ def test_ignore_non_cv_files(email_fetcher_module, tmp_path):
     raw = msg.as_bytes()
 
     class FakeIMAP:
+        def __init__(self):
+            self.fetch_queries = []
+
         def uid(self, cmd, *args):
             if cmd.lower() == 'search':
                 return 'OK', [b'1']
             if cmd.lower() == 'fetch':
+                query = args[1]
+                self.fetch_queries.append(query)
+                if query == '(BODY.PEEK[HEADER.FIELDS (SUBJECT)])':
+                    return 'OK', [(None, b'Subject: Profile\r\n')]
                 return 'OK', [
                     (None, raw),
                     (b'INTERNALDATE', b'"20-Sep-2023 10:20:00 -0400"'),
@@ -106,5 +118,7 @@ def test_ignore_non_cv_files(email_fetcher_module, tmp_path):
     imap = FakeIMAP()
     fetcher.mail = imap
     files = fetcher.fetch_cv_attachments()
-    assert files == []
+    expected = tmp_path / 'profile.pdf'
+    assert files == [str(expected)]
+    assert expected.exists()
 
