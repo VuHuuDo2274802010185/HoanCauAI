@@ -27,3 +27,15 @@ def record_sent_time(path: str, sent_time: str | None) -> None:
     data[fname] = sent_time or ""  # cập nhật thời gian gửi
     with open(SENT_TIME_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+def record_sent_times_bulk(mapping: Dict[str, str | None]) -> None:
+    """Ghi nhiều bản ghi thời gian gửi cùng lúc."""
+    if not mapping:
+        return
+    data = load_sent_times()
+    for path, ts in mapping.items():
+        fname = os.path.basename(path)
+        data[fname] = ts or ""
+    with open(SENT_TIME_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
