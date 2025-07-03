@@ -202,7 +202,7 @@ class EmailFetcher:
                         try:
                             tup = imaplib.Internaldate2tuple(f'INTERNALDATE "{internal_date}"'.encode())
                             if tup:
-                                dt = datetime.fromtimestamp(time.mktime(tup), tz=datetime.timezone.utc)
+                                dt = datetime.fromtimestamp(time.mktime(tup), tz=timezone.utc)
                                 sent_time = dt.isoformat()
                         except Exception:
                             sent_time = ""

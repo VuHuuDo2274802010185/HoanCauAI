@@ -53,7 +53,7 @@ def render(
             datetime.combine(
                 datetime.strptime(from_date_str, "%d/%m/%Y"),
                 time.min,
-                tzinfo=datetime.timezone.utc,
+                tzinfo=timezone.utc,
             )
             if from_date_str
             else None
@@ -62,7 +62,7 @@ def render(
             datetime.combine(
                 datetime.strptime(to_date_str, "%d/%m/%Y"),
                 time.max,
-                tzinfo=datetime.timezone.utc,
+                tzinfo=timezone.utc,
             )
             if to_date_str
             else None
