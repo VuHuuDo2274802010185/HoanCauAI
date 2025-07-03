@@ -103,7 +103,9 @@ class EmailFetcher:
     ) -> List[str]:
         """
         Tìm và tải xuống file đính kèm PDF/DOCX từ các email thoả mãn:
-        - Tiêu đề hoặc nội dung chứa bất kỳ từ khoá nào trong ``keywords``.
+        - Trước tiên kiểm tra tiêu đề chứa bất kỳ từ khoá nào trong ``keywords``;
+          email không khớp sẽ bỏ qua để tiết kiệm thời gian.
+        - Sau khi tiêu đề khớp, nội dung và đính kèm sẽ được tải để xử lý.
         - Ngày gửi >= ``since`` và < ``before`` nếu được cung cấp
           (``before`` được hiểu là mốc kết thúc, không bao gồm ngày này).
         Quét theo từng đợt ``batch_size`` email mới nhất.
@@ -116,7 +118,7 @@ class EmailFetcher:
             raise RuntimeError("Chưa kết nối IMAP. Gọi connect() trước.")
 
         if keywords is None:
-            keywords = ["CV", "Resume", "Curriculum Vitae"]
+            keywords = ["CV", "Resume", "Curriculum Vitae", "Profile"]
 
         new_files: List[str] = []
         self.last_fetch_info = []
@@ -149,10 +151,33 @@ class EmailFetcher:
         self.logger.info(f"[INFO] Đã tìm thấy {len(email_ids)} email trong hộp thư.")
 
         max_uid_seen = 0
+        lower_keywords = [kw.lower() for kw in keywords]
         for start in range(0, len(email_ids), batch_size):
             batch = email_ids[start:start + batch_size]
             for num in batch:
-                # Fetch both message and INTERNALDATE for accurate timestamp
+                # Fetch subject header first for quick filtering
+                if hasattr(self.mail, 'uid'):
+                    h_typ, h_data = self.mail.uid('fetch', num, '(BODY.PEEK[HEADER.FIELDS (SUBJECT)])')
+                else:
+                    h_typ, h_data = self.mail.fetch(num, '(BODY.PEEK[HEADER.FIELDS (SUBJECT)])')
+                if h_typ != 'OK' or not h_data:
+                    continue
+                subj = ''
+                for item in h_data:
+                    if isinstance(item, tuple) and isinstance(item[1], (bytes, bytearray)):
+                        try:
+                            hdr = email.message_from_bytes(item[1])
+                            subj_hdr = hdr.get('Subject', '')
+                            subj = ''.join(
+                                p.decode(enc or 'utf-8', errors='ignore') if isinstance(p, bytes) else p
+                                for p, enc in decode_header(subj_hdr)
+                            )
+                        except Exception:
+                            subj = ''
+                if not any(kw in subj.lower() for kw in lower_keywords):
+                    continue
+
+                # Fetch full message and INTERNALDATE only when subject matches
                 if hasattr(self.mail, 'uid'):
                     typ, msg_data = self.mail.uid('fetch', num, '(RFC822 INTERNALDATE)')
                     uid_int = int(num)
@@ -257,7 +282,7 @@ class EmailFetcher:
                     name, ext = os.path.splitext(filename)
                     if ext.lower() not in ['.pdf', '.docx']:
                         continue
-                    if not re.search(r"(cv|resume)", name, re.IGNORECASE):
+                    if not re.search(r"(cv|resume|profile)", name, re.IGNORECASE):
                         continue
                     safe_name = re.sub(r'[^\w\-\_ ]', '_', name)
                     safe = safe_name + ext
