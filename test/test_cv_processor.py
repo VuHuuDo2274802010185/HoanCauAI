@@ -47,7 +47,7 @@ def cv_processor_class(mock_pandas, mock_requests, monkeypatch):
 
 @pytest.mark.parametrize('text,expected', [
     (
-        """Họ tên: Nguyen Van A\nTuổi: 30\nEmail: a@test.com\nĐiện thoại: +84987654321\nĐịa chỉ: 123 Street\nHọc vấn: University ABC\nKinh nghiệm: 5 năm\nKỹ năng: Python""",
+        """Họ tên: Nguyen Van A\nTuổi: 30\nEmail: a@test.com\nĐiện thoại: +84987654321\nVị trí: Kỹ sư phần mềm\nĐịa chỉ: 123 Street\nHọc vấn: University ABC\nKinh nghiệm: 5 năm\nKỹ năng: Python""",
         {
             'ten': 'Nguyen Van A',
             'tuoi': '30',
@@ -57,11 +57,12 @@ def cv_processor_class(mock_pandas, mock_requests, monkeypatch):
             'kinh_nghiem': '5 năm',
             'dia_chi': '123 Street',
             'ky_nang': 'Python',
+            'vi_tri': 'Kỹ sư phần mềm',
         }
     ),
     (
 
-        """Họ tên: John Smith\nAge: 35\nEmail: john@example.com\nĐiện thoại: 555-123-4567\nAddress: 1 Main St\nEducation: BSc\nExperience: 3 years\nSkills: Java""",
+        """Họ tên: John Smith\nAge: 35\nEmail: john@example.com\nĐiện thoại: 555-123-4567\nPosition: Data Engineer\nAddress: 1 Main St\nEducation: BSc\nExperience: 3 years\nSkills: Java""",
         {
             'ten': 'John Smith',
             'tuoi': '35',
@@ -71,6 +72,7 @@ def cv_processor_class(mock_pandas, mock_requests, monkeypatch):
             'kinh_nghiem': '3 years',
             'dia_chi': '1 Main St',
             'ky_nang': 'Java',
+            'vi_tri': 'Data Engineer',
         }
     )
 ])

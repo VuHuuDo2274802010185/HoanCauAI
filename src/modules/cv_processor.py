@@ -211,6 +211,7 @@ class CVProcessor:
             "kinh_nghiem": r"(?:(?:Kinh nghiệm|Experience)[:\-\s]+)([^\n]+)",
             "dia_chi": r"(?:(?:Địa chỉ|Address)[:\-\s]+)([^\n]+)",
             "ky_nang": r"(?:(?:Kỹ năng|Skills?)[:\-\s]+)([^\n]+)",
+            "vi_tri": r"(?:(?:Vị trí|Position|Apply for|Ứng tuyển)[:\-\s]+)([^\n]+)",
         }
         info: Dict[str, str] = {}
         for k, p in patterns.items():
@@ -245,12 +246,15 @@ class CVProcessor:
             if progress_callback:
                 progress_callback(0, 100, "📧 Kết nối email...")
             
-            files: List[str] = self.fetcher.fetch_cv_attachments(
-                since=since,
-                before=before,
-                unseen_only=unseen,
-                progress_callback=email_progress_callback,
-            )
+            fetch_args = dict(since=since, before=before, unseen_only=unseen)
+            # Tương thích với các fetcher cũ không nhận progress_callback
+            import inspect
+            if 'progress_callback' in inspect.signature(
+                self.fetcher.fetch_cv_attachments
+            ).parameters:
+                fetch_args['progress_callback'] = email_progress_callback
+
+            files: List[str] = self.fetcher.fetch_cv_attachments(**fetch_args)
         else:
             files = []
             if progress_callback:
