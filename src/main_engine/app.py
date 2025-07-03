@@ -66,7 +66,6 @@ try:
         EMAIL_PASS,
         EMAIL_UNSEEN_ONLY,
     )
-    from modules.auto_fetcher import watch_loop
 
     try:
         from .tabs import fetch_process_tab, single_tab, results_tab
@@ -358,7 +357,7 @@ provider, api_key, model = render_sidebar(
 
 
 # Render email configuration
-email_user, email_pass, unseen_only = render_email_config(ROOT, provider, api_key)
+email_user, email_pass = render_email_config(ROOT, provider, api_key)
 
 # Load style preferences from session state
 background_color = st.session_state.get("background_color", "#fff7e6")
@@ -556,7 +555,6 @@ with tab_main:
         api_key,
         email_user=email_user,
         email_pass=email_pass,
-        unseen_only=unseen_only,
     )
 
 with tab_single:
