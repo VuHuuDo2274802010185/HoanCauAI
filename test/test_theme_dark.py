@@ -82,7 +82,7 @@ def _install_app(monkeypatch):
     # stub tabs
     tab_mod = types.ModuleType("main_engine.tabs")
     simple_tab = types.SimpleNamespace(render=lambda *a, **k: None)
-    for name in ["fetch_tab", "process_tab", "single_tab", "results_tab", "chat_tab"]:
+    for name in ["fetch_process_tab", "single_tab", "results_tab", "chat_tab"]:
         setattr(tab_mod, name, simple_tab)
         monkeypatch.setitem(sys.modules, f"main_engine.tabs.{name}", simple_tab)
     monkeypatch.setitem(sys.modules, "main_engine.tabs", tab_mod)

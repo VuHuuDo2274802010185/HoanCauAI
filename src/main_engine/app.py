@@ -26,7 +26,7 @@ LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
 
 # Khi chạy bằng `streamlit run`, __package__ sẽ là None dẫn tới lỗi khi
 # dùng relative imports. Thiết lập thủ công để các import như
-# `from .tabs import fetch_tab` hoạt động.
+# `from .tabs import fetch_process_tab` hoạt động.
 if __package__ is None:
     __package__ = "main_engine"
 
@@ -69,7 +69,7 @@ try:
     from modules.auto_fetcher import watch_loop
 
     try:
-        from .tabs import fetch_tab, process_tab, single_tab, results_tab
+        from .tabs import fetch_process_tab, single_tab, results_tab
     except ImportError as ie:
         logger.error(f"Failed to import core tabs: {ie}")
         st.error(f"Lỗi import tabs: {ie}")
@@ -540,21 +540,17 @@ custom_css = f"""
 st.markdown(custom_css, unsafe_allow_html=True)
 
 # --- Main UI Tabs ---
-tab_fetch, tab_process, tab_single, tab_results, tab_chat = st.tabs(
+tab_main, tab_single, tab_results, tab_chat = st.tabs(
     [
-        "Lấy CV từ Email",
-        "Xử lý CV",
+        "Lấy & Xử lý CV",
         "Single File",
         "Kết quả",
         "Hỏi AI",
     ]
 )
 
-with tab_fetch:
-    fetch_tab.render(email_user, email_pass, unseen_only)
-
-with tab_process:
-    process_tab.render(
+with tab_main:
+    fetch_process_tab.render(
         provider,
         model,
         api_key,
