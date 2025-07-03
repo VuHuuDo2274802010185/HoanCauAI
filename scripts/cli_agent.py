@@ -14,7 +14,6 @@ for path in (ROOT, SRC_DIR):
 
 from modules.config import LLM_CONFIG
 
-from modules.auto_fetcher import watch_loop
 from modules.cv_processor import CVProcessor
 from modules.llm_client import LLMClient
 from modules.qa_chatbot import QAChatbot
@@ -25,28 +24,6 @@ def cli():
     """Hoàn Cầu AI Agent CLI"""
     pass
 
-@cli.command()
-@click.option('--interval', default=600, show_default=True, help='Khoảng thời gian giữa các lần fetch (giây)')
-@click.option('--host', default=lambda: settings.email_host, help='IMAP host')
-@click.option('--port', default=lambda: settings.email_port, type=int, help='IMAP port')
-@click.option('--user', default=lambda: settings.email_user, help='Email user')
-@click.option('--password', default=lambda: settings.email_pass, help='Email password')
-@click.option('--from-date', type=click.DateTime(formats=['%d/%m/%Y']), help='Chỉ lấy email từ ngày này (DD/MM/YYYY)')
-@click.option('--to-date', type=click.DateTime(formats=['%d/%m/%Y']), help='Chỉ lấy email trước ngày này (DD/MM/YYYY)')
-@click.option('--unseen/--all', 'unseen_only', default=settings.email_unseen_only, show_default=True, help='Chỉ quét email chưa đọc')
-def watch(interval, host, port, user, password, from_date, to_date, unseen_only):
-    """Tự động fetch CV từ email liên tục"""
-    click.echo(f"Bắt đầu auto fetch với interval={interval}s...")
-    watch_loop(
-        interval,
-        host=host,
-        port=port,
-        user=user,
-        password=password,
-        unseen_only=unseen_only,
-        since=from_date.date() if from_date else None,
-        before=to_date.date() if to_date else None,
-    )
 
 @cli.command()
 @click.option('--from-date', type=click.DateTime(formats=['%d/%m/%Y']), help='Chỉ xử lý các file sau ngày này (DD/MM/YYYY)')

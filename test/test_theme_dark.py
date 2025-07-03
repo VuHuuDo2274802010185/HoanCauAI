@@ -76,7 +76,6 @@ def _install_app(monkeypatch):
         EMAIL_UNSEEN_ONLY=False,
     )
     monkeypatch.setitem(sys.modules, "modules.config", cfg)
-    monkeypatch.setitem(sys.modules, "modules.auto_fetcher", types.SimpleNamespace(watch_loop=lambda *a, **k: None))
     monkeypatch.setitem(sys.modules, "modules.qa_chatbot", types.ModuleType("modules.qa_chatbot"))
 
     # stub tabs

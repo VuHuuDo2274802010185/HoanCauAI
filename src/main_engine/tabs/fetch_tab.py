@@ -24,13 +24,13 @@ def render(email_user: str, email_pass: str, unseen_only: bool) -> None:
     """Render UI for fetching CVs from email."""
     st.subheader("Lấy CV từ Email")
     st.markdown(
-        "**Email Config:** Khi đã nhập Gmail và mật khẩu ở sidebar, hệ thống sẽ tự động tải CV mới."
+        "**Email Config:** Khi đã nhập Gmail và mật khẩu ở sidebar, bạn có thể tải CV mới từ hộp thư."
     )
     if not email_user or not email_pass:
-        st.warning("Cần nhập Gmail và mật khẩu trong sidebar để bắt đầu auto fetch.")
+        st.warning("Cần nhập Gmail và mật khẩu trong sidebar rồi nhấn 'Fetch Now'.")
     else:
         st.info(
-            "Auto fetch đang chạy ngầm. Bạn có thể nhấn 'Fetch Now' để kiểm tra ngay."
+            "Nhấn 'Fetch Now' để kiểm tra hộp thư và tải CV mới."
         )
         col1, col2 = st.columns(2)
         today_str = date.today().strftime("%d/%m/%Y")

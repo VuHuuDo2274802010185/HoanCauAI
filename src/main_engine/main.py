@@ -18,30 +18,17 @@ from modules.email_fetcher import EmailFetcher
 from modules.cv_processor import CVProcessor
 from modules.config import EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASS, OUTPUT_CSV
 from modules.dynamic_llm_client import DynamicLLMClient
-from modules.auto_fetcher import watch_loop
 
 # Cấu hình logging chung
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s: %(message)s")
 
 @click.command()
 @click.option('--batch/--single', default=True, help="Chế độ batch (email) hoặc single (file)")
-@click.option('--watch', is_flag=True, help='Theo dõi email liên tục')
-@click.option('--interval', default=600, type=int, help='Khoảng thời gian giữa các lần quét (giây)')
 @click.argument('file', required=False, type=click.Path())
-def main(batch: bool, watch: bool, interval: int, file):
+def main(batch: bool, file):
     """CLI để xử lý CV: batch qua email hoặc đơn file."""
     # Khởi tạo LLM client theo config
     llm_client = DynamicLLMClient()
-
-    if watch:
-        watch_loop(
-            interval,
-            host=EMAIL_HOST,
-            port=EMAIL_PORT,
-            user=EMAIL_USER,
-            password=EMAIL_PASS,
-        )
-        return
 
     if batch:
         # Chạy batch nhưng bỏ qua bước kết nối email/fetch IMAP

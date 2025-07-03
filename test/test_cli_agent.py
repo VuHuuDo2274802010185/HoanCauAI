@@ -3,7 +3,6 @@ import sys
 import types
 import importlib
 from click.testing import CliRunner
-from datetime import date
 import pytest
 
 # ensure repo root and src on path
@@ -24,13 +23,6 @@ class DummyDF(list):
 @pytest.fixture
 def cli_module(monkeypatch, tmp_path):
     calls = {}
-
-    # dummy watch loop
-    def fake_watch_loop(interval, **kw):
-        calls['watch'] = {'interval': interval, **kw}
-    monkeypatch.setitem(sys.modules, 'modules.auto_fetcher', types.SimpleNamespace(watch_loop=fake_watch_loop))
-
-
 
     # dummy processor
     class DummyProcessor:
@@ -91,17 +83,6 @@ def cli_module(monkeypatch, tmp_path):
     cli = importlib.import_module('scripts.cli_agent')
     importlib.reload(cli)
     return cli.cli, calls, settings
-
-def test_watch_command(cli_module):
-    cli, calls, settings = cli_module
-    runner = CliRunner()
-    res = runner.invoke(cli, ['watch'])
-    assert res.exit_code == 0
-    assert f"Bắt đầu auto fetch với interval=600s" in res.output
-    assert calls['watch']['interval'] == 600
-    assert calls['watch']['host'] == settings.email_host
-    assert calls['watch']['since'] is None
-    assert calls['watch']['before'] is None
 
 
 def test_full_process_empty(cli_module):

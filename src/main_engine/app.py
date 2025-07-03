@@ -66,7 +66,6 @@ try:
         EMAIL_PASS,
         EMAIL_UNSEEN_ONLY,
     )
-    from modules.auto_fetcher import watch_loop
 
     try:
         from .tabs import fetch_tab, process_tab, single_tab, results_tab
