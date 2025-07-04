@@ -94,12 +94,22 @@ class StreamlitProgressBar:
         
     def initialize(self, total_steps: int = 100, title: str = "Processing..."):
         """Initialize the progress bar display"""
-        if self.container:
+        # Check if container is a streamlit container (has __enter__ and __exit__ methods)
+        # If it's the st module itself, it doesn't support context manager
+        if (self.container and 
+            hasattr(self.container, '__enter__') and 
+            hasattr(self.container, '__exit__')):
             with self.container:
                 st.markdown(f"### {title}")
                 self.progress_bar = st.progress(0)
                 self.status_text = st.empty()
                 self.info_text = st.empty()
+        else:
+            # Use st directly when container is None or st module
+            st.markdown(f"### {title}")
+            self.progress_bar = st.progress(0)
+            self.status_text = st.empty()
+            self.info_text = st.empty()
                 
         self.manager.start(total_steps, title)
         self.update_display()
@@ -145,10 +155,15 @@ class StreamlitProgressBar:
         self.update_display()
         
         # Show completion message
-        if self.container:
+        if (self.container and 
+            hasattr(self.container, '__enter__') and 
+            hasattr(self.container, '__exit__')):
             time.sleep(0.5)  # Brief pause to show completion
             with self.container:
                 st.success(message)
+        elif self.container:
+            time.sleep(0.5)  # Brief pause to show completion
+            st.success(message)
 
 @contextmanager
 def progress_context(total_steps: int = 100, title: str = "Processing...", container=None):
