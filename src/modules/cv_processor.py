@@ -207,6 +207,7 @@ class CVProcessor:
             "tuoi": r"(?:(?:Tuổi|Age)[:\-\s]+)(\d{1,3})",
             "email": r"([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)",
             "dien_thoai": r"(\+?\d[\d\-\s]{7,}\d)",
+            "vi_tri": r"(?:(?:Vị trí|Position)[:\-\s]+)([^\n]+)",
             "hoc_van": r"(?:(?:Học vấn|Education)[:\-\s]+)([^\n]+)",
             "kinh_nghiem": r"(?:(?:Kinh nghiệm|Experience)[:\-\s]+)([^\n]+)",
             "dia_chi": r"(?:(?:Địa chỉ|Address)[:\-\s]+)([^\n]+)",
@@ -311,9 +312,13 @@ class CVProcessor:
             "Kinh nghiệm",
             "Kỹ năng",
         ])  # tạo DataFrame từ list dict với thứ tự cột cố định
-        if "Thời gian nhận" in df.columns:
+        if hasattr(df, "sort_values"):
             df.sort_values("Thời gian nhận", ascending=False, inplace=True)
             df["Thời gian nhận"] = df["Thời gian nhận"].apply(format_sent_time_display)
+        else:
+            df.sort(key=lambda r: r.get("Thời gian nhận", ""), reverse=True)
+            for row in df:
+                row["Thời gian nhận"] = format_sent_time_display(row.get("Thời gian nhận", ""))
         return df  # trả về kết quả
 
     def save_to_csv(self, df: pd.DataFrame, output: str = OUTPUT_CSV):
