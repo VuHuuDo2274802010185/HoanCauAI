@@ -9,6 +9,7 @@ import streamlit as st
 
 from modules.config import OUTPUT_CSV
 from modules.progress_manager import StreamlitProgressBar
+from modules.qa_chatbot import QAChatbot
 from .utils import handle_error, safe_session_state_get
 
 logger = logging.getLogger(__name__)
@@ -144,7 +145,6 @@ def process_chat_message(user_input: str):
         })
         progress_bar = StreamlitProgressBar()
         progress_bar.initialize(2, "🤖 AI đang suy nghĩ...")
-        from modules.qa_chatbot import QAChatbot
         provider = st.session_state.get("selected_provider", "google")
         model = st.session_state.get("selected_model", "gemini-2.5-flash-lite-preview-06-17")
         api_key = st.session_state.get(f"{provider}_api_key", "")
