@@ -61,17 +61,6 @@ else:
 EMAIL_USER = _get_env("EMAIL_USER")
 EMAIL_PASS = _get_env("EMAIL_PASS")
 
-# Thư mục email và giới hạn ngày tìm kiếm
-EMAIL_FOLDER = _get_env("EMAIL_FOLDER", "INBOX")
-_raw_days = os.getenv("EMAIL_SEARCH_DAYS", "").split('#', 1)[0].strip()
-if _raw_days:
-    try:
-        EMAIL_SEARCH_DAYS = int(_raw_days)
-    except ValueError:
-        EMAIL_SEARCH_DAYS = 0
-else:
-    EMAIL_SEARCH_DAYS = 0
-
 # --- Tuỳ chọn quét email: chỉ UNSEEN hay tất cả ---
 def _get_bool(varname: str, default: bool = True) -> bool:
     val = os.getenv(varname)

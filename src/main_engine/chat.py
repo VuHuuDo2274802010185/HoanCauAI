@@ -115,21 +115,21 @@ def render_chat_history():
 
 @handle_error
 def render_chat_input_form():
-    """Render chat input field that sends message on Enter."""
-
-    def submit_message() -> None:
-        message = st.session_state.get("user_input", "").strip()
-        if message:
-            process_chat_message(message)
-            st.session_state.user_input = ""
-
-    st.text_input(
-        "💬 Nhập câu hỏi của bạn:",
-        placeholder="Ví dụ: Tóm tắt thông tin các ứng viên có kinh nghiệm AI...",
-        key="user_input",
-        on_change=submit_message,
-        help="Nhấn Enter để gửi",
-    )
+    """Render chat input form."""
+    with st.form("chat_form", clear_on_submit=True):
+        col1, col2 = st.columns([4, 1])
+        with col1:
+            user_input = st.text_area(
+                "💬 Nhập câu hỏi của bạn:",
+                placeholder="Ví dụ: Tóm tắt thông tin các ứng viên có kinh nghiệm AI...",
+                height=100,
+                help="Nhấn Ctrl+Enter để gửi nhanh",
+            )
+        with col2:
+            st.markdown("<br>", unsafe_allow_html=True)
+            submit_button = st.form_submit_button("📨 Gửi", help="Gửi câu hỏi cho AI", use_container_width=True)
+    if submit_button and user_input.strip():
+        process_chat_message(user_input.strip())
 
 
 @handle_error

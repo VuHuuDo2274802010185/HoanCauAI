@@ -1,4 +1,4 @@
-"""Tab kết hợp lấy và xử lý CV từ email với progress tracking."""
+"""Tab kết hợp lấy và xử lý CV từ email."""
 
 import logging
 from typing import List
@@ -24,7 +24,6 @@ from modules.cv_processor import CVProcessor, format_sent_time_display
 from modules.dynamic_llm_client import DynamicLLMClient
 from modules.ui_utils import loading_logs
 from modules.sent_time_store import load_sent_times
-from modules.progress_manager import StreamlitProgressBar, progress_context
 from ..utils import safe_session_state_get
 
 
@@ -83,41 +82,18 @@ def render(
         )
         since = from_dt.date() if from_dt else None
         before = to_dt.date() if to_dt else None
-        
-        # Create progress container
-        progress_container = st.container()
-        
-        with progress_container:
-            # Initialize progress bar
-            progress_bar = StreamlitProgressBar(progress_container)
-            progress_bar.initialize(100, "🚀 Đang khởi tạo xử lý CV...")
-            
-            try:
-                processor = CVProcessor(
-                    fetcher=fetcher,
-                    llm_client=DynamicLLMClient(provider=provider, model=model, api_key=api_key),
-                )
-                
-                # Create progress callback
-                def progress_callback(current, message):
-                    progress_bar.update(current, message)
-                
-                df = processor.process(
-                    unseen_only=unseen_only,
-                    since=since,
-                    before=before,
-                    from_time=from_dt,
-                    to_time=to_dt,
-                    progress_callback=progress_callback,
-                )
-                
-                progress_bar.finish("✅ Xử lý CV hoàn tất!")
-                
-            except Exception as e:
-                if progress_bar.status_text:
-                    progress_bar.status_text.error(f"❌ Lỗi xử lý: {str(e)}")
-                st.error(f"Lỗi trong quá trình xử lý: {str(e)}")
-                return
+        with loading_logs("Đang thực hiện..."):
+            processor = CVProcessor(
+                fetcher=fetcher,
+                llm_client=DynamicLLMClient(provider=provider, model=model, api_key=api_key),
+            )
+            df = processor.process(
+                unseen_only=unseen_only,
+                since=since,
+                before=before,
+                from_time=from_dt,
+                to_time=to_dt,
+            )
 
         new_files = [Path(p) for p, _ in getattr(fetcher, "last_fetch_info", [])] if fetcher else []
         if new_files:
