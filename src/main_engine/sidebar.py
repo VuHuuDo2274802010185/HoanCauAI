@@ -20,7 +20,7 @@ from modules.config import (
     EMAIL_PASS,
     EMAIL_UNSEEN_ONLY,
 )
-from modules.ui_utils import loading_logs
+from modules.progress_manager import StreamlitProgressBar
 from .utils import handle_error, safe_session_state_get, safe_session_state_set
 
 # Logger cho file này
@@ -89,13 +89,15 @@ def render_sidebar(validate_configuration, detect_platform, get_available_models
             if not api_key:
                 st.sidebar.warning("⚠️ Vui lòng nhập API Key trước khi lấy models")
             else:
-                with loading_logs("Đang lấy danh sách models..."):
-                    models = get_available_models(provider, api_key)
-                    if models:
-                        safe_session_state_set("available_models", models)
-                        st.sidebar.success(f"✅ Đã lấy {len(models)} models")
-                    else:
-                        st.sidebar.error("❌ Không thể lấy models")
+                progress_bar = StreamlitProgressBar(st.sidebar)
+                progress_bar.initialize(2, "Đang lấy danh sách models...")
+                progress_bar.update(1, "Gọi API...")
+                models = get_available_models(provider, api_key)
+                if models:
+                    safe_session_state_set("available_models", models)
+                    progress_bar.finish(f"✅ Đã lấy {len(models)} models")
+                else:
+                    progress_bar.finish("❌ Không thể lấy models")
     with col2:
         # Nút xóa cache models
         if st.button("🗑️", help="Xóa cache models"):
