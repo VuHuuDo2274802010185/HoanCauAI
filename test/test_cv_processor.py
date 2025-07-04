@@ -47,31 +47,29 @@ def cv_processor_class(mock_pandas, mock_requests, monkeypatch):
 
 @pytest.mark.parametrize('text,expected', [
     (
-        """Họ tên: Nguyen Van A\nTuổi: 30\nEmail: a@test.com\nĐiện thoại: +84987654321\nĐịa chỉ: 123 Street\nVị trí: Developer\nHọc vấn: University ABC\nKinh nghiệm: 5 năm\nKỹ năng: Python""",
+        """Họ tên: Nguyen Van A\nTuổi: 30\nEmail: a@test.com\nĐiện thoại: +84987654321\nĐịa chỉ: 123 Street\nHọc vấn: University ABC\nKinh nghiệm: 5 năm\nKỹ năng: Python""",
         {
             'ten': 'Nguyen Van A',
             'tuoi': '30',
             'email': 'a@test.com',
             'dien_thoai': '+84987654321',
-            'dia_chi': '123 Street',
-            'vi_tri': 'Developer',
             'hoc_van': 'University ABC',
             'kinh_nghiem': '5 năm',
+            'dia_chi': '123 Street',
             'ky_nang': 'Python',
         }
     ),
     (
 
-        """Họ tên: John Smith\nAge: 35\nEmail: john@example.com\nĐiện thoại: 555-123-4567\nAddress: 1 Main St\nPosition: Manager\nEducation: BSc\nExperience: 3 years\nSkills: Java""",
+        """Họ tên: John Smith\nAge: 35\nEmail: john@example.com\nĐiện thoại: 555-123-4567\nAddress: 1 Main St\nEducation: BSc\nExperience: 3 years\nSkills: Java""",
         {
             'ten': 'John Smith',
             'tuoi': '35',
             'email': 'john@example.com',
             'dien_thoai': '555-123-4567',
-            'dia_chi': '1 Main St',
-            'vi_tri': 'Manager',
             'hoc_van': 'BSc',
             'kinh_nghiem': '3 years',
+            'dia_chi': '1 Main St',
             'ky_nang': 'Java',
         }
     )

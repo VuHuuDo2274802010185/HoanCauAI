@@ -119,7 +119,6 @@ if st.button("Process CV"):
                     "Email": info.get("email", ""),
                     "Điện thoại": info.get("dien_thoai", ""),
                     "Địa chỉ": info.get("dia_chi", ""),
-                    "Vị trí": info.get("vi_tri", ""),
                     "Học vấn": info.get("hoc_van", ""),
                     "Kinh nghiệm": info.get("kinh_nghiem", ""),
                     "Kỹ năng": info.get("ky_nang", ""),
