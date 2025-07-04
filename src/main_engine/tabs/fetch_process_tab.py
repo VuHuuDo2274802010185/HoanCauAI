@@ -6,6 +6,8 @@ from pathlib import Path
 from datetime import datetime, time, timezone, date
 import base64
 
+from modules.progress_manager import StreamlitProgressBar
+
 import pandas as pd
 import streamlit as st
 
@@ -22,7 +24,6 @@ from modules.config import (
 from modules.email_fetcher import EmailFetcher
 from modules.cv_processor import CVProcessor, format_sent_time_display
 from modules.dynamic_llm_client import DynamicLLMClient
-from modules.ui_utils import loading_logs
 from modules.sent_time_store import load_sent_times
 from ..utils import safe_session_state_get
 
@@ -82,18 +83,29 @@ def render(
         )
         since = from_dt.date() if from_dt else None
         before = to_dt.date() if to_dt else None
-        with loading_logs("Đang thực hiện..."):
+        progress_container = st.container()
+        with progress_container:
+            progress_bar = StreamlitProgressBar(progress_container)
+            progress_bar.initialize(100, "🚀 Đang khởi tạo xử lý CV...")
+
             processor = CVProcessor(
                 fetcher=fetcher,
                 llm_client=DynamicLLMClient(provider=provider, model=model, api_key=api_key),
             )
+
+            def progress_callback(current, message):
+                progress_bar.update(current, message)
+
             df = processor.process(
                 unseen_only=unseen_only,
                 since=since,
                 before=before,
                 from_time=from_dt,
                 to_time=to_dt,
+                progress_callback=progress_callback,
             )
+
+            progress_bar.finish("✅ Xử lý CV hoàn tất!")
 
         new_files = [Path(p) for p, _ in getattr(fetcher, "last_fetch_info", [])] if fetcher else []
         if new_files:

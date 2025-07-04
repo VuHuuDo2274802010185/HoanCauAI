@@ -5,7 +5,7 @@ import os
 import pandas as pd
 import streamlit as st
 from typing import cast
-from modules.ui_utils import loading_logs
+from modules.progress_manager import StreamlitProgressBar
 
 from modules.qa_chatbot import QAChatbot
 from modules.config import OUTPUT_CSV
@@ -37,11 +37,15 @@ def render(provider: str, model: str, api_key: str) -> None:
                 model=cast(str, model),
                 api_key=cast(str, api_key),
             )
-            with loading_logs("Đang hỏi AI..."):
-                try:
-                    logging.info("Đang gửi câu hỏi tới AI")
-                    answer = chatbot.ask_question(question, df)
-                    st.markdown(answer, unsafe_allow_html=True)
-                except Exception as e:
-                    logging.error(f"Lỗi hỏi AI: {e}")
-                    st.error(f"Lỗi khi hỏi AI: {e}")
+            progress_bar = StreamlitProgressBar()
+            progress_bar.initialize(2, "💬 Đang hỏi AI...")
+            try:
+                logging.info("Đang gửi câu hỏi tới AI")
+                progress_bar.update(1, "Đang chờ phản hồi...")
+                answer = chatbot.ask_question(question, df)
+                progress_bar.finish("✅ Đã nhận câu trả lời")
+                st.markdown(answer, unsafe_allow_html=True)
+            except Exception as e:
+                progress_bar.finish("❌ Lỗi")
+                logging.error(f"Lỗi hỏi AI: {e}")
+                st.error(f"Lỗi khi hỏi AI: {e}")

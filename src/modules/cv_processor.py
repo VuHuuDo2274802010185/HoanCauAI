@@ -6,7 +6,7 @@ import json  # parse và dump JSON
 import time  # xử lý thời gian và sleep retry
 import logging  # ghi log
 from datetime import datetime, date  # định dạng thời gian hiển thị và lọc
-from typing import List, Dict, Optional  # khai báo kiểu
+from typing import List, Dict, Optional, Callable  # khai báo kiểu
 
 import pandas as pd  # xử lý DataFrame
 pd.set_option("display.max_colwidth", None)  # hiển thị đầy đủ nội dung các cột
@@ -228,6 +228,7 @@ class CVProcessor:
 
         from_time: datetime | None = None,
         to_time: datetime | None = None,
+        progress_callback: Optional[Callable[[int, str], None]] = None,
     ) -> pd.DataFrame:
         """
         Tìm tất cả file CV (fetcher hoặc thư mục attachments), trích xuất info, trả về DataFrame
@@ -274,12 +275,16 @@ class CVProcessor:
 
             files = [f for f in files if _in_range(f)]
 
+        total_files = len(files)
+        if progress_callback:
+            progress_callback(0, f"Bắt đầu xử lý {total_files} file...")
+
         if not files:
             logger.info("ℹ️ Không có file CV nào trong thư mục.")
             return pd.DataFrame()  # trả về DataFrame rỗng nếu không có file
 
         rows: List[Dict[str, str]] = []
-        for path in files:
+        for idx, path in enumerate(files):
             txt = self.extract_text(path)  # đọc text file
             info = self.extract_info_with_llm(txt) or {}
             # gom thông tin vào dict
@@ -298,6 +303,10 @@ class CVProcessor:
                 "Kinh nghiệm": info.get("kinh_nghiem", ""),
                 "Kỹ năng": info.get("ky_nang", ""),
             })
+
+            if progress_callback:
+                percentage = ((idx + 1) / total_files) * 100 if total_files > 0 else 100
+                progress_callback(idx + 1, f"Đang xử lý {os.path.basename(path)} ({percentage:.1f}%)")
 
         df = pd.DataFrame(rows, columns=[
             "Thời gian nhận",
@@ -319,6 +328,10 @@ class CVProcessor:
             df.sort(key=lambda r: r.get("Thời gian nhận", ""), reverse=True)
             for row in df:
                 row["Thời gian nhận"] = format_sent_time_display(row.get("Thời gian nhận", ""))
+
+        if progress_callback:
+            progress_callback(total_files, f"✅ Hoàn tất xử lý {total_files} file")
+
         return df  # trả về kết quả
 
     def save_to_csv(self, df: pd.DataFrame, output: str = OUTPUT_CSV):

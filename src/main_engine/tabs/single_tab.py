@@ -7,7 +7,7 @@ import streamlit as st
 from modules.cv_processor import CVProcessor
 from modules.config import get_model_price
 from modules.dynamic_llm_client import DynamicLLMClient
-from modules.ui_utils import loading_logs
+from modules.progress_manager import StreamlitProgressBar
 
 
 def render(provider: str, model: str, api_key: str, root: Path) -> None:
@@ -24,18 +24,19 @@ def render(provider: str, model: str, api_key: str, root: Path) -> None:
     if uploaded:
         tmp_file = root / f"tmp_{uploaded.name}"
         tmp_file.write_bytes(uploaded.getbuffer())
-        with loading_logs(
-            f"Đang trích xuất & phân tích... (LLM: {provider}/{label})"
-        ):
-            logging.info(f"Xử lý file đơn {uploaded.name}")
-            proc = CVProcessor(
-                llm_client=DynamicLLMClient(
-                    provider=provider,
-                    model=model,
-                    api_key=api_key,
-                )
+        progress_bar = StreamlitProgressBar()
+        progress_bar.initialize(2, f"Đang trích xuất & phân tích... (LLM: {provider}/{label})")
+        logging.info(f"Xử lý file đơn {uploaded.name}")
+        proc = CVProcessor(
+            llm_client=DynamicLLMClient(
+                provider=provider,
+                model=model,
+                api_key=api_key,
             )
-            text = proc.extract_text(str(tmp_file))
-            info = proc.extract_info_with_llm(text)
+        )
+        text = proc.extract_text(str(tmp_file))
+        progress_bar.update(1, "Đang phân tích với LLM...")
+        info = proc.extract_info_with_llm(text)
+        progress_bar.finish("✅ Hoàn tất")
         st.json(info)
         tmp_file.unlink(missing_ok=True)
