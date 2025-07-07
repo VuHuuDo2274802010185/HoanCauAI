@@ -1,8 +1,8 @@
 # requirements.txt
 
-# Lệnh cài đặt toàn bộ dependencies:
-
-# pip install -r requirements.txt
+# Thư viện cần thiết để chạy dự án
+# Cách sử dụng:
+#   pip install -r requirements.txt
 
 python-dotenv>=0.21.0        # load biến môi trường từ file .env (dotenv)
 pdfminer.six==20231228        # trích xuất text từ PDF (ưu tiên pdfminer)
@@ -18,6 +18,6 @@ gradio>=4.0.0                 # alternative UI framework (Gradio)
 fastapi>=0.95.0               # framework backend API
 uvicorn[standard]>=0.22.0     # ASGI server, kèm uvloop và các extras
 python-multipart>=0.0.5       # xử lý multipart/form-data (file upload FastAPI)
-click                         # CLI utilities (dùng cho scripts click)
+click>=8.1                    # tiện ích CLI
 pydantic>=2.0.0               # validation, BaseSettings (FastAPI)
 pydantic-settings>=2.0.0

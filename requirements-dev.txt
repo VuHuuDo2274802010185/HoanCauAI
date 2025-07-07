@@ -1,4 +1,5 @@
-# Packages required for running tests
+# Các gói cần để chạy test
+# pip install -r requirements-dev.txt
 pytest>=7.0.0
 fastapi>=0.95.0
 python-docx>=0.8.11
