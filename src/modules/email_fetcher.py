@@ -116,7 +116,7 @@ class EmailFetcher:
             raise RuntimeError("Chưa kết nối IMAP. Gọi connect() trước.")
 
         if keywords is None:
-            keywords = ["CV", "Resume", "Curriculum Vitae", "Profile"]
+            keywords = ["CV", "Resume", "Curriculum Vitae"]
 
         new_files: List[str] = []
         self.last_fetch_info = []
@@ -276,7 +276,7 @@ class EmailFetcher:
                     name, ext = os.path.splitext(filename)
                     if ext.lower() not in ['.pdf', '.docx']:
                         continue
-                    if not re.search(r"(cv|resume|profile)", name, re.IGNORECASE):
+                    if not re.search(r"(cv|resume)", name, re.IGNORECASE):
                         continue
                     safe_name = re.sub(r'[^\w\-\_ ]', '_', name)
                     safe = safe_name + ext
