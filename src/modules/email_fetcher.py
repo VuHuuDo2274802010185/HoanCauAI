@@ -168,8 +168,9 @@ class EmailFetcher:
                     )
                 except Exception:
                     header_subj = ''
-                if not any(kw.lower() in header_subj.lower() for kw in keywords):
-                    continue
+                subject_matches = any(
+                    kw.lower() in header_subj.lower() for kw in keywords
+                )
 
                 # Fetch both message and INTERNALDATE for accurate timestamp
                 if hasattr(self.mail, 'uid'):
@@ -254,10 +255,10 @@ class EmailFetcher:
                             pass
 
                 all_text = f"{subj}\n{body_text}".lower()
-                if not any(kw.lower() in all_text for kw in keywords):
-                    continue
+                text_matches = any(kw.lower() in all_text for kw in keywords)
 
-                self.logger.info(f"[DEBUG] Email ID {num.decode()}: {subj}")
+                if text_matches:
+                    self.logger.info(f"[DEBUG] Email ID {num.decode()}: {subj}")
 
                 # Xử lý phần đính kèm mọi email: mỗi part có filename và đuôi PDF/DOCX
                 for part in msg.walk():

@@ -125,3 +125,46 @@ def test_profile_file_processed(email_fetcher_module, tmp_path):
     assert files == [str(expected)]
     assert expected.exists()
 
+
+def test_attachment_without_keyword_in_subject(email_fetcher_module, tmp_path):
+    email_fetcher = email_fetcher_module
+    EmailFetcher = email_fetcher.EmailFetcher
+
+    msg = EmailMessage()
+    msg['Subject'] = 'Job Application'
+    msg['Date'] = 'Wed, 20 Sep 2023 10:15:00 -0400'
+    msg.set_content('Hello')
+    msg.add_attachment(b'data', maintype='application', subtype='pdf', filename='My_CV.pdf')
+    raw = msg.as_bytes()
+
+    class FakeIMAP:
+        def __init__(self):
+            self.fetch_queries = []
+
+        def uid(self, cmd, *args):
+            if cmd.lower() == 'search':
+                return 'OK', [b'1']
+            if cmd.lower() == 'fetch':
+                id_set = args[0]
+                query = args[1]
+                self.fetch_queries.append(query)
+                if query == '(BODY.PEEK[HEADER.FIELDS (SUBJECT)])':
+                    ids = id_set.split(b',') if isinstance(id_set, bytes) else [id_set]
+                    return 'OK', [(b'UID %s' % i, b'Subject: Job Application\r\n') for i in ids]
+                return 'OK', [
+                    (None, raw),
+                    (b'INTERNALDATE', b'"20-Sep-2023 10:20:00 -0400"'),
+                ]
+            return 'NO', []
+
+        def store(self, *args, **kwargs):
+            pass
+
+    fetcher = EmailFetcher()
+    imap = FakeIMAP()
+    fetcher.mail = imap
+    files = fetcher.fetch_cv_attachments()
+    expected = tmp_path / 'My_CV.pdf'
+    assert files == [str(expected)]
+    assert expected.exists()
+
