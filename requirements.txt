@@ -14,6 +14,7 @@ openpyxl>=3.1.0               # ghi/đọc file Excel (.xlsx) (tuỳ chọn)
 google-generativeai>=0.2.0    # SDK Google Gemini AI
 requests>=2.31.0              # HTTP requests (OpenRouter API, v.v.)
 streamlit>=1.22.0             # framework UI web
+gradio>=4.0.0                 # alternative UI framework (Gradio)
 fastapi>=0.95.0               # framework backend API
 uvicorn[standard]>=0.22.0     # ASGI server, kèm uvloop và các extras
 python-multipart>=0.0.5       # xử lý multipart/form-data (file upload FastAPI)

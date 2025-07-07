@@ -211,6 +211,39 @@ class TerminalProgressBar:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
+class GradioProgressBar:
+    """Progress bar implementation for Gradio interface"""
+    
+    def __init__(self, progress_fn=None):
+        self.progress_fn = progress_fn
+        self.current_step = 0
+        self.total_steps = 100
+        self.start_time = time.time()
+        
+    def initialize(self, total_steps: int, initial_message: str = "Starting..."):
+        """Initialize progress bar"""
+        self.total_steps = total_steps
+        self.current_step = 0
+        self.start_time = time.time()
+        if self.progress_fn:
+            self.progress_fn(0, desc=initial_message)
+    
+    def update(self, step: int, message: str = "Processing..."):
+        """Update progress"""
+        self.current_step = min(step, self.total_steps)
+        progress_value = self.current_step / self.total_steps
+        
+        if self.progress_fn:
+            self.progress_fn(progress_value, desc=message)
+    
+    def increment(self, message: str = "Processing..."):
+        """Increment progress by 1"""
+        self.update(self.current_step + 1, message)
+    
+    def complete(self, message: str = "Complete!"):
+        """Mark progress as complete"""
+        self.update(self.total_steps, message)
+
 # Global progress manager instance
 global_progress = ProgressManager()
 
