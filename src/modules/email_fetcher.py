@@ -116,7 +116,7 @@ class EmailFetcher:
             raise RuntimeError("Chưa kết nối IMAP. Gọi connect() trước.")
 
         if keywords is None:
-            keywords = ["CV", "Resume", "Curriculum Vitae"]
+            keywords = ["CV", "Resume", "Curriculum Vitae", "Profile"]
 
         new_files: List[str] = []
         self.last_fetch_info = []
@@ -152,6 +152,25 @@ class EmailFetcher:
         for start in range(0, len(email_ids), batch_size):
             batch = email_ids[start:start + batch_size]
             for num in batch:
+                # Fetch subject header first to quickly filter emails
+                if hasattr(self.mail, 'uid'):
+                    h_typ, h_data = self.mail.uid('fetch', num, '(BODY.PEEK[HEADER.FIELDS (SUBJECT)])')
+                else:
+                    h_typ, h_data = self.mail.fetch(num, '(BODY.PEEK[HEADER.FIELDS (SUBJECT)])')
+                if h_typ != 'OK' or not h_data:
+                    continue
+                try:
+                    header_msg = email.message_from_bytes(h_data[0][1])
+                    subj_hdr = header_msg.get('Subject', '')
+                    header_subj = ''.join(
+                        p.decode(enc or 'utf-8', errors='ignore') if isinstance(p, bytes) else p
+                        for p, enc in decode_header(subj_hdr)
+                    )
+                except Exception:
+                    header_subj = ''
+                if not any(kw.lower() in header_subj.lower() for kw in keywords):
+                    continue
+
                 # Fetch both message and INTERNALDATE for accurate timestamp
                 if hasattr(self.mail, 'uid'):
                     typ, msg_data = self.mail.uid('fetch', num, '(RFC822 INTERNALDATE)')
@@ -257,7 +276,7 @@ class EmailFetcher:
                     name, ext = os.path.splitext(filename)
                     if ext.lower() not in ['.pdf', '.docx']:
                         continue
-                    if not re.search(r"(cv|resume)", name, re.IGNORECASE):
+                    if not re.search(r"(cv|resume|profile)", name, re.IGNORECASE):
                         continue
                     safe_name = re.sub(r'[^\w\-\_ ]', '_', name)
                     safe = safe_name + ext
