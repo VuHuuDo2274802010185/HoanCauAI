@@ -2,14 +2,16 @@
 
 HoanCau AI Resume Processor là hệ thống tự động trích xuất thông tin quan trọng từ hồ sơ (.pdf, .docx), hỗ trợ chạy qua CLI, giao diện web (Streamlit) và API (FastAPI).
 
+
 ## 🚀 Setup
 
 ### ⚡ Quick Start
 
-1. **Tải mã nguồn** về máy
-2. **Windows:** chạy `setup_window.cmd` rồi `start_window.cmd`
-3. **macOS/Linux:** chạy `./setup_linux.sh` rồi `./start_linux.sh`
-4. Làm theo hướng dẫn hiển thị trên màn hình
+1. **Tải mã nguồn** về máy (hoặc `git clone <repo>`)
+2. **Tạo môi trường ảo** và cài dependencies bằng script đi kèm
+3. **Windows:** chạy `setup_window.cmd` rồi `start_window.cmd`
+4. **macOS/Linux:** chạy `./setup_linux.sh` rồi `./start_linux.sh`
+5. Làm theo hướng dẫn hiển thị trên màn hình
 
 ### 📋 Yêu cầu hệ thống
 
@@ -166,6 +168,7 @@ Khi chạy `setup_window.cmd` hoặc `start_window.cmd` lần đầu, SmartScree
 - Lưu log cuộc trò chuyện của tính năng Hỏi AI.
 - Không gây cảnh báo Streamlit khi chạy CLI: `DynamicLLMClient` tự kiểm tra session context.
 
+
 ## ⚙️ Sử dụng CLI Agent
 
 Các lệnh chính:
@@ -272,4 +275,4 @@ python3 scripts/health_check.py
 
 ## 📜 License
 
-Distributed under the MIT License. Xem `LICENSE` chi tiết.
+Dự án được phát hành theo giấy phép MIT. Xem `LICENSE` để biết thêm chi tiết.
