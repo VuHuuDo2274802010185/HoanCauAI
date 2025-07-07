@@ -28,9 +28,6 @@ file_h = logging.FileHandler(LOG_DIR / "cv_processor.log", encoding="utf-8")
 file_h.setFormatter(fmt)
 logger.addHandler(file_h)
 
-# Import progress manager
-from .progress_manager import StreamlitProgressBar, progress_context
-
 # --- Cấu hình extractor PDF: pdfminer, PyPDF2 hoặc PyMuPDF ---
 _PDF_EX: Optional[str]
 try:
@@ -48,6 +45,8 @@ except ImportError:
             _PDF_EX = None  # không có thư viện PDF nào
 
 from .llm_client import LLMClient  # client LLM mặc định
+from typing import Union
+# Support both LLMClient and DynamicLLMClient
 from .config import (
     ATTACHMENT_DIR,
     OUTPUT_CSV,
@@ -78,7 +77,7 @@ class CVProcessor:
     """
     Lớp xử lý file CV: đọc text, gọi LLM hoặc regex fallback, trả về DataFrame
     """
-    def __init__(self, fetcher: Optional[object] = None, llm_client: Optional[LLMClient] = None):
+    def __init__(self, fetcher: Optional[object] = None, llm_client = None):
         """Khởi tạo: cấp fetcher (đọc email) và LLM client"""
         self.fetcher = fetcher  # đối tượng có method fetch_cv_attachments()
         self.llm_client = llm_client or LLMClient()  # client LLM mặc định
@@ -210,6 +209,7 @@ class CVProcessor:
             "tuoi": r"(?:(?:Tuổi|Age)[:\-\s]+)(\d{1,3})",
             "email": r"([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)",
             "dien_thoai": r"(\+?\d[\d\-\s]{7,}\d)",
+            "vi_tri": r"(?:(?:Vị trí|Position)[:\-\s]+)([^\n]+)",
             "hoc_van": r"(?:(?:Học vấn|Education)[:\-\s]+)([^\n]+)",
             "kinh_nghiem": r"(?:(?:Kinh nghiệm|Experience)[:\-\s]+)([^\n]+)",
             "dia_chi": r"(?:(?:Địa chỉ|Address)[:\-\s]+)([^\n]+)",
@@ -228,21 +228,25 @@ class CVProcessor:
         before: date | None = None,
         from_time: datetime | None = None,
         to_time: datetime | None = None,
-        progress_callback: Optional[Callable] = None,
+        progress_callback: Optional[Callable[[int, str], None]] = None,
+        ignore_last_uid: bool = False,
     ) -> pd.DataFrame:
         """
-        Enhanced CV processing with progress tracking
+        Tìm tất cả file CV (fetcher hoặc thư mục attachments), trích xuất info, trả về DataFrame
         """
-        start_time = time.time()
-        
         # fetch từ email nếu có fetcher
         if self.fetcher:
             unseen = unseen_only if unseen_only is not None else EMAIL_UNSEEN_ONLY
-            files: List[str] = self.fetcher.fetch_cv_attachments(
-                since=since,
-                before=before,
-                unseen_only=unseen,
-            )
+            fetch_kwargs = {
+                "since": since,
+                "before": before,
+                "unseen_only": unseen,
+            }
+            import inspect
+            sig = inspect.signature(self.fetcher.fetch_cv_attachments)
+            if "ignore_last_uid" in sig.parameters:
+                fetch_kwargs["ignore_last_uid"] = ignore_last_uid
+            files: List[str] = self.fetcher.fetch_cv_attachments(**fetch_kwargs)
         else:
             files = []
 
@@ -250,119 +254,91 @@ class CVProcessor:
             os.path.join(ATTACHMENT_DIR, fname): ts
             for fname, ts in load_sent_times().items()
         }
-
-        # Lấy tất cả file trong thư mục attachment
-        all_files = set(files)  # từ email
-        if ATTACHMENT_DIR.exists():
-            local_files = [
-                str(ATTACHMENT_DIR / fname)
-                for fname in os.listdir(ATTACHMENT_DIR)
-                if fname.lower().endswith((".pdf", ".docx"))
+        if self.fetcher:
+            sent_map.update(dict(getattr(self.fetcher, "last_fetch_info", [])))
+        if not files:
+            logger.info("🔍 dò thư mục attachments...")
+            files = [
+                os.path.join(ATTACHMENT_DIR, f)
+                for f in os.listdir(ATTACHMENT_DIR)
+                if f.lower().endswith((".pdf", ".docx"))
             ]
-            all_files.update(local_files)
 
-        # Filter by time range if specified
         if from_time or to_time:
-            filtered_files = []
-            for file_path in all_files:
-                fname = os.path.basename(file_path)
-                sent_time_str = sent_map.get(file_path, "")
-                
-                if sent_time_str:
-                    try:
-                        sent_time = datetime.fromisoformat(sent_time_str.replace("Z", "+00:00"))
-                        sent_time = sent_time.astimezone()
-                        
-                        if from_time and sent_time < from_time:
-                            continue
-                        if to_time and sent_time > to_time:
-                            continue
-                            
-                        filtered_files.append(file_path)
-                    except Exception as e:
-                        logger.warning(f"Invalid sent time format for {fname}: {sent_time_str} - {e}")
-                        if not (from_time or to_time):  # Include if no time filter
-                            filtered_files.append(file_path)
-                else:
-                    # Include files without sent time if no time filter
-                    if not (from_time or to_time):
-                        filtered_files.append(file_path)
-            
-            all_files = set(filtered_files)
+            def _in_range(p: str) -> bool:
+                ts = sent_map.get(p, "")
+                if not ts:
+                    return False
+                try:
+                    dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+                except Exception:
+                    return False
+                if from_time and dt < from_time:
+                    return False
+                if to_time and dt > to_time:
+                    return False
+                return True
 
-        total_files = len(all_files)
-        logger.info(f"📊 Processing {total_files} CV files...")
+            files = [f for f in files if _in_range(f)]
+
+        total_files = len(files)
+        if progress_callback:
+            progress_callback(0, f"Bắt đầu xử lý {total_files} file...")
+
+        if not files:
+            logger.info("ℹ️ Không có file CV nào trong thư mục.")
+            return pd.DataFrame()  # trả về DataFrame rỗng nếu không có file
+
+        rows: List[Dict[str, str]] = []
+        for idx, path in enumerate(files):
+            txt = self.extract_text(path)  # đọc text file
+            info = self.extract_info_with_llm(txt) or {}
+            # gom thông tin vào dict
+            sent_time = sent_map.get(path, "")
+            sent_time = sent_time if sent_time is not None else ""
+            rows.append({
+                "Thời gian nhận": sent_time,
+                "Nguồn": os.path.basename(path),
+                "Vị trí": info.get("vi_tri", ""),
+                "Họ tên": info.get("ten", ""),
+                "Tuổi": info.get("tuoi", ""),
+                "Email": info.get("email", ""),
+                "Điện thoại": info.get("dien_thoai", ""),
+                "Địa chỉ": info.get("dia_chi", ""),
+                "Học vấn": info.get("hoc_van", ""),
+                "Kinh nghiệm": info.get("kinh_nghiem", ""),
+                "Kỹ năng": info.get("ky_nang", ""),
+            })
+
+            if progress_callback:
+                percentage = ((idx + 1) / total_files) * 100 if total_files > 0 else 100
+                progress_callback(idx + 1, f"Đang xử lý {os.path.basename(path)} ({percentage:.1f}%)")
+
+        df = pd.DataFrame(rows, columns=[
+            "Thời gian nhận",
+            "Nguồn",
+            "Vị trí",
+            "Họ tên",
+            "Tuổi",
+            "Email",
+            "Điện thoại",
+            "Địa chỉ",
+            "Học vấn",
+            "Kinh nghiệm",
+            "Kỹ năng",
+        ])  # tạo DataFrame từ list dict với thứ tự cột cố định
+        if hasattr(df, "sort_values"):
+            df.sort_values("Thời gian nhận", ascending=False, inplace=True)
+            df["Thời gian nhận"] = df["Thời gian nhận"].apply(format_sent_time_display)
+        else:
+            df.sort(key=lambda r: r.get("Thời gian nhận", ""), reverse=True)
+            for row in df:
+                row["Thời gian nhận"] = format_sent_time_display(row.get("Thời gian nhận", ""))
 
         if progress_callback:
-            progress_callback(0, f"Starting processing {total_files} files...")
+            progress_callback(total_files, f"✅ Hoàn tất xử lý {total_files} file")
 
-        processed_data = []
-        failed_count = 0
-        
-        for i, file_path in enumerate(all_files):
-            try:
-                # Update progress
-                current_step = i + 1
-                percentage = (current_step / total_files) * 100 if total_files > 0 else 0
-                
-                fname = os.path.basename(file_path)
-                logger.info(f"📄 Processing {current_step}/{total_files}: {fname}")
-                
-                if progress_callback:
-                    progress_callback(
-                        current_step,
-                        f"Processing {fname} ({percentage:.1f}%)"
-                    )
-
-                # Extract text
-                text = self.extract_text(file_path)
-                if not text.strip():
-                    logger.warning(f"⚠️ No text extracted from {fname}")
-                    failed_count += 1
-                    continue
-
-                # Extract info using LLM
-                info = self.extract_info_with_llm(text)
-                if not info:
-                    logger.warning(f"⚠️ No info extracted from {fname}")
-                    info = self._fallback_regex(text)  # fallback
-
-                # Prepare record
-                sent_time_str = sent_map.get(file_path, "")
-                record = {
-                    "file_name": fname,
-                    "sent_time": sent_time_str,
-                    "sent_time_display": format_sent_time_display(sent_time_str),
-                    **info
-                }
-                
-                processed_data.append(record)
-                logger.info(f"✅ Successfully processed {fname}")
-
-            except Exception as e:
-                logger.error(f"❌ Error processing {file_path}: {e}")
-                failed_count += 1
-                continue
-
-        # Create DataFrame
-        df = pd.DataFrame(processed_data)
-        
-        # Log summary
-        elapsed = time.time() - start_time
-        success_count = len(processed_data)
-        logger.info(f"📈 Processing Summary:")
-        logger.info(f"   Total files: {total_files}")
-        logger.info(f"   Successful: {success_count}")
-        logger.info(f"   Failed: {failed_count}")
-        logger.info(f"   Time elapsed: {elapsed:.2f}s")
-        
-        if progress_callback:
-            progress_callback(
-                total_files,
-                f"✅ Completed! {success_count}/{total_files} files processed successfully"
-            )
-
-        return df
+        return df  # trả về kết quả
 
     def save_to_csv(self, df: pd.DataFrame, output: str = OUTPUT_CSV):
         """
@@ -393,9 +369,9 @@ class CVProcessor:
                 length = max(len(str(cell.value)) if cell.value is not None else 0 for cell in column_cells)
                 ws.column_dimensions[column_cells[0].column_letter].width = min(length + 2, 50)
 
-            # Tạo hyperlink cho cột "Nguồn"  
-            if "file_name" in df.columns:
-                col_idx = list(df.columns).index("file_name") + 1
+            # Tạo hyperlink cho cột "Nguồn"
+            if "Nguồn" in df.columns:
+                col_idx = list(df.columns).index("Nguồn") + 1
                 for row in range(2, len(df) + 2):
                     fname = ws.cell(row=row, column=col_idx).value
                     path = (ATTACHMENT_DIR / str(fname)).resolve()
