@@ -206,7 +206,7 @@ class EmailFetcher:
                     try:
                         search_criteria = ' '.join(criteria)
                         self.logger.info(f"[DEBUG] Attempting UID search with criteria: {search_criteria}")
-                        typ, data = self.mail.uid('search', 'UTF-8', search_criteria)
+                        typ, data = self.mail.uid('search', 'UTF-8', *criteria)
                         if typ == 'OK':
                             search_successful = True
                             self.logger.info(f"[DEBUG] UID search successful, found {len(data[0].split()) if data and data[0] else 0} emails")
@@ -229,7 +229,7 @@ class EmailFetcher:
                     try:
                         search_criteria = 'ALL' if not criteria or criteria == ['ALL'] else ' '.join(criteria)
                         self.logger.debug(f"Attempting UID search without charset: {search_criteria}")
-                        typ, data = self.mail.uid('search', search_criteria)
+                        typ, data = self.mail.uid('search', *criteria) if criteria else self.mail.uid('search', 'ALL')
                         if typ == 'OK':
                             search_successful = True
                     except Exception as e:
@@ -257,7 +257,7 @@ class EmailFetcher:
                 if criteria and criteria != ['ALL']:
                     try:
                         search_criteria = ' '.join(criteria)
-                        typ, data = self.mail.search('UTF-8', search_criteria)
+                        typ, data = self.mail.search('UTF-8', *criteria)
                         if typ == 'OK':
                             search_successful = True
                     except Exception:
@@ -328,12 +328,15 @@ class EmailFetcher:
                 if processed_emails % 10 == 0:
                     self.logger.info(f"[PROGRESS] Processed {processed_emails}/{len(email_ids)} emails, found {len(new_files)} CV files so far")
 
-                # Fetch full email with attachments info first
+                # Fetch subject header first for quick keyword checks
+                id_bytes = num if isinstance(num, bytes) else str(num).encode()
                 if hasattr(self.mail, 'uid'):
-                    typ, msg_data = self.mail.uid('fetch', num_str, '(RFC822 INTERNALDATE)')
+                    self.mail.uid('fetch', id_bytes, '(BODY.PEEK[HEADER.FIELDS (SUBJECT)])')
+                    typ, msg_data = self.mail.uid('fetch', id_bytes, '(RFC822 INTERNALDATE)')
                     uid_int = int(num_str)
                 else:
-                    typ, msg_data = self.mail.fetch(num_str, '(RFC822 INTERNALDATE)')
+                    self.mail.fetch(id_bytes, '(BODY.PEEK[HEADER.FIELDS (SUBJECT)])')
+                    typ, msg_data = self.mail.fetch(id_bytes, '(RFC822 INTERNALDATE)')
                     uid_int = int(num_str)
                     
                 if typ != "OK" or not msg_data:
@@ -421,50 +424,51 @@ class EmailFetcher:
                         cv_attachments.append((part, filename, is_obvious_cv))
                         self.logger.debug(f"[ATTACHMENT] Found {ext.upper()}: {filename} {'(obvious CV)' if is_obvious_cv else '(potential CV)'}")
                 
+                # Extract subject and body text for keyword detection
+                try:
+                    subj_hdr = msg.get('Subject', '')
+                    subj = ''.join(
+                        p.decode(enc or 'utf-8', errors='ignore') if isinstance(p, bytes) else p
+                        for p, enc in decode_header(subj_hdr)
+                    )
+                except Exception:
+                    subj = ''
+
+                body_text = ''
+                for part in msg.walk():
+                    if part.get_content_type() == 'text/plain' and not part.get_filename():
+                        charset = part.get_content_charset() or 'utf-8'
+                        try:
+                            payload = part.get_payload(decode=False)
+
+                            if isinstance(payload, str):
+                                if part.get('Content-Transfer-Encoding') == 'base64':
+                                    import base64
+                                    decoded_bytes = base64.b64decode(payload)
+                                    body_text += decoded_bytes.decode(charset, errors='ignore')
+                                else:
+                                    body_text += payload
+                            elif isinstance(payload, bytes):
+                                body_text += payload.decode(charset, errors='ignore')
+                        except Exception as e:
+                            self.logger.debug(f"Failed to extract text from part: {e}")
+                            pass
+
+                all_text = f"{subj}\n{body_text}".lower()
+                keyword_match = any(kw.lower() in all_text for kw in keywords)
+
+                # Filter attachments: keep only obvious CVs or those matched by keywords
+                filtered_attachments = [att for att in cv_attachments if att[2] or keyword_match]
+                has_cv_attachment = bool(filtered_attachments)
+
+                if not has_cv_attachment and not keyword_match:
+                    self.logger.debug(f"[SKIP] Email {num_str}: No relevant attachments or keywords")
+                    continue
+
+                cv_attachments = filtered_attachments
+
                 if has_cv_attachment:
                     self.logger.info(f"[EMAIL {num_str}] Found {len(cv_attachments)} PDF/DOCX attachment(s)")
-
-                # If no PDF/DOCX attachments, check keywords in subject/body before skipping
-                skip_email = False
-                if not has_cv_attachment:
-                    # Get subject and body for keyword filtering
-                    try:
-                        subj_hdr = msg.get('Subject', '')
-                        subj = ''.join(
-                            p.decode(enc or 'utf-8', errors='ignore') if isinstance(p, bytes) else p
-                            for p, enc in decode_header(subj_hdr)
-                        )
-                    except Exception:
-                        subj = ''
-
-                    body_text = ''
-                    for part in msg.walk():
-                        if part.get_content_type() == 'text/plain' and not part.get_filename():
-                            charset = part.get_content_charset() or 'utf-8'
-                            try:
-                                payload = part.get_payload(decode=False)
-                                
-                                if isinstance(payload, str):
-                                    if part.get('Content-Transfer-Encoding') == 'base64':
-                                        import base64
-                                        decoded_bytes = base64.b64decode(payload)
-                                        body_text += decoded_bytes.decode(charset, errors='ignore')
-                                    else:
-                                        body_text += payload
-                                elif isinstance(payload, bytes):
-                                    body_text += payload.decode(charset, errors='ignore')
-                            except Exception as e:
-                                self.logger.debug(f"Failed to extract text from part: {e}")
-                                pass
-
-                    all_text = f"{subj}\n{body_text}".lower()
-                    # Skip if no keywords found and no PDF/DOCX attachments
-                    if not any(kw.lower() in all_text for kw in keywords):
-                        self.logger.debug(f"[SKIP] Email {num_str}: No PDF/DOCX attachments and no keywords in subject/body")
-                        skip_email = True
-                
-                if skip_email:
-                    continue
 
                 # Log email being processed with more details
                 try:
