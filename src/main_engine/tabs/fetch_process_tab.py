@@ -95,8 +95,8 @@ def render(
     
     st.divider()  # Tạo đường phân cách
     
-    # Tạo 3 cột cho các nút bấm
-    col_btn1, col_btn2, col_btn3 = st.columns([2, 2, 1])
+    # Tạo 3 cột cho các nút bấm với kích thước đều nhau
+    col_btn1, col_btn2, col_btn3 = st.columns(3)
     
     # Cột 3: Nút Reset UID
     with col_btn3:
