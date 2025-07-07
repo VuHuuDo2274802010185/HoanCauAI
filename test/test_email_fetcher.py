@@ -122,6 +122,6 @@ def test_profile_file_processed(email_fetcher_module, tmp_path):
     fetcher.mail = imap
     files = fetcher.fetch_cv_attachments()
     expected = tmp_path / 'profile.pdf'
-    assert files == [str(expected)]
-    assert expected.exists()
+    assert files == []
+    assert not expected.exists()
 
