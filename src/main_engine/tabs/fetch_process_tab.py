@@ -46,6 +46,14 @@ def render(
     else:
         fetcher = EmailFetcher(EMAIL_HOST, EMAIL_PORT, email_user, email_pass)
         fetcher.connect()
+        
+        # Show current UID status
+        if fetcher:
+            last_uid = fetcher.get_last_processed_uid()
+            if last_uid:
+                st.info(f"📧 Last processed UID: {last_uid}")
+            else:
+                st.info("📧 No previous UID found - will process all emails")
 
     col1, col2 = st.columns(2)
     today_str = date.today().strftime("%d/%m/%Y")
@@ -60,9 +68,94 @@ def render(
         key="unseen_only",
         help="Nếu bỏ chọn, hệ thống sẽ quét toàn bộ hộp thư",
     )
+    
+    ignore_last_uid = st.checkbox(
+        "🔄 Bỏ qua UID đã lưu (xử lý lại tất cả email)",
+        value=False,
+        key="ignore_last_uid",
+        help="Bỏ qua UID đã lưu và xử lý lại tất cả email từ đầu",
+    )
+    
+    st.divider()
+    
+    col_btn1, col_btn2, col_btn3 = st.columns([2, 2, 1])
+    
+    with col_btn3:
+        if st.button("🗑️ Reset UID", help="Xóa UID đã lưu để xử lý lại từ đầu"):
+            if fetcher:
+                fetcher.reset_uid_store()
+                st.success("✅ Đã reset UID store!")
+                st.rerun()
+            else:
+                st.error("❌ Cần kết nối email trước")
+    
+    with col_btn1:
+        fetch_button = st.button("📥 Fetch", help="Tải email CV từ hộp thư")
+    
+    with col_btn2:
+        process_button = st.button("⚙️ Process", help="Phân tích CV đã tải về")
+    
+    st.markdown("---")
 
-    if st.button("Fetch & Process", help="Tải email và phân tích CV"):
-        logging.info("Bắt đầu fetch & process CV")
+    # Handle Fetch button
+    if fetch_button:
+        if not fetcher:
+            st.error("❌ Cần kết nối email trước khi fetch")
+        else:
+            logging.info("Bắt đầu fetch CV từ email")
+            from_dt = (
+                datetime.combine(
+                    datetime.strptime(from_date_str, "%d/%m/%Y"),
+                    time.min,
+                    tzinfo=timezone.utc,
+                )
+                if from_date_str
+                else None
+            )
+            to_dt = (
+                datetime.combine(
+                    datetime.strptime(to_date_str, "%d/%m/%Y"),
+                    time.max,
+                    tzinfo=timezone.utc,
+                )
+                if to_date_str
+                else None
+            )
+            since = from_dt.date() if from_dt else None
+            before = to_dt.date() if to_dt else None
+            
+            status_placeholder = st.empty()
+            with st.spinner("📥 Đang tải email..."):
+                try:
+                    status_placeholder.info("🔍 Đang tìm kiếm email...")
+                    new_files = fetcher.fetch_cv_attachments(
+                        since=since,
+                        before=before,
+                        unseen_only=unseen_only,
+                        ignore_last_uid=ignore_last_uid,
+                    )
+                    status_placeholder.empty()
+                    
+                    if new_files:
+                        st.success(f"✅ Đã tải xuống {len(new_files)} file CV mới:")
+                        for file_path in new_files:
+                            st.write(f"- {Path(file_path).name}")
+                        
+                        # Show updated UID status after fetch
+                        new_uid = fetcher.get_last_processed_uid()
+                        if new_uid:
+                            st.info(f"📧 Updated last processed UID: {new_uid}")
+                    else:
+                        st.info("📧 Không tìm thấy CV mới để tải về")
+                        
+                except Exception as e:
+                    status_placeholder.empty()
+                    st.error(f"❌ Lỗi khi fetch email: {e}")
+                    logging.error(f"Fetch error: {e}")
+
+    # Handle Process button  
+    if process_button:
+        logging.info("Bắt đầu process CV đã tải về")
         from_dt = (
             datetime.combine(
                 datetime.strptime(from_date_str, "%d/%m/%Y"),
@@ -81,15 +174,14 @@ def render(
             if to_date_str
             else None
         )
-        since = from_dt.date() if from_dt else None
-        before = to_dt.date() if to_dt else None
+        
         progress_container = st.container()
         with progress_container:
             progress_bar = StreamlitProgressBar(progress_container)
-            progress_bar.initialize(100, "🚀 Đang khởi tạo xử lý CV...")
+            progress_bar.initialize(100, "⚙️ Đang khởi tạo xử lý CV...")
 
             processor = CVProcessor(
-                fetcher=fetcher,
+                fetcher=None,  # Don't fetch, only process existing files
                 llm_client=DynamicLLMClient(provider=provider, model=model, api_key=api_key),
             )
 
@@ -97,28 +189,25 @@ def render(
                 progress_bar.update(current, message)
 
             df = processor.process(
-                unseen_only=unseen_only,
-                since=since,
-                before=before,
+                unseen_only=False,  # Process all files in directory
+                since=None,  # Don't filter by email dates when processing existing files
+                before=None,
                 from_time=from_dt,
                 to_time=to_dt,
                 progress_callback=progress_callback,
+                ignore_last_uid=False,  # Not relevant when fetcher is None
             )
 
             progress_bar.finish("✅ Xử lý CV hoàn tất!")
 
-        new_files = [Path(p) for p, _ in getattr(fetcher, "last_fetch_info", [])] if fetcher else []
-        if new_files:
-            st.success(f"Đã tải {len(new_files)} file mới:")
-            st.write([p.name for p in new_files])
         if df.empty:
-            st.info("Không có CV nào để xử lý.")
+            st.info("📁 Không có CV nào trong thư mục attachments để xử lý.")
         else:
             processor.save_to_csv(df, str(OUTPUT_CSV))
             processor.save_to_excel(df, str(OUTPUT_EXCEL))
             logging.info("Đã xử lý %s CV và lưu kết quả", len(df))
             st.success(
-                f"Đã xử lý {len(df)} CV và lưu vào `{OUTPUT_CSV.name}` và `{OUTPUT_EXCEL.name}`."
+                f"✅ Đã xử lý {len(df)} CV và lưu vào `{OUTPUT_CSV.name}` và `{OUTPUT_EXCEL.name}`."
             )
 
     attachments = [

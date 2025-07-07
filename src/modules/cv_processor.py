@@ -45,6 +45,8 @@ except ImportError:
             _PDF_EX = None  # không có thư viện PDF nào
 
 from .llm_client import LLMClient  # client LLM mặc định
+from typing import Union
+# Support both LLMClient and DynamicLLMClient
 from .config import (
     ATTACHMENT_DIR,
     OUTPUT_CSV,
@@ -75,7 +77,7 @@ class CVProcessor:
     """
     Lớp xử lý file CV: đọc text, gọi LLM hoặc regex fallback, trả về DataFrame
     """
-    def __init__(self, fetcher: Optional[object] = None, llm_client: Optional[LLMClient] = None):
+    def __init__(self, fetcher: Optional[object] = None, llm_client = None):
         """Khởi tạo: cấp fetcher (đọc email) và LLM client"""
         self.fetcher = fetcher  # đối tượng có method fetch_cv_attachments()
         self.llm_client = llm_client or LLMClient()  # client LLM mặc định
@@ -222,13 +224,12 @@ class CVProcessor:
     def process(
         self,
         unseen_only: bool | None = None,
-
         since: date | None = None,
         before: date | None = None,
-
         from_time: datetime | None = None,
         to_time: datetime | None = None,
         progress_callback: Optional[Callable[[int, str], None]] = None,
+        ignore_last_uid: bool = False,
     ) -> pd.DataFrame:
         """
         Tìm tất cả file CV (fetcher hoặc thư mục attachments), trích xuất info, trả về DataFrame
@@ -240,6 +241,7 @@ class CVProcessor:
                 since=since,
                 before=before,
                 unseen_only=unseen,
+                ignore_last_uid=ignore_last_uid,
             )
         else:
             files = []
