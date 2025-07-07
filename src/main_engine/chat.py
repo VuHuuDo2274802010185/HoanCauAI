@@ -9,7 +9,10 @@ import streamlit as st
 
 from modules.config import OUTPUT_CSV
 from modules.progress_manager import StreamlitProgressBar
-from modules.qa_chatbot import QAChatbot
+try:
+    from modules.qa_chatbot import QAChatbot
+except Exception:  # pragma: no cover - optional dependency may be missing
+    QAChatbot = None
 from .utils import handle_error, safe_session_state_get
 
 logger = logging.getLogger(__name__)
