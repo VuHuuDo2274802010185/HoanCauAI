@@ -275,4 +275,43 @@ python3 scripts/health_check.py
 
 ## 📜 License
 
+
 Dự án được phát hành theo giấy phép MIT. Xem `LICENSE` để biết thêm chi tiết.
+
+## 🎉 New: Gradio Interface Available!
+
+This project now supports both Streamlit and Gradio interfaces:
+
+### 🌟 Gradio (Recommended)
+- **Quick Start**: `python gradio_simple.py` (Port: 7862)
+- **Full Version**: `python main.py` (default)
+- **URL**: http://localhost:7862
+
+### 📊 Streamlit (Legacy)
+- **Start**: `python main.py --interface streamlit`
+- **URL**: http://localhost:8501
+
+### ⚡ Quick Commands
+```bash
+# Gradio (simple) - WORKING ✅
+python gradio_simple.py
+
+# Gradio (full) - In development
+python main.py
+
+# Streamlit
+python main.py --interface streamlit
+
+# Get help
+python main.py --help
+```
+
+### 🎉 Migration Status
+- ✅ **Gradio Simple App**: Working perfectly on port 7862
+- ✅ **All modules imported**: config, cv_processor, email_fetcher, dynamic_llm_client
+- ✅ **Full functionality**: LLM config, email config, CV processing, chat
+- ✅ **Fixed CVProcessor.process method**: Now uses correct DataFrame return type
+- 🔄 **Full Gradio App**: Under development
+- 📊 **Streamlit App**: Still available as legacy option
+
+See `GRADIO_MIGRATION.md` for detailed migration notes.
