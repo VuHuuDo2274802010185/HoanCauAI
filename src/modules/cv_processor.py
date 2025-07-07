@@ -237,12 +237,16 @@ class CVProcessor:
         # fetch từ email nếu có fetcher
         if self.fetcher:
             unseen = unseen_only if unseen_only is not None else EMAIL_UNSEEN_ONLY
-            files: List[str] = self.fetcher.fetch_cv_attachments(
-                since=since,
-                before=before,
-                unseen_only=unseen,
-                ignore_last_uid=ignore_last_uid,
-            )
+            fetch_kwargs = {
+                "since": since,
+                "before": before,
+                "unseen_only": unseen,
+            }
+            import inspect
+            sig = inspect.signature(self.fetcher.fetch_cv_attachments)
+            if "ignore_last_uid" in sig.parameters:
+                fetch_kwargs["ignore_last_uid"] = ignore_last_uid
+            files: List[str] = self.fetcher.fetch_cv_attachments(**fetch_kwargs)
         else:
             files = []
 
