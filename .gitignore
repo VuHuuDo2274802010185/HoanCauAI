@@ -3,15 +3,10 @@ __pycache__/
 *.pyc
 .env
 *.log
-attachments/
-!attachments/.gitkeep
-log/*
-!log/.gitkeep
-*.csv
-!csv/cv_summary.csv
-!csv/.gitkeep
-*.xlsx
-!csv/cv_summary.xlsx
+Input Files/
+!Input Files/.gitkeep
+Output Files/*
+!Output Files/.gitkeep
 .venv
 FIX_REPORT.md
 health_check_report.json

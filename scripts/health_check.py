@@ -21,7 +21,7 @@ except ImportError:
     errors.append("Missing required package: streamlit")  # báo lỗi nếu thiếu
 
 # --- Kiểm tra các thư mục cần thiết ---
-for d in ["attachments", "csv", "log", "static"]:
+for d in ["Input Files", "Output Files", "static"]:
     if not (BASE_DIR / d).is_dir():  # nếu thư mục không tồn tại
         errors.append(f"Missing directory: {d}")
 

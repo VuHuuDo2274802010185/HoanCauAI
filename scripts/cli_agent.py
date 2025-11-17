@@ -52,7 +52,7 @@ def watch(interval, host, port, user, password, from_date, to_date, unseen_only)
 @click.option('--from-date', type=click.DateTime(formats=['%d/%m/%Y']), help='Chỉ xử lý các file sau ngày này (DD/MM/YYYY)')
 @click.option('--to-date', type=click.DateTime(formats=['%d/%m/%Y']), help='Chỉ xử lý các file trước ngày này (DD/MM/YYYY)')
 def full_process(from_date, to_date):
-    """Xử lý toàn bộ CV trong thư mục attachments"""
+    """Xử lý toàn bộ CV trong thư mục Input Files"""
     click.echo("Bắt đầu full process...")
     processor = CVProcessor(llm_client=LLMClient())
     df = processor.process(

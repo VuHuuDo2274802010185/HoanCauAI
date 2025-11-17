@@ -85,13 +85,13 @@ def _clean_path(varname: str, default: str) -> Path:
         path = BASE_DIR / path
     return path
 
-# Thư mục lưu log chung
-LOG_DIR = _clean_path("LOG_DIR", "log")
+# Thư mục lưu log chung - đặt trong Output Files
+LOG_DIR = _clean_path("LOG_DIR", "Output Files/log")
 LOG_FILE = _clean_path("LOG_FILE", str(LOG_DIR / "app.log"))
 
-ATTACHMENT_DIR = _clean_path("ATTACHMENT_DIR", "attachments")
-OUTPUT_CSV = _clean_path("OUTPUT_CSV", "csv/cv_summary.csv")
-OUTPUT_EXCEL = _clean_path("OUTPUT_EXCEL", "excel/cv_summary.xlsx")
+ATTACHMENT_DIR = _clean_path("ATTACHMENT_DIR", "Input Files")
+OUTPUT_CSV = _clean_path("OUTPUT_CSV", "Output Files/cv_summary.csv")
+OUTPUT_EXCEL = _clean_path("OUTPUT_EXCEL", "Output Files/cv_summary.xlsx")
 # File lưu thời gian gửi email cho mỗi attachment
 SENT_TIME_FILE = _clean_path(
     "SENT_TIME_FILE",

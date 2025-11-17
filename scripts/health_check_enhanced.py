@@ -115,10 +115,8 @@ def check_project_structure() -> bool:
     required_dirs = [
         "src/main_engine",
         "src/modules",
-        "attachments",
-        "log",
-        "csv",
-        "excel"
+        "Input Files",
+        "Output Files"
     ]
     
     missing_items = []
@@ -220,7 +218,7 @@ def check_file_permissions() -> bool:
     print_status("Checking file permissions...")
     
     # Test write permissions in key directories
-    test_dirs = ["attachments", "log", "csv", "excel"]
+    test_dirs = ["Input Files", "Output Files"]
     
     for dir_name in test_dirs:
         dir_path = Path(dir_name)
