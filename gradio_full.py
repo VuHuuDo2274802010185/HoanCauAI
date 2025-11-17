@@ -489,7 +489,7 @@ def process_cvs(from_date: str, to_date: str, progress=gr.Progress()):
             return result_text, load_results_data(), load_processing_logs()
         else:
             progress(1.0, desc="ℹ️ Không tìm thấy CV")
-            return "📁 Không có CV nào trong thư mục attachments để xử lý.", "", ""
+            return "📁 Không có CV nào trong thư mục Input Files để xử lý.", "", ""
             
     except Exception as e:
         logger.error(f"Error in process_cvs: {e}")
@@ -572,8 +572,8 @@ def delete_all_attachments():
             except Exception:
                 pass
         
-        logger.info(f"Đã xóa {count} file trong attachments")
-        return f"✅ Đã xóa {count} file trong thư mục attachments.", get_attachments_list()
+        logger.info(f"Đã xóa {count} file trong Input Files")
+        return f"✅ Đã xóa {count} file trong thư mục Input Files.", get_attachments_list()
     except Exception as e:
         return f"❌ Lỗi xóa file: {str(e)}", get_attachments_list()
 
@@ -984,7 +984,7 @@ def create_gradio_interface():
                         # Delete all attachments section (same as Streamlit confirm delete logic)
                         with gr.Row():
                             delete_all_btn = gr.Button(
-                                "🗑️ Xóa toàn bộ attachments",
+                                "🗑️ Xóa toàn bộ file Input Files",
                                 variant="stop",
                                 scale=1
                             )

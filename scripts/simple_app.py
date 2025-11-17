@@ -100,7 +100,7 @@ if st.button("Process CV"):
         if p.suffix.lower() in (".pdf", ".docx")
     ]
     if not cv_files:
-        st.warning("Không có file CV trong attachments.")
+        st.warning("Không có file CV trong Input Files.")
     else:
         processor = CVProcessor(
             llm_client=DynamicLLMClient(provider=provider, model=model, api_key=api_key)
