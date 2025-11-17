@@ -55,7 +55,7 @@ HoanCau AI Resume Processor là hệ thống tự động trích xuất thông t
   Khi xử lý bằng `CVProcessor`, cột `Thời gian nhận` (đứng trước cột `Nguồn`) trong bảng kết quả sẽ hiển thị giá trị `sent_time` này.
   Cột `Vị trí` nằm ngay sau `Nguồn`, kế tiếp là `Họ tên`.
   Chuỗi ISO sẽ được định dạng lại cho dễ đọc, ví dụ `2:33 pm 26/6/2025`.
-  Các giá trị thời gian này được lưu lại trong file `attachments/sent_times.json` để lần xử lý sau vẫn giữ nguyên thông tin.
+  Các giá trị thời gian này được lưu lại trong file `Input Files/sent_times.json` để lần xử lý sau vẫn giữ nguyên thông tin.
 - Nếu vẫn không có email, kiểm tra folder IMAP mặc định là `INBOX`, hoặc đổi:
   ```python
   f.mail.select('INBOX.Sent Mail')  # hoặc tên folder khác
@@ -97,10 +97,8 @@ tạo các thư mục cần thiết.
    `OPENROUTER_API_KEY`), `EMAIL_USER` và `EMAIL_PASS`. File `.env` đã nằm trong
    `.gitignore` nên **không commit** lên Git. Nếu gặp lỗi cấu hình, hãy so sánh
    với file mẫu [`.env.example`](./.env.example) để biết các biến cần thiết.
-    Bạn có thể tạo sẵn các thư mục `attachments`, `csv`, `log` và `static` (hoặc để
-   script tự tạo) để lưu file tải về và log.
-   Nếu trước đây bạn từng chạy phiên bản cũ sử dụng thư mục `.log` hoặc `logs`,
-   dự án sẽ tự động chuyển toàn bộ nội dung sang `log` khi khởi chạy.
+    Bạn có thể tạo sẵn các thư mục `Input Files`, `Output Files` và `static` (hoặc để
+   script tự tạo) để lưu file tải về và xuất kết quả.
 
 ### 💻 Cài đặt nhanh trên Windows
 
@@ -183,7 +181,7 @@ python3 scripts/cli_agent.py --help
 cli-agent watch --interval 600     # chỉ quét UNSEEN
 cli-agent watch --all             # quét toàn bộ email
 
-# Chạy full process: xử lý batch trong attachments
+# Chạy full process: xử lý batch trong Input Files
 cli-agent full-process
 
 # Xử lý một file CV đơn lẻ
@@ -197,7 +195,7 @@ cli-agent chat "Câu hỏi của bạn"
 ```
 Lệnh `chat` tự động sử dụng khóa API tương ứng với `LLM_PROVIDER`
 được khai báo trong file `.env` (`GOOGLE_API_KEY` hoặc `OPENROUTER_API_KEY`).
-Mỗi lần hỏi đáp sẽ được lưu vào file log tại `log/chat_log.json` (có thể thay đổi qua biến `CHAT_LOG_FILE` hoặc thư mục `LOG_DIR`).
+Mỗi lần hỏi đáp sẽ được lưu vào file log tại `Output Files/log/chat_log.json` (có thể thay đổi qua biến `CHAT_LOG_FILE` hoặc thư mục `LOG_DIR`).
 
 ## 🌐 Giao diện web (Streamlit)
 
@@ -239,9 +237,9 @@ HoanCauAI/
 │   │   └── app.py
 │   └── modules/           # Core modules (fetcher, processor, chatbot, server)
 ├── config/                # File cấu hình JSON
-├── csv/                   # Kết quả CSV
+├── Input Files/           # Lưu CV tải về và file đầu vào
+├── Output Files/          # Kết quả CSV, Excel và log
 ├── docs/                  # Tài liệu bổ sung
-├── attachments/           # Lưu CV tải về
 ├── .env.example           # Mẫu cấu hình môi trường
 ├── requirements.txt       # Dependencies
 └── README.md              # Hướng dẫn sử dụng

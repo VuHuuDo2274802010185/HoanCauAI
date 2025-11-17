@@ -2,12 +2,13 @@
 
 # Import các thư viện cần thiết
 import logging  # Thư viện ghi log để theo dõi hoạt động của ứng dụng
+import shutil  # Thư viện để copy file
 from pathlib import Path  # Thư viện xử lý đường dẫn file/folder hiện đại
 import streamlit as st  # Framework tạo ứng dụng web
 
 # Import các module xử lý CV và AI
 from modules.cv_processor import CVProcessor  # Module xử lý file CV
-from modules.config import get_model_price  # Hàm lấy giá của model AI
+from modules.config import get_model_price, ATTACHMENT_DIR  # Hàm lấy giá của model AI và thư mục input
 from modules.dynamic_llm_client import DynamicLLMClient  # Client kết nối với các LLM khác nhau
 from modules.progress_manager import StreamlitProgressBar  # Module quản lý thanh tiến trình
 
@@ -33,6 +34,12 @@ def render(provider: str, model: str, api_key: str, root: Path) -> None:
         # Tạo file tạm thời trong thư mục root với prefix "tmp_"
         tmp_file = root / f"tmp_{uploaded.name}"
         tmp_file.write_bytes(uploaded.getbuffer())  # Ghi nội dung file upload vào file tạm
+        
+        # Copy file vào Input Files nếu chưa có
+        input_file = ATTACHMENT_DIR / uploaded.name
+        if not input_file.exists():
+            shutil.copy2(tmp_file, input_file)
+            logging.info(f"Đã copy {uploaded.name} vào Input Files")
         
         # Khởi tạo thanh tiến trình
         progress_bar = StreamlitProgressBar()

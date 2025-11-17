@@ -1140,11 +1140,18 @@ def process_single_cv(file):
     
     try:
         # Save uploaded file temporarily
-        temp_path = ATTACHMENT_DIR / f"temp_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{file.name}"
+        temp_path = ATTACHMENT_DIR / f"temp_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{Path(file.name).name}"
         temp_path.parent.mkdir(parents=True, exist_ok=True)
         
         with open(temp_path, "wb") as f:
             f.write(file.read())
+        
+        # Copy file vào Input Files nếu chưa có
+        import shutil
+        input_file = ATTACHMENT_DIR / Path(file.name).name
+        if not input_file.exists():
+            shutil.copy2(temp_path, input_file)
+            logger.info(f"Đã copy {file.name} vào Input Files")
         
         # Create LLM client (same as Streamlit)
         llm_client = DynamicLLMClient(

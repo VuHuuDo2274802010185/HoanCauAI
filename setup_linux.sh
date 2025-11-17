@@ -64,6 +64,6 @@ if [ ! -f ".env" ]; then
 fi
 
 # 6) Create required directories
-mkdir -p attachments csv log static
+mkdir -p "Input Files" "Output Files" static
 
 echo "Setup completed successfully."

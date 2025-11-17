@@ -77,26 +77,19 @@ echo Đang cài đặt dependencies...
 %PYTHON_CMD% -m uv pip install -r "%~dp0requirements.txt"
 echo Hoàn tất cài đặt dependencies.
 
-:: 6) Tạo thư mục attachments, csv, log, static
-if not exist "%~dp0attachments" (
-    mkdir "%~dp0attachments"
-    echo Đã tạo thư mục attachments.
+:: 6) Tạo thư mục "Input Files" và "Output Files"
+if not exist "%~dp0Input Files" (
+    mkdir "%~dp0Input Files"
+    echo Đã tạo thư mục "Input Files".
 ) else (
-    echo Thư mục attachments đã tồn tại.
+    echo Thư mục "Input Files" đã tồn tại.
 )
 
-if not exist "%~dp0csv" (
-    mkdir "%~dp0csv"
-    echo Đã tạo thư mục csv.
+if not exist "%~dp0Output Files" (
+    mkdir "%~dp0Output Files"
+    echo Đã tạo thư mục "Output Files".
 ) else (
-    echo Thư mục csv đã tồn tại.
-)
-
-if not exist "%~dp0log" (
-    mkdir "%~dp0log"
-    echo Đã tạo thư mục log.
-) else (
-    echo Thư mục log đã tồn tại.
+    echo Thư mục "Output Files" đã tồn tại.
 )
 
 if not exist "%~dp0static" (
